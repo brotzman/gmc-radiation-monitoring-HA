@@ -1,0 +1,5 @@
+# Home Assistant app repository metadata.
+# https://developers.home-assistant.io/docs/apps/repository/
+name: "GMC Radiation Monitor"
+url: "https://github.com/brotzman/gmc-homeassistant"
+maintainer: "Brotzman"
