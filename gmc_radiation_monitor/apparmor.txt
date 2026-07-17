@@ -1,0 +1,41 @@
+#include <tunables/global>
+
+profile gmc_radiation_monitor flags=(attach_disconnected,mediate_deleted) {
+  #include <abstractions/base>
+
+  # Container-local file access. Host exposure remains limited to mounts/devices
+  # explicitly granted by the Home Assistant app configuration.
+  file,
+
+  # MQTT client traffic, Home Assistant Ingress, DNS and local IPC.
+  network,
+  signal (send) set=(kill,term,int,hup,cont),
+
+  # S6 Overlay and Bashio startup/runtime paths.
+  /init ix,
+  /bin/** ix,
+  /usr/bin/** ix,
+  /usr/local/bin/** ix,
+  /usr/lib/bashio/** ix,
+  /run/{s6,s6-rc*,service}/** ix,
+  /package/** ix,
+  /command/** ix,
+  /etc/services.d/** rwix,
+  /etc/cont-init.d/** rwix,
+  /etc/cont-finish.d/** rwix,
+  /run/{,**} rwk,
+
+  # Persistent app data, temporary export/upload files and Matplotlib cache.
+  /data/{,**} rwk,
+  /tmp/{,**} rwk,
+  /dev/shm/{,**} rwk,
+
+  # Serial devices exposed through `uart: true`.
+  /dev/tty rw,
+  /dev/ttyUSB[0-9]* rw,
+  /dev/ttyACM[0-9]* rw,
+  /dev/ttyAMA[0-9]* rw,
+  /dev/ttyS[0-9]* rw,
+  /dev/serial/{,**} rw,
+  /dev/pts/{,**} rw,
+}
