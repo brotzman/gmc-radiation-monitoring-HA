@@ -87,7 +87,7 @@ The workflow area provides configurable Home Assistant notifications, event anno
 
 The internal SQLite schema is migrated automatically to version 8. Existing measurement and device data remain compatible.
 
-Version 8.0.14 removes the mandatory GitHub Container Registry image reference. Home Assistant now builds the app directly from the included Dockerfile, avoiding registry-denied installation failures when a package is private or not yet published. The GitHub workflow verifies source builds for amd64 and aarch64 without publishing an image. Measurements, storage, MQTT entities, device communication, Ingress routes and user configuration remain unchanged. The dashboard opens the 8.0.14 manual that matches the selected UI language: German, English, Spanish, French, Italian, Dutch, Polish or Croatian.
+Version 8.1.0 removes the mandatory GitHub Container Registry image reference. Home Assistant now builds the app directly from the included Dockerfile, avoiding registry-denied installation failures when a package is private or not yet published. The GitHub workflow verifies source builds for amd64 and aarch64 without publishing an image. Measurements, storage, MQTT entities, device communication, Ingress routes and user configuration remain unchanged. The dashboard opens the 8.1.0 manual that matches the selected UI language: German, English, Spanish, French, Italian, Dutch, Polish or Croatian.
 
 ## Installation
 

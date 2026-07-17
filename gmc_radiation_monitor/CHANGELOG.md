@@ -1,5 +1,13 @@
 # Changelog
 
+## 8.1.0
+
+- Promoted the statistical-analysis feature set to the 8.1.0 feature release.
+- Added an explicit Poisson rate-change significance assessment for the recent one-hour window against prior quality-filtered history.
+- Added two-sided p-values, sigma significance, data-quality-adjusted confidence, empirical historical percentile and a "one in N historical hours" rarity estimate.
+- Integrated significance and rarity into the explainable radiation-intelligence result without changing safety thresholds or alarm semantics.
+- Added regression tests for significant increases, normal counting variation, insufficient history and intelligence integration.
+
 ## 8.0.14
 
 - Removed the mandatory GHCR image reference so Home Assistant builds the app from the included Dockerfile.
