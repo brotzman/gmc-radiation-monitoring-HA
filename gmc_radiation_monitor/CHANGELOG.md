@@ -1,12 +1,11 @@
 # Changelog
 
-## 8.0.13
+## 8.0.14
 
-- Reorganized the source package into the official Home Assistant App repository structure with `repository.yaml` at the Git root and the app in `gmc_radiation_monitor/`.
-- Added the required `DOCS.md` app documentation file and repository-level installation, contribution, security and issue-reporting metadata.
-- Added the official Home Assistant app linter workflow and multi-architecture GitHub Container Registry build and publish workflows for `aarch64` and `amd64`.
-- Added the app `image` reference `ghcr.io/brotzman/gmc-radiation-monitor` and linked app metadata to its repository subdirectory.
-- Updated the app, runtime, release-note and all eight integrated manual version references to 8.0.13.
+- Removed the mandatory GHCR image reference so Home Assistant builds the app from the included Dockerfile.
+- Fixed installation failures reporting `ghcr.io/...:8.0.13: denied` when the container package was absent or private.
+- Replaced automatic registry publication with non-publishing multi-architecture source-build validation for `amd64` and `aarch64`.
+- Updated app, runtime, release-note and all eight integrated manual version references to 8.0.14.
 - Kept measurements, storage, MQTT Discovery entities, serial communication, Ingress routes, dashboard behavior and user configuration compatible.
 
 ## 8.0.12
