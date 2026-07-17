@@ -1,0 +1,49 @@
+[tool.ruff]
+target-version = "py312"
+line-length = 110
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
+ignore = ["E501"]
+allowed-confusables = ["−", "×", "–", "‘", "’", "σ"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/test_serial_stagger_466.py" = ["E402"]
+"tests/test_v600_features.py" = ["E402"]
+
+[tool.bandit]
+exclude_dirs = ["tests"]
+skips = ["B310", "B603"]
+
+[tool.mypy]
+python_version = "3.12"
+files = [
+  "rootfs/usr/local/lib/gmc_bridge/version.py",
+  "rootfs/usr/local/lib/gmc_bridge/device_profiles.py",
+  "rootfs/usr/local/lib/gmc_bridge/web_security.py",
+  "rootfs/usr/local/lib/gmc_bridge/revision_cache.py",
+  "rootfs/usr/local/lib/gmc_bridge/report_web_support.py",
+  "rootfs/usr/local/lib/gmc_bridge/serial_device.py",
+  "rootfs/usr/local/lib/gmc_bridge/serial_discovery.py",
+  "rootfs/usr/local/lib/gmc_bridge/serial_scheduler.py",
+]
+ignore_missing_imports = true
+check_untyped_defs = true
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+show_error_codes = true
+
+[tool.coverage.run]
+branch = true
+source = ["gmc_bridge"]
+parallel = true
+
+[tool.coverage.report]
+fail_under = 70
+show_missing = true
+skip_covered = true
+exclude_also = [
+  "if TYPE_CHECKING:",
+  "raise NotImplementedError",
+]

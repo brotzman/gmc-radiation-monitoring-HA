@@ -1,0 +1,185 @@
+name: GMC Radiation Monitor
+description: Local GQ GMC monitoring with MQTT Discovery, configurable safety profiles,
+  background anomaly detection, diagnostics, reports, backups and streamed exports
+version: 8.0.13
+slug: gmc_radiation_monitor
+url: https://github.com/brotzman/gmc-homeassistant/tree/main/gmc_radiation_monitor
+image: ghcr.io/brotzman/gmc-radiation-monitor
+stage: stable
+arch:
+- aarch64
+- amd64
+startup: application
+boot: auto
+init: false
+uart: true
+apparmor: true
+tmpfs: true
+services:
+- mqtt:need
+homeassistant_api: true
+ingress: true
+ingress_port: 8099
+panel_icon: mdi:radioactive
+panel_title: GMC Radiation Monitoring
+panel_admin: true
+watchdog: http://[HOST]:[PORT:8099]/health
+options:
+  devices:
+  - name: GMC-320
+    scan_interval: 60
+    command_timeout: 3.0
+    inter_command_delay_ms: 250
+    serial_startup_delay: 0
+    auxiliary_read_interval: 300
+    read_gyro: false
+    read_device_time: false
+    device_clock_warning_seconds: 120
+    heartbeat_enabled: false
+    cpm_per_usvh: 154.0
+    gmcmap_counter_id: ''
+    serial_debug: false
+    serial_debug_max_bytes: 64
+    orientation_calibration_enabled: true
+    orientation_calibration_serial: f488c59b0031f0
+    orientation_offset_x: 25.385
+    orientation_offset_y: 0.43
+    orientation_offset_z: 18.43
+    orientation_scale_x: 263.285
+    orientation_scale_y: 261.43
+    orientation_scale_z: 254.57
+    orientation_calibration_name: GMC-320 six-position calibration
+  - name: GMC-500+
+    scan_interval: 75
+    command_timeout: 4.0
+    inter_command_delay_ms: 600
+    serial_startup_delay: 15
+    auxiliary_read_interval: 300
+    read_gyro: false
+    read_device_time: false
+    device_clock_warning_seconds: 120
+    heartbeat_enabled: false
+    cpm_per_usvh: 154.0
+    gmcmap_counter_id: ''
+    serial_debug: false
+    serial_debug_max_bytes: 64
+    orientation_calibration_enabled: true
+    orientation_calibration_serial: 080048303838a0
+    orientation_offset_x: 84.0
+    orientation_offset_y: -112.5
+    orientation_offset_z: -193.905
+    orientation_scale_x: 16380.0
+    orientation_scale_y: 15951.5
+    orientation_scale_z: 15879.235
+    orientation_calibration_name: GMC-500+ six-position calibration
+  gmcmap:
+    enabled: false
+    privacy_confirmed: false
+    account_id: ''
+    upload_interval: 300
+    timeout: 10.0
+  history:
+    retention_days: 90
+    report_timezone: Europe/Berlin
+    enable_restore: false
+    enable_purge_all_history: false
+  analysis:
+    traffic_light_yellow_percent: 125.0
+    traffic_light_red_percent: 175.0
+    smart_alerts_enabled: true
+    rapid_rise_percent: 50.0
+    rapid_rise_window_minutes: 10
+    sustained_alert_minutes: 30
+    baseline_learning_days: 7
+    external_temperature_entity: sensor.arbeitszimmer_temperatur
+    external_temperature_name: Raumklima (Arbeitszimmer)
+    external_temperature_max_age_seconds: 900
+    cosmic_hint_enabled: true
+    pressure_weather_entity_primary: weather.forecast_home_2
+    pressure_weather_entity_secondary: weather.forecast_balkon
+    pressure_weather_source_name: Meteorologisk institutt (Met.no)
+    pressure_weather_max_age_seconds: 7200
+    pressure_weather_max_difference_hpa: 5.0
+  safety:
+    profile: gq
+    threshold_basis: either
+    warning_cpm: 51
+    danger_cpm: 100
+    warning_usvh: 0.326
+    danger_usvh: 0.651
+  interface:
+    publish_advanced_sensors: true
+    ui_mode: simple
+    ui_language: auto
+  system:
+    log_level: info
+    serial_scheduler_enabled: true
+    serial_scheduler_gap_seconds: 2.0
+schema:
+  devices:
+  - name: str?
+    scan_interval: int(5,)?
+    command_timeout: float(0.2,10.0)?
+    inter_command_delay_ms: int(50,2000)?
+    serial_startup_delay: float(0.0,300.0)?
+    auxiliary_read_interval: int(0,86400)?
+    read_gyro: bool?
+    read_device_time: bool?
+    device_clock_warning_seconds: int(10,86400)?
+    heartbeat_enabled: bool?
+    cpm_per_usvh: float(0.001,)?
+    gmcmap_counter_id: str?
+    serial_debug: bool?
+    serial_debug_max_bytes: int(16,1024)?
+    orientation_calibration_enabled: bool?
+    orientation_calibration_serial: str?
+    orientation_offset_x: float?
+    orientation_offset_y: float?
+    orientation_offset_z: float?
+    orientation_scale_x: float?
+    orientation_scale_y: float?
+    orientation_scale_z: float?
+    orientation_calibration_name: str?
+  gmcmap:
+    enabled: bool
+    privacy_confirmed: bool
+    account_id: str
+    upload_interval: int(60,86400)
+    timeout: float(1.0,30.0)
+  history:
+    retention_days: int(7,3650)
+    report_timezone: str
+    enable_restore: bool
+    enable_purge_all_history: bool
+  analysis:
+    traffic_light_yellow_percent: float(100.0,)
+    traffic_light_red_percent: float(100.0,)
+    smart_alerts_enabled: bool
+    rapid_rise_percent: float(1.0,)
+    rapid_rise_window_minutes: int(1,1440)
+    sustained_alert_minutes: int(1,1440)
+    baseline_learning_days: int(1,90)
+    external_temperature_entity: str
+    external_temperature_name: str
+    external_temperature_max_age_seconds: int(30,86400)
+    cosmic_hint_enabled: bool
+    pressure_weather_entity_primary: str
+    pressure_weather_entity_secondary: str
+    pressure_weather_source_name: str
+    pressure_weather_max_age_seconds: int(60,86400)
+    pressure_weather_max_difference_hpa: float(0.1,20.0)
+  safety:
+    profile: list(gq|bfs_reference|icrp_reference|custom)
+    threshold_basis: list(cpm|dose_rate|either)
+    warning_cpm: int(0,)
+    danger_cpm: int(1,)
+    warning_usvh: float(0.0,)
+    danger_usvh: float(0.001,)
+  interface:
+    publish_advanced_sensors: bool
+    ui_mode: list(simple|advanced)
+    ui_language: list(auto|en|de|fr|es|it|nl|pl|hr)
+  system:
+    log_level: list(debug|info|warning|error)
+    serial_scheduler_enabled: bool
+    serial_scheduler_gap_seconds: float(0.0,30.0)

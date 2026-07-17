@@ -1,0 +1,267 @@
+All GMC history was deleted: Der gesamte GMC-Verlauf wurde gelöscht
+Another report or maintenance job is running: Ein anderer Bericht- oder Wartungsvorgang
+  läuft bereits
+Complete history deletion failed: Vollständiges Löschen des Verlaufs fehlgeschlagen
+Danger zone: Gefahrenbereich
+Delete all GMC history: Gesamten GMC-Verlauf löschen
+Deletion confirmation text must be exactly DELETE ALL GMC HISTORY: Der Bestätigungstext
+  muss exakt DELETE ALL GMC HISTORY lauten
+History deleted: Verlauf gelöscht
+Invalid deletion confirmation: Ungültige Löschbestätigung
+? Permanently delete all GMC history from this app and Home Assistant Recorder. This
+  includes CPM, temperature, voltage, gyro and tube measurements for every known GMC
+  and all time periods.
+: Löscht dauerhaft den gesamten GMC-Verlauf aus dieser App und dem Home-Assistant-Recorder.
+  Dies umfasst CPM, Temperatur, Spannung, Gyro- und Röhrenmesswerte aller bekannten
+  GMCs über alle Zeiträume.
+This cannot be undone. Delete all GMC history?: Dies kann nicht rückgängig gemacht
+  werden. Gesamten GMC-Verlauf löschen?
+Type DELETE ALL GMC HISTORY to confirm: Zur Bestätigung DELETE ALL GMC HISTORY eingeben
+configuration:
+  analysis:
+    description: Gemeinsame Basislinien-, Ampel- und Ereigniseinstellungen für alle
+      Geräte.
+    fields:
+      baseline_learning_days:
+        description: Historientage für die lokale Hintergrundbasis.
+        name: Lernzeitraum der Basis
+      external_temperature_entity:
+        description: Home-Assistant-Sensor für die CPM–Temperatur-Korrelation, wenn
+          das GMC keine eigene Temperatur liefert. Voreingestellt auf das Arbeitszimmer;
+          die Entity-ID bleibt editierbar.
+        name: Externe Temperatur-Entität
+      external_temperature_max_age_seconds:
+        description: Ältere Home-Assistant-Temperaturwerte werden nicht für die Korrelation
+          verwendet.
+        name: Maximales Alter der externen Temperatur
+      external_temperature_name:
+        description: Alternativer Anzeigename zur automatischen Suche, falls sich
+          die voreingestellte Entity-ID unterscheidet oder geändert wurde.
+        name: Suchname der externen Temperatur
+      cosmic_hint_enabled:
+        description: Lernt eine vorsichtige luftdruckbezogene Hintergrundsignatur.
+          Dies ist nur ein statistischer Hinweis und unterdrückt niemals Strahlungswarnungen.
+        name: Statistischer Hinweis auf kosmischen Einfluss
+      pressure_weather_entity_primary:
+        description: Primäre Home-Assistant-Wetterentität für den aktuellen Luftdruck.
+        name: Primäre Luftdruck-Wetterentität
+      pressure_weather_entity_secondary:
+        description: Optionale zweite Wetterentität zur Plausibilisierung des Luftdruckwerts.
+        name: Sekundäre Luftdruck-Wetterentität
+      pressure_weather_source_name:
+        description: Anbietername, der bei der Luftdruckquelle angezeigt wird.
+        name: Anbieter der Luftdruckquelle
+      pressure_weather_max_age_seconds:
+        description: Ältere Wetter-Luftdruckwerte werden nicht in das Modell übernommen.
+        name: Maximales Alter des Luftdruckwerts
+      pressure_weather_max_difference_hpa:
+        description: Maximal zulässige Abweichung zwischen beiden Luftdruckquellen,
+          bevor der Wert verworfen wird.
+        name: Maximale Abweichung der Luftdruckquellen
+      rapid_rise_percent:
+        description: Prozentuale Zunahme, die im gewählten Zeitfenster ein Ereignis
+          auslöst.
+        name: Schneller Anstieg
+      rapid_rise_window_minutes:
+        description: Vergleichszeitraum in Minuten.
+        name: Zeitfenster des Anstiegs
+      smart_alerts_enabled:
+        description: Schnelle Anstiege, anhaltende Erhöhungen und Normalisierung erkennen.
+        name: Intelligente Ereignisse
+      sustained_alert_minutes:
+        description: Minuten oberhalb der erlernten Basis bis zum Dauerereignis.
+        name: Dauerhafte Erhöhung
+      traffic_light_red_percent:
+        description: Rote Abweichungsschwelle; muss über Gelb liegen. Kein Sicherheitsgrenzwert.
+        name: 'Relative Ampel: Rot'
+      traffic_light_yellow_percent:
+        description: Abweichung des 1-Stunden-Mittels von der erlernten Basis in Prozent.
+          Kein Sicherheitsgrenzwert.
+        name: 'Relative Ampel: Gelb'
+    name: Hintergrundanalyse
+  devices:
+    description: Jedes angeschlossene GMC wird hier vollständig und unabhängig konfiguriert.
+      Pro physischem Zähler einen Eintrag anlegen.
+    fields:
+      auxiliary_read_interval:
+        description: Sekunden zwischen Abfragen von Temperatur, Spannung, Dual-Tube,
+          Gerätezeit und Gyro. CPM wird weiterhin im Messintervall gelesen; 0 liest
+          Zusatzwerte in jedem Zyklus.
+        name: Intervall der Zusatzwerte
+      command_timeout:
+        description: Maximale Wartezeit auf eine Geräteantwort in Sekunden.
+        name: Antwort-Timeout
+      cpm_per_usvh:
+        description: Röhrenspezifischer Umrechnungsfaktor dieses Geräts.
+        name: CPM je µSv/h
+      device_clock_warning_seconds:
+        description: Zulässige Zeitabweichung in Sekunden.
+        name: Warnschwelle der Geräteuhr
+      gmcmap_counter_id:
+        description: Eigene öffentliche GMCMap-Counter-ID für dieses Gerät.
+        name: GMCMap-Zähler-ID
+      heartbeat_enabled:
+        description: Live-CPS für dieses Gerät aktivieren, sofern unterstützt.
+        name: 1-Hz-Heartbeat aktivieren
+      inter_command_delay_ms:
+        description: Pause zwischen Gerätebefehlen in Millisekunden.
+        name: Befehlsabstand
+      name:
+        description: Eindeutiger Name für Home Assistant und das gemeinsame Dashboard,
+          z. B. Keller.
+        name: Anzeigename
+      read_device_time:
+        description: Gerätezeit dieses GMC abfragen, sofern unterstützt.
+        name: Geräteuhr lesen
+      read_gyro:
+        description: Optionale Gyro-Daten für dieses Gerät abfragen.
+        name: Gyro-Diagnose lesen
+      scan_interval:
+        description: Sekunden zwischen dauerhaft gespeicherten Messungen dieses Geräts.
+        name: Messintervall
+      serial_debug:
+        description: Begrenzte TX/RX-Hex- und ASCII-Vorschauen für dieses Gerät protokollieren.
+          Nur zur Diagnose aktivieren.
+        name: Serielle Frame-Diagnose
+      serial_debug_max_bytes:
+        description: Maximale Anzahl angezeigter Bytes je TX/RX-Frame.
+        name: Byte-Limit der Frame-Diagnose
+      serial_startup_delay:
+        description: Startversatz in Sekunden vor der Initialisierung dieses Geräts.
+          Konfigurierte größere Werte bleiben erhalten; zwischen zwei Geräten werden
+          immer mindestens 15 Sekunden eingehalten.
+        name: Serieller Startversatz
+      orientation_calibration_enabled:
+        name: Lagekalibrierung aktivieren
+        description: Die konfigurierten Offsets und Skalierungen für Roll-, Nick-
+          und Neigungswinkel verwenden.
+      orientation_calibration_serial:
+        name: Seriennummer der Kalibrierung
+        description: Seriennummer des Geräts, für das diese Kalibrierung gilt.
+      orientation_offset_x:
+        name: Lagekalibrierung X-Offset
+        description: Rohwert-Nullpunkt der X-Achse aus der Sechs-Lagen-Kalibrierung.
+      orientation_offset_y:
+        name: Lagekalibrierung Y-Offset
+        description: Rohwert-Nullpunkt der Y-Achse aus der Sechs-Lagen-Kalibrierung.
+      orientation_offset_z:
+        name: Lagekalibrierung Z-Offset
+        description: Rohwert-Nullpunkt der Z-Achse aus der Sechs-Lagen-Kalibrierung.
+      orientation_scale_x:
+        name: Lagekalibrierung X-Skalierung
+        description: Rohwertschritte der X-Achse für 1 g.
+      orientation_scale_y:
+        name: Lagekalibrierung Y-Skalierung
+        description: Rohwertschritte der Y-Achse für 1 g.
+      orientation_scale_z:
+        name: Lagekalibrierung Z-Skalierung
+        description: Rohwertschritte der Z-Achse für 1 g.
+      orientation_calibration_name:
+        name: Name des Kalibrierprofils
+        description: Name, der bei den berechneten Lagewerten angezeigt wird.
+    name: Geräte
+  gmcmap:
+    description: Gemeinsame Konto- und Netzwerkeinstellungen für öffentliche Uploads.
+      Die Zähler-ID bleibt gerätespezifisch.
+    fields:
+      account_id:
+        description: GMCMap-Benutzer-ID aus dem registrierten GMCMap-Konto. Wird weder
+          protokolliert noch in Diagnoseexporten gespeichert.
+        name: Benutzer-ID (AID)
+      enabled:
+        description: Sendet Messwerte optional an die öffentliche GMCMap-Weltkarte.
+          Standardmäßig deaktiviert.
+        name: Öffentliche Übertragung aktivieren
+      privacy_confirmed:
+        description: Muss aktiviert sein, bevor Daten gesendet werden. Standort und
+          Stationsangaben werden im GMCMap-Konto verwaltet und können öffentlich sichtbar
+          sein.
+        name: Öffentliche Datenübertragung bestätigen
+      timeout:
+        description: Maximale Wartezeit pro GMCMap-Anfrage in Sekunden. Fehler werden
+          im Hintergrund mit Rückoff wiederholt.
+        name: Netzwerk-Timeout
+      upload_interval:
+        description: Sekunden zwischen öffentlichen Übertragungen je Gerät. Empfohlen
+          sind mindestens 120 bis 300 Sekunden.
+        name: Uploadintervall
+    name: GMCMap (gemeinsam)
+  history:
+    description: Gemeinsame Aufbewahrung, Berichtszeitzone sowie Steuerung von Wiederherstellung und vollständigem Löschen.
+    fields:
+      enable_purge_all_history:
+        description: Blendet die Gefahrenkarte zum vollständigen Löschen aller GMC-Daten ein und aktiviert die serverseitige Löschfunktion. Aus Sicherheitsgründen standardmäßig deaktiviert.
+        name: Vollständiges Löschen erlauben
+      enable_restore:
+        description: SQLite-Import vorübergehend freigeben. Aus Sicherheitsgründen
+          standardmäßig deaktiviert.
+        name: Wiederherstellung erlauben
+      report_timezone:
+        description: IANA-Zeitzone für Tagesgrenzen und Zeitstempel, z. B. Europe/Berlin.
+        name: Zeitzone der Berichte
+      retention_days:
+        description: Tage, die Messungen lokal in SQLite gespeichert bleiben.
+        name: Aufbewahrungsdauer
+    name: Verlauf und Sicherung
+  interface:
+    description: Gemeinsame Sprache, Ansichtsart und MQTT-Darstellung.
+    fields:
+      publish_advanced_sensors:
+        description: Statistik-, Basislinien- und Alarmwerte per MQTT Discovery veröffentlichen.
+        name: Erweiterte MQTT-Sensoren
+      ui_language:
+        description: Auto folgt der Browsersprache.
+        name: Sprache der Oberfläche
+      ui_mode:
+        description: Einfach zeigt Kernwerte; Erweitert zeigt Analysen, Wartung und
+          Exporte.
+        name: Berichtsansicht
+    name: Oberfläche
+  safety:
+    description: Gemeinsames Grenzwertprofil und benutzerdefinierte Warnstufen.
+    fields:
+      danger_cpm:
+        description: Beginn der roten Stufe. Muss über der Warnschwelle liegen.
+        name: 'Benutzerdefiniert: Gefahr in CPM'
+      danger_usvh:
+        description: Beginn der roten Stufe für die abgeleitete Dosisleistung.
+        name: 'Benutzerdefiniert: Gefahr in µSv/h'
+      profile:
+        description: GQ nutzt Herstellerbänder. BfS- und ICRP-Referenz projizieren
+          1 bzw. 20 mSv/Jahr mathematisch auf kontinuierliche Dosisleistung; sie sind
+          keine amtlichen Sofort-Alarmgrenzen. Benutzerdefiniert nutzt die Felder
+          darunter.
+        name: Grenzwertprofil
+      threshold_basis:
+        description: CPM, abgeleitete Dosisleistung oder der jeweils strengere Status.
+          Nur bei Benutzerdefiniert wirksam.
+        name: Auswertung im benutzerdefinierten Profil
+      warning_cpm:
+        description: Beginn der gelben Stufe. Nur im Profil Benutzerdefiniert wirksam.
+        name: 'Benutzerdefiniert: Warnung in CPM'
+      warning_usvh:
+        description: Beginn der gelben Stufe für die abgeleitete Dosisleistung.
+        name: 'Benutzerdefiniert: Warnung in µSv/h'
+    name: Sicherheitsbewertung
+  system:
+    description: Gemeinsame technische Einstellungen für das gesamte Add-on.
+    fields:
+      log_level:
+        description: Detailgrad der Add-on-Protokolle.
+        name: Protokollierungsstufe
+      serial_scheduler_enabled:
+        description: Befehlsfenster mehrerer Zähler am gemeinsamen USB-Controller
+          nacheinander ausführen.
+        name: Gemeinsamer serieller Scheduler
+      serial_scheduler_gap_seconds:
+        description: Ruhezeit in Sekunden zwischen Befehlsfenstern verschiedener Zähler.
+        name: Ruheabstand des Schedulers
+    name: System
+'{count} measurements and {events} events were removed.': '{count} Messwerte und {events}
+  Ereignisse wurden entfernt.'
+Reports for the displayed analysis: Berichte für die angezeigte Analyse
+? All downloads below automatically use the GMC device currently shown in Analysis.
+  Select another connected device above to change the report source.
+: Alle Downloads verwenden automatisch das GMC-Gerät, das aktuell in der Analyse angezeigt
+  wird. Wähle oben ein anderes verbundenes Gerät aus, um die Berichtsquelle zu wechseln.
+No connected GMC device: Kein verbundenes GMC-Gerät

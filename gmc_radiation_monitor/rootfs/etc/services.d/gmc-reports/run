@@ -1,0 +1,24 @@
+#!/usr/bin/with-contenv bashio
+set -euo pipefail
+umask 077
+
+CONFIG_PATH="/data/options.json"
+export CONFIG_PATH
+
+if [[ ! -r "${CONFIG_PATH}" ]]; then
+  bashio::log.fatal "Missing Home Assistant options file: ${CONFIG_PATH}"
+  exit 1
+fi
+
+while IFS= read -r -d '' key && IFS= read -r -d '' value; do
+  printf -v "${key}" '%s' "${value}"
+  export "${key}"
+done < <(python3 /usr/local/bin/gmc_runtime_env.py reports)
+
+MPLCONFIGDIR="/tmp/matplotlib"
+mkdir -p "${MPLCONFIGDIR}"
+chmod 0700 "${MPLCONFIGDIR}"
+export MPLCONFIGDIR
+
+bashio::log.info "Starting GMC report server on internal Ingress port 8099"
+exec python3 /usr/local/bin/gmc_report_server.py

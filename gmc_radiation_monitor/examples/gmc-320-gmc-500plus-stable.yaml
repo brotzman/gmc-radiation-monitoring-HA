@@ -1,0 +1,35 @@
+devices:
+  - name: GMC-320
+    scan_interval: 60
+    command_timeout: 3.0
+    inter_command_delay_ms: 250
+    serial_startup_delay: 0
+    auxiliary_read_interval: 300
+    read_gyro: false
+    read_device_time: false
+    heartbeat_enabled: false
+    cpm_per_usvh: 154.0
+    gmcmap_counter_id: ""
+
+  - name: GMC-500+
+    scan_interval: 75
+    command_timeout: 4.0
+    inter_command_delay_ms: 600
+    serial_startup_delay: 15
+    auxiliary_read_interval: 300
+    read_gyro: false
+    read_device_time: false
+    heartbeat_enabled: false
+    cpm_per_usvh: 154.0
+    gmcmap_counter_id: ""
+
+gmcmap:
+  enabled: false
+  privacy_confirmed: false
+  account_id: ""
+  upload_interval: 300
+  timeout: 10.0
+
+system:
+  serial_scheduler_enabled: true
+  serial_scheduler_gap_seconds: 2.0
