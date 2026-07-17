@@ -37,6 +37,10 @@ This app requires a Home Assistant installation with the Supervisor app store, s
 
 [Open the repository dialog in Home Assistant](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fbrotzman%2Fgmc-homeassistant)
 
+## Installation troubleshooting
+
+Version 8.0.14 intentionally has no `image:` entry in the app configuration. If Home Assistant still tries to pull `ghcr.io/brotzman/gmc-radiation-monitor`, refresh the app repository metadata and verify that GitHub contains the 8.0.14 commit. Removing and re-adding the custom repository can clear stale metadata; existing app data should be backed up before uninstalling an installed instance.
+
 ## Home Assistant architecture
 
 GMC Radiation Monitor is intentionally packaged as a **Home Assistant App** rather than a `custom_components` integration. It needs Supervisor-managed UART access, a dedicated container, Ingress, persistent app storage and an AppArmor profile. Home Assistant entities are provided through MQTT Discovery, while the app also uses the Home Assistant API where required.
@@ -48,11 +52,11 @@ A separate custom integration would duplicate the device and entity model and wo
 - [App overview](gmc_radiation_monitor/README.md)
 - [Full documentation](gmc_radiation_monitor/DOCS.md)
 - [Changelog](gmc_radiation_monitor/CHANGELOG.md)
-- [Release notes 8.0.13](gmc_radiation_monitor/RELEASE_NOTES_8.0.13.md)
+- [Release notes 8.0.14](gmc_radiation_monitor/RELEASE_NOTES_8.0.14.md)
 
 ## Development and publishing
 
-Pull requests run the Home Assistant app linter and the project quality suite. Pushes to `main` build the configured `aarch64` and `amd64` images and publish a multi-architecture image to GitHub Container Registry when repository package permissions are enabled.
+Pull requests and pushes run the Home Assistant app linter, the project quality suite and non-publishing source builds for `aarch64` and `amd64`. Home Assistant installs the app by building the included Dockerfile locally; no GitHub Container Registry package or credentials are required.
 
 ## Safety notice
 
