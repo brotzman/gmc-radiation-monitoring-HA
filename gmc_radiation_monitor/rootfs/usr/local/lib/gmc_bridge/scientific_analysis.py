@@ -318,3 +318,97 @@ def relative_device_response(
         "co_location_required": True,
     }
 
+
+
+def recent_change_significance(
+    recent_rows: Iterable[HistoryRow],
+    baseline_rows: Iterable[HistoryRow],
+    *,
+    quality_score: float = 100.0,
+) -> dict[str, Any]:
+    """Quantify whether a recent count-rate change exceeds counting noise.
+
+    The comparison uses aggregate impulses and effective counting time.  A
+    two-sided normal approximation to the difference between two independent
+    Poisson rates is reported together with an empirical rarity estimate based
+    on baseline hourly rates.  This is an explanatory statistic, not a safety
+    classification or identification of a physical cause.
+    """
+    recent = [row for row in recent_rows if int(row.cpm) >= 0]
+    baseline = [row for row in baseline_rows if int(row.cpm) >= 0]
+    if len(recent) < 5 or len(baseline) < 30:
+        return {
+            "available": False,
+            "state": "Insufficient history for significance assessment",
+            "recent_samples": len(recent),
+            "baseline_samples": len(baseline),
+        }
+
+    recent_impulses = sum(int(row.cpm) for row in recent)
+    baseline_impulses = sum(int(row.cpm) for row in baseline)
+    recent_minutes = float(len(recent))
+    baseline_minutes = float(len(baseline))
+    recent_rate = recent_impulses / recent_minutes
+    baseline_rate = baseline_impulses / baseline_minutes
+    difference = recent_rate - baseline_rate
+    standard_error = math.sqrt(
+        max(recent_impulses, 1) / (recent_minutes * recent_minutes)
+        + max(baseline_impulses, 1) / (baseline_minutes * baseline_minutes)
+    )
+    sigma = difference / standard_error if standard_error > 0 else 0.0
+    # Two-sided p-value from the standard-normal survival function.
+    p_value = math.erfc(abs(sigma) / math.sqrt(2.0))
+    probability_not_noise = max(0.0, min(100.0, (1.0 - p_value) * 100.0))
+    change_percent = 100.0 * difference / baseline_rate if baseline_rate > 0 else None
+
+    hourly = _hourly_count_rates(baseline)
+    hourly_rates = [float(point["rate_cpm"]) for point in hourly]
+    if hourly_rates:
+        if difference >= 0:
+            as_or_more_extreme = sum(value >= recent_rate for value in hourly_rates)
+        else:
+            as_or_more_extreme = sum(value <= recent_rate for value in hourly_rates)
+        empirical_percentile = 100.0 * (
+            sum(value <= recent_rate for value in hourly_rates) / len(hourly_rates)
+        )
+        rarity_one_in = (len(hourly_rates) + 1) / (as_or_more_extreme + 1)
+    else:
+        empirical_percentile = None
+        rarity_one_in = None
+
+    effective_sigma = abs(sigma) * max(0.25, min(1.0, quality_score / 100.0))
+    if effective_sigma >= 5.0:
+        confidence = "Very high"
+    elif effective_sigma >= 3.0:
+        confidence = "High"
+    elif effective_sigma >= 2.0:
+        confidence = "Medium"
+    else:
+        confidence = "Low"
+
+    if abs(sigma) < 2.0:
+        state = "Consistent with normal counting variation"
+    elif difference > 0:
+        state = "Statistically significant increase"
+    else:
+        state = "Statistically significant decrease"
+
+    return {
+        "available": True,
+        "state": state,
+        "recent_rate_cpm": recent_rate,
+        "baseline_rate_cpm": baseline_rate,
+        "change_cpm": difference,
+        "change_percent": change_percent,
+        "significance_sigma": sigma,
+        "p_value_two_sided": p_value,
+        "probability_not_counting_noise_percent": probability_not_noise,
+        "confidence": confidence,
+        "quality_adjusted_sigma": effective_sigma,
+        "empirical_percentile": empirical_percentile,
+        "historical_rarity_one_in": rarity_one_in,
+        "historical_hours": len(hourly_rates),
+        "recent_samples": len(recent),
+        "baseline_samples": len(baseline),
+        "statistical_only": True,
+    }

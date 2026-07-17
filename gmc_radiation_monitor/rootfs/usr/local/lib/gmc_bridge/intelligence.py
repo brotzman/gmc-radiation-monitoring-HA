@@ -35,6 +35,7 @@ def build_radiation_intelligence(
     deviation = analysis.get("baseline_deviation_percent")
     trend = analysis.get("trend_30m_cpm")
     excluded = int(analysis.get("excluded_samples_24h") or 0)
+    significance = analysis.get("change_significance") or {}
 
     if not baseline_ready:
         confidence = "Low"
@@ -58,6 +59,20 @@ def build_radiation_intelligence(
         if trend is not None and float(trend) > 0:
             probability += _clamp(float(trend) * 1.2, 0.0, 12.0)
             reasons.append({"key": "The recent 30-minute robust trend is rising"})
+        if significance.get("available"):
+            sigma = abs(float(significance.get("significance_sigma") or 0.0))
+            probability = max(probability, _clamp((sigma - 1.0) * 24.0, 3.0, 96.0))
+            confidence = str(significance.get("confidence") or confidence)
+            reasons.append({
+                "key": "The recent level differs from counting noise with {probability:.2f}% statistical confidence",
+                "params": {"probability": float(significance.get("probability_not_counting_noise_percent") or 0.0)},
+            })
+            rarity = significance.get("historical_rarity_one_in")
+            if rarity is not None and float(rarity) >= 2.0:
+                reasons.append({
+                    "key": "A comparable or more extreme hourly level occurred about once in {rarity:.1f} historical hours",
+                    "params": {"rarity": float(rarity)},
+                })
 
     device_deviation = None if not device_profile else device_profile.get("deviation_percent")
     site_deviation = None if not site_profile else site_profile.get("deviation_percent")
@@ -127,6 +142,7 @@ def build_radiation_intelligence(
         "classification": classification,
         "probability_percent": probability,
         "confidence": confidence,
-        "reasons": reasons[:8],
+        "reasons": reasons[:10],
+        "significance": significance,
         "disclaimer": "Heuristic statistical assessment; not a radiation-protection classification.",
     }

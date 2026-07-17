@@ -24,7 +24,7 @@ from .events import current_hysteretic_state, detect_events
 from .file_security import secure_file
 from .history import HistoryRow, HistoryStore
 from .quality_pipeline import filter_history_rows, robust_sigma, robust_trimmed_mean
-from .scientific_analysis import counting_uncertainty, detect_persistent_level_shift
+from .scientific_analysis import counting_uncertainty, detect_persistent_level_shift, recent_change_significance
 from .translations import Translator
 from .version import APP_VERSION
 
@@ -265,6 +265,7 @@ def build_live_analysis(
         "counting_uncertainty_24h": counting_uncertainty([]),
         "counting_uncertainty_7d": counting_uncertainty([]),
         "level_shift": {"available": False, "detected": False, "state": "Insufficient history for level-shift detection"},
+        "change_significance": {"available": False, "state": "Insufficient history for significance assessment"},
         "raw_archive_samples_24h": 0, "raw_archive_accepted_24h": 0,
         "raw_archive_pending_24h": 0, "raw_archive_available": False,
     }
@@ -356,6 +357,10 @@ def build_live_analysis(
     uncertainty_24h = counting_uncertainty(rows_24h)
     uncertainty_7d = counting_uncertainty(rows_7d)
     level_shift = detect_persistent_level_shift(rows_7d)
+    baseline_reference = [row for row in rows_7d if row.timestamp_utc <= latest_timestamp - 3600]
+    change_significance = recent_change_significance(
+        rows_1h, baseline_reference, quality_score=float(quality_24h["score"]),
+    )
     raw_archive = store.raw_measurement_summary(
         start_timestamp_utc=latest_timestamp - 86400,
         end_timestamp_utc=latest_timestamp + 1,
@@ -425,6 +430,7 @@ def build_live_analysis(
         "counting_uncertainty_24h": uncertainty_24h,
         "counting_uncertainty_7d": uncertainty_7d,
         "level_shift": level_shift,
+        "change_significance": change_significance,
         "raw_archive_samples_24h": int(raw_archive.get("total", 0)),
         "raw_archive_accepted_24h": int(raw_archive.get("accepted", 0)),
         "raw_archive_pending_24h": int(raw_archive.get("pending", 0)),
