@@ -191,7 +191,7 @@ def test_rfc1801_options_are_packaged_and_disabled_safely_by_default():
 
     root = Path(__file__).parents[1]
     config = yaml.safe_load((root / "config.yaml").read_text())
-    assert config["version"] == "8.0.13"
+    assert config["version"] == "8.0.14"
     devices = config["options"]["devices"]
     assert [device["name"] for device in devices] == ["GMC-320", "GMC-500+"]
     assert all(device["read_gyro"] is False for device in devices)
