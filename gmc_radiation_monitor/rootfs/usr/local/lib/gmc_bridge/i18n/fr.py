@@ -2456,11 +2456,18 @@ CATALOG.update({
     'User manual is not available': 'Le manuel d’utilisation n’est pas disponible',
 })
 
-# Version 8.2.0 report and history labels.
+# Version 8.2.1 report and history labels.
 CATALOG.update({
     'Accepted measurements [count]': 'Mesures acceptées [nombre]',
     'Local hour [h]': 'Heure locale [h]',
     'Mean count rate [CPM]': 'Taux de comptage moyen [CPM]',
     'Radiation Monitoring': 'Surveillance des rayonnements',
     'Rejected raw value': 'Valeur brute rejetée',
+})
+
+
+# Version 8.2.1 complete runtime localization.
+CATALOG.update({
+    'The recent level differs from counting noise with {probability:.2f}% statistical confidence': 'Le niveau récent se distingue du bruit de comptage avec un niveau de confiance statistique de {probability:.2f} %',
+    'A comparable or more extreme hourly level occurred about once in {rarity:.1f} historical hours': "Un niveau horaire comparable ou plus extrême s'est produit environ une fois toutes les {rarity:.1f} heures historiques",
 })

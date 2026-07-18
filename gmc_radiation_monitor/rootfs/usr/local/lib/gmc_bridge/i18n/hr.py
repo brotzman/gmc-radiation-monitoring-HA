@@ -2149,11 +2149,18 @@ CATALOG.update({
     'User manual is not available': 'Korisnički priručnik nije dostupan',
 })
 
-# Version 8.2.0 report and history labels.
+# Version 8.2.1 report and history labels.
 CATALOG.update({
     'Accepted measurements [count]': 'Prihvaćena mjerenja [broj]',
     'Local hour [h]': 'Lokalni sat [h]',
     'Mean count rate [CPM]': 'Srednja brzina brojanja [CPM]',
     'Radiation Monitoring': 'Praćenje zračenja',
     'Rejected raw value': 'Odbačena sirova vrijednost',
+})
+
+
+# Version 8.2.1 complete runtime localization.
+CATALOG.update({
+    'The recent level differs from counting noise with {probability:.2f}% statistical confidence': 'Nedavna razina razlikuje se od šuma brojanja uz statističku pouzdanost od {probability:.2f} %',
+    'A comparable or more extreme hourly level occurred about once in {rarity:.1f} historical hours': 'Usporediva ili ekstremnija satna razina povijesno se pojavila približno jednom u {rarity:.1f} sati',
 })

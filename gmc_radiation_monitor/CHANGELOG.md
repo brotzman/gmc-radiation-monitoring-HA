@@ -1,5 +1,13 @@
 # Changelog
 
+## 8.2.1
+
+- Completed localization of the statistical significance and historical-rarity explanations in all eight supported dashboard languages.
+- Removed the English fallback text visible in non-English Intelligent radiation analysis cards.
+- Extended the static translation audit to include dynamic analysis dictionaries that use `{"key": ...}` message templates.
+- Added cross-language rendering tests so newly introduced analysis reasons cannot silently fall back to English.
+- Updated runtime, package, release-note and all integrated manual version references to 8.2.1.
+
 ## 8.2.0
 
 - Rebuilt the primary PDF export as a professional five-page beta/gamma radiation report with executive summary, recommendations, statistical analysis, anomaly events and technical traceability.

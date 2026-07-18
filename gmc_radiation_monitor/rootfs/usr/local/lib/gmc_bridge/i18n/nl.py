@@ -2201,11 +2201,18 @@ CATALOG.update({
     'User manual is not available': 'De gebruikershandleiding is niet beschikbaar',
 })
 
-# Version 8.2.0 report and history labels.
+# Version 8.2.1 report and history labels.
 CATALOG.update({
     'Accepted measurements [count]': 'Geaccepteerde metingen [aantal]',
     'Local hour [h]': 'Lokaal uur [u]',
     'Mean count rate [CPM]': 'Gemiddelde telsnelheid [CPM]',
     'Radiation Monitoring': 'Stralingsmonitoring',
     'Rejected raw value': 'Verworpen ruwe waarde',
+})
+
+
+# Version 8.2.1 complete runtime localization.
+CATALOG.update({
+    'The recent level differs from counting noise with {probability:.2f}% statistical confidence': 'Het recente niveau wijkt met {probability:.2f} % statistische zekerheid af van de telruis',
+    'A comparable or more extreme hourly level occurred about once in {rarity:.1f} historical hours': 'Een vergelijkbaar of extremer uurniveau kwam historisch ongeveer eens per {rarity:.1f} uur voor',
 })
