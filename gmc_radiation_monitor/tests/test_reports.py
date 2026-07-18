@@ -13,6 +13,8 @@ from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from pypdf import PdfReader
+
 LIB_DIR = Path(__file__).parents[1] / "rootfs/usr/local/lib"
 if str(LIB_DIR) not in sys.path:
     sys.path.insert(0, str(LIB_DIR))
@@ -380,6 +382,27 @@ class ReportTests(unittest.TestCase):
         heatmap = heatmap_png_bytes(rows, tz=self.tz, title=self.period.label)
         self.assertTrue(histogram.startswith(b"\x89PNG\r\n\x1a\n"))
         self.assertTrue(heatmap.startswith(b"\x89PNG\r\n\x1a\n"))
+
+    def test_professional_pdf_has_five_pages_and_unit_correct_beta_gamma_labels(self):
+        _name, _content_type, payload = build_report(
+            self.store,
+            period=self.period,
+            timezone_name="Europe/Berlin",
+            scan_interval_seconds=60,
+            output_format="pdf",
+            language="de",
+        )
+        reader = PdfReader(io.BytesIO(payload))
+        self.assertEqual(len(reader.pages), 5)
+        text = "\n".join(page.extract_text() or "" for page in reader.pages)
+        self.assertIn("Beta-/Gamma-Strahlungsbericht", text)
+        self.assertIn("Zählrate [CPM]", text)
+        self.assertIn("Lokale Zeit [Europe/Berlin]", text)
+        self.assertIn("Akzeptierte Messwerte [Anzahl]", text)
+        self.assertIn("Mittlere Zählrate [CPM]", text)
+        self.assertIn("Statistische Analyse und Ereignisse", text)
+        self.assertIn("Methodischer Hinweis", text)
+        self.assertNotIn("Bq/m", text)
 
     def test_advanced_download_formats(self):
         for output_format, prefix in (

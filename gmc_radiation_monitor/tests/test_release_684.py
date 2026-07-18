@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import html
 
 import yaml
 from gmc_bridge.history import HistoryStore
@@ -9,11 +10,11 @@ from gmc_bridge.translations import Translator
 from gmc_bridge.version import APP_VERSION
 
 
-def _configuration_restore_labels() -> dict[str, str]:
+def _configuration_history_management_labels() -> dict[str, str]:
     labels: dict[str, str] = {}
     for path in sorted(Path("translations").glob("*.yaml")):
         payload = yaml.safe_load(path.read_text())
-        labels[path.stem] = payload["configuration"]["history"]["fields"]["enable_restore"]["name"]
+        labels[path.stem] = payload["configuration"]["history"]["fields"]["history_management_enabled"]["name"]
     return labels
 
 
@@ -25,27 +26,27 @@ def _app(tmp_path: Path) -> ReportApplication:
         read_gyro=False,
         cpm_per_usvh=154.0,
         ui_mode="advanced",
-        restore_enabled=False,
-        purge_all_history_enabled=False,
+        history_management_enabled=False,
     )
 
 
-def test_runtime_restore_label_matches_addon_configuration_translations() -> None:
-    labels = _configuration_restore_labels()
+def test_runtime_history_management_label_matches_addon_configuration_translations() -> None:
+    labels = _configuration_history_management_labels()
     assert labels
     for language, expected in labels.items():
-        assert Translator(language)("Allow restore") == expected
+        assert Translator(language)("History management") == expected
 
 
-def test_disabled_restore_notice_uses_localized_configuration_label(tmp_path: Path) -> None:
+def test_disabled_history_management_notice_uses_localized_configuration_label(tmp_path: Path) -> None:
     app = _app(tmp_path)
-    labels = _configuration_restore_labels()
+    labels = _configuration_history_management_labels()
     for language, expected in labels.items():
         page = app.render_index(language_override=language, mode_override="advanced").decode()
-        assert expected in page
-        restore_section = page.split("<h2>", 1)[-1] if expected not in page else page
-        assert "enable_restore" not in restore_section
+        assert html.escape(expected) in page
+        management_section = page.split("<h2>", 1)[-1] if expected not in page else page
+        assert "enable_restore" not in management_section
+        assert "enable_purge_all_history" not in management_section
 
 
-def test_release_version_is_690() -> None:
-    assert APP_VERSION == "8.1.1"
+def test_release_version_is_820() -> None:
+    assert APP_VERSION == "8.2.0"

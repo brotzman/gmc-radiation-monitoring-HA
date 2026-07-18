@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def test_release_8012_sidebar_icon_and_version() -> None:
     config = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
-    assert APP_VERSION == "8.1.1"
-    assert config["version"] == "8.1.1"
+    assert APP_VERSION == "8.2.0"
+    assert config["version"] == "8.2.0"
     assert config["panel_icon"] == "mdi:radioactive"
-    assert (ROOT / "RELEASE_NOTES_8.1.1.md").is_file()
+    assert (ROOT / "RELEASE_NOTES_8.2.0.md").is_file()

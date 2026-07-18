@@ -460,11 +460,11 @@ class UiAndTranslationTests(unittest.TestCase):
         self.assertIn("Counting statistics", simple)
         self.assertIn("Counting statistics", advanced)
         self.assertIn('data-analysis-level="expert"', simple)
-        self.assertIn('class="advanced-only" id="maintenance"', simple)
+        self.assertIn('class="advanced-only history-management-section" id="maintenance"', simple)
         self.assertIn(
             'body[data-analysis-level="summary"] .advanced-only { display:none !important; }', simple
         )
-        self.assertIn("History maintenance", advanced)
+        self.assertIn("History management", advanced)
 
     def test_language_auto_detection_and_override(self):
         app = self._app(ui_language="auto")

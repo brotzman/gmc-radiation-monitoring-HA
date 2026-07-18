@@ -85,9 +85,9 @@ def _runtime_translation_keys() -> set[str]:
 
 
 def test_release_version_and_notes() -> None:
-    assert APP_VERSION == "8.1.1"
-    assert "version: 8.1.1" in (ROOT / "config.yaml").read_text(encoding="utf-8")
-    assert (ROOT / "RELEASE_NOTES_8.1.1.md").is_file()
+    assert APP_VERSION == "8.2.0"
+    assert "version: 8.2.0" in (ROOT / "config.yaml").read_text(encoding="utf-8")
+    assert (ROOT / "RELEASE_NOTES_8.2.0.md").is_file()
 
 
 def test_every_runtime_translation_key_exists_in_every_catalogue() -> None:

@@ -112,13 +112,14 @@ def test_disabled_deletion_notice_occupies_the_maintenance_position(tmp_path: Pa
         .render_index(language_override="de", mode_override="advanced")
         .decode()
     )
-    maintenance = page.split('<section class="advanced-only" id="maintenance">', 1)[1].split("</section>", 1)[
+    maintenance = page.split('id="maintenance"', 1)[1].split("</section>", 1)[
         0
     ]
     assert "Historie wiederherstellen" in maintenance
     assert "Historie löschen" in maintenance
     assert "Das Löschen ist standardmäßig deaktiviert." in maintenance
-    assert "Vollständiges Löschen erlauben" in maintenance
+    assert "Historienverwaltung" in maintenance
+    assert "Vollständiges Löschen erlauben" not in maintenance
     assert 'action="?action=purge-all-history"' not in maintenance
 
 
