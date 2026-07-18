@@ -48,4 +48,4 @@ def test_disabled_restore_notice_uses_localized_configuration_label(tmp_path: Pa
 
 
 def test_release_version_is_690() -> None:
-    assert APP_VERSION == "8.1.0"
+    assert APP_VERSION == "8.1.1"
