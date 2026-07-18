@@ -72,22 +72,29 @@ def _runtime_translation_keys() -> set[str]:
                     if not (
                         isinstance(key_node, ast.Constant)
                         and isinstance(key_node.value, str)
-                        and key_node.value.endswith("_key")
-                    ):
-                        continue
-                    if (
-                        isinstance(value_node, ast.Constant)
+                        and isinstance(value_node, ast.Constant)
                         and isinstance(value_node.value, str)
                         and value_node.value
                     ):
-                        keys.add(value_node.value)
+                        continue
+                    field_name = key_node.value
+                    value = value_node.value
+                    if field_name.endswith("_key"):
+                        keys.add(value)
+                    elif field_name == "key" and (
+                        value[:1].isupper() or any(character.isspace() for character in value) or "{" in value
+                    ):
+                        # Runtime analysis models use {"key": <translation key>}
+                        # for explanatory messages. Short lowercase values such as
+                        # "device" are internal identifiers, not display strings.
+                        keys.add(value)
     return keys
 
 
 def test_release_version_and_notes() -> None:
-    assert APP_VERSION == "8.2.0"
-    assert "version: 8.2.0" in (ROOT / "config.yaml").read_text(encoding="utf-8")
-    assert (ROOT / "RELEASE_NOTES_8.2.0.md").is_file()
+    assert APP_VERSION == "8.2.1"
+    assert "version: 8.2.1" in (ROOT / "config.yaml").read_text(encoding="utf-8")
+    assert (ROOT / "RELEASE_NOTES_8.2.1.md").is_file()
 
 
 def test_every_runtime_translation_key_exists_in_every_catalogue() -> None:
@@ -148,3 +155,38 @@ def test_nested_historical_template_values_are_localized() -> None:
     german = render_historical_section(section, Translator("de"))
     assert "Nicht genügend vergleichbare Tageswerte" in german
     assert "12 Tage · 7 Tageswerte" in german
+
+
+def test_statistical_significance_reasons_are_fully_localized() -> None:
+    result = build_radiation_intelligence_result(
+        {
+            "available": True,
+            "probability_percent": 18.0,
+            "confidence": "Low",
+            "state": "Likely device-specific deviation",
+            "reasons": [
+                {
+                    "key": "The recent level differs from counting noise with {probability:.2f}% statistical confidence",
+                    "params": {"probability": 17.79},
+                },
+                {
+                    "key": "A comparable or more extreme hourly level occurred about once in {rarity:.1f} historical hours",
+                    "params": {"rarity": 2.6},
+                },
+            ],
+            "disclaimer": "Heuristic statistical assessment; not a radiation-protection classification.",
+        }
+    )
+    english_fragments = (
+        "The recent level differs from counting noise",
+        "A comparable or more extreme hourly level occurred",
+    )
+    for language in SUPPORTED_UI_LANGUAGES:
+        rendered = render_radiation_intelligence(result, Translator(language))
+        if language != "en":
+            for fragment in english_fragments:
+                assert fragment not in rendered, f"{language} still exposes {fragment!r}"
+
+    german = render_radiation_intelligence(result, Translator("de"))
+    assert "statistischen Sicherheit von 17.79 %" in german
+    assert "historisch etwa einmal in 2.6 Stunden" in german
