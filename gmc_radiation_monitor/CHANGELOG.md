@@ -1,8 +1,11 @@
 # Changelog
 
-## 8.1.0
+## 8.1.1
 
-- Promoted the statistical-analysis feature set to the 8.1.0 feature release.
+- Renamed the Home Assistant sidebar panel to **Radiation Monitoring**.
+- Updated release metadata and manuals for version 8.1.1.
+
+- Promoted the statistical-analysis feature set to the 8.1.1 feature release.
 - Added an explicit Poisson rate-change significance assessment for the recent one-hour window against prior quality-filtered history.
 - Added two-sided p-values, sigma significance, data-quality-adjusted confidence, empirical historical percentile and a "one in N historical hours" rarity estimate.
 - Integrated significance and rarity into the explainable radiation-intelligence result without changing safety thresholds or alarm semantics.

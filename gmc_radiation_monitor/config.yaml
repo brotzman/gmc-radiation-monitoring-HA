@@ -1,7 +1,7 @@
 name: GMC Radiation Monitor
 description: Local GQ GMC monitoring with MQTT Discovery, configurable safety profiles,
   background anomaly detection, diagnostics, reports, backups and streamed exports
-version: 8.1.0
+version: 8.1.1
 slug: gmc_radiation_monitor
 url: https://github.com/brotzman/gmc-homeassistant/tree/main/gmc_radiation_monitor
 stage: stable
@@ -20,7 +20,7 @@ homeassistant_api: true
 ingress: true
 ingress_port: 8099
 panel_icon: mdi:radioactive
-panel_title: GMC Radiation Monitoring
+panel_title: Radiation Monitoring
 panel_admin: true
 watchdog: http://[HOST]:[PORT:8099]/health
 options:
