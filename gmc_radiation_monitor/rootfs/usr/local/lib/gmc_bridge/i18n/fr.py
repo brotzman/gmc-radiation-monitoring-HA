@@ -2455,3 +2455,12 @@ CATALOG.update({
     'Open user manual PDF': 'Ouvrir le manuel d’utilisation en PDF',
     'User manual is not available': 'Le manuel d’utilisation n’est pas disponible',
 })
+
+# Version 8.2.0 report and history labels.
+CATALOG.update({
+    'Accepted measurements [count]': 'Mesures acceptées [nombre]',
+    'Local hour [h]': 'Heure locale [h]',
+    'Mean count rate [CPM]': 'Taux de comptage moyen [CPM]',
+    'Radiation Monitoring': 'Surveillance des rayonnements',
+    'Rejected raw value': 'Valeur brute rejetée',
+})

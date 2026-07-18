@@ -541,4 +541,94 @@ NL.update({"View":"Weergave","Choose how many details and tools this page shows.
 PL.update({"View":"Widok","Choose how many details and tools this page shows. The selection is stored in this browser.":"Określa, ile szczegółów i narzędzi jest wyświetlanych na tej stronie. Wybór jest zapisywany w tej przeglądarce.","Explore accepted measurements and document events for the selected GMC device.":"Przeglądaj zaakceptowane pomiary i dokumentuj zdarzenia dla wybranego urządzenia GMC.","Notifications, comparisons, self-tests and JSON APIs work with the existing measurements and require no additional hardware.":"Powiadomienia, porównania, autotesty i interfejsy JSON API korzystają z istniejących pomiarów i nie wymagają dodatkowego sprzętu.","Measurement CSV":"Pomiary jako CSV"})
 HR.update({"View":"Prikaz","Choose how many details and tools this page shows. The selection is stored in this browser.":"Određuje koliko se pojedinosti i alata prikazuje na ovoj stranici. Odabir se sprema u ovom pregledniku.","Explore accepted measurements and document events for the selected GMC device.":"Pregledajte prihvaćena mjerenja i zabilježite događaje za odabrani GMC uređaj.","Notifications, comparisons, self-tests and JSON APIs work with the existing measurements and require no additional hardware.":"Obavijesti, usporedbe, samotestiranja i JSON API-ji koriste postojeća mjerenja i ne zahtijevaju dodatni hardver.","Measurement CSV":"Mjerenja kao CSV"})
 
+HISTORY_820_EN = {
+    "Local date and time": "Local date and time",
+    "Count rate [CPM]": "Count rate [CPM]",
+    "Accepted CPM": "Accepted CPM",
+    "Smoothed trend": "Smoothed trend",
+    "Accepted measurements": "Accepted measurements",
+    "Selected period": "Selected period",
+    "Data coverage": "Data coverage",
+    "Expected from the configured scan interval": "Expected from the configured scan interval",
+    "Mean count rate": "Mean count rate",
+    "Accepted values only": "Accepted values only",
+    "Median count rate": "Median count rate",
+    "Robust center of the selected period": "Robust center of the selected period",
+    "Minimum / maximum": "Minimum / maximum",
+    "Visible only when the raw-value layer is enabled": "Visible only when the raw-value layer is enabled",
+    "Explore, compare and document accepted measurements for the selected GMC device.": "Explore, compare and document accepted measurements for the selected GMC device.",
+    "Accepted count rates, smoothed trend, rejected raw values and event markers": "Accepted count rates, smoothed trend, rejected raw values and event markers",
+    "Quick ranges": "Quick ranges",
+    "24 h": "24 h",
+    "7 days": "7 days",
+    "30 days": "30 days",
+    "90 days": "90 days",
+    "Event note": "Event note",
+    "Document movement, maintenance, shielding changes or an unknown cause": "Document movement, maintenance, shielding changes or an unknown cause",
+    "History management": "History management",
+    "History management enabled": "History management enabled",
+    "Restore and complete deletion are available. Disable the configuration switch again after maintenance.": "Restore and complete deletion are available. Disable the configuration switch again after maintenance.",
+    "History management protected": "History management protected",
+    "Restore and complete deletion remain locked during normal operation.": "Restore and complete deletion remain locked during normal operation.",
+    "Export, back up, restore or deliberately remove stored radiation history from one protected workspace.": "Export, back up, restore or deliberately remove stored radiation history from one protected workspace.",
+    "Preview and merge a compatible SQLite backup": "Preview and merge a compatible SQLite backup",
+    "Permanently remove app and Recorder history after explicit confirmation": "Permanently remove app and Recorder history after explicit confirmation",
+    "Enable history management in the app configuration and restart only when maintenance is planned.": "Enable history management in the app configuration and restart only when maintenance is planned.",
+    "Enable “{setting}” in the app configuration and restart only when history maintenance is planned.": "Enable “{setting}” in the app configuration and restart only when history maintenance is planned.",
+}
+for _catalogue in (EN, DE, FR, ES, IT, NL, PL, HR):
+    _catalogue.update(HISTORY_820_EN)
+DE.update({
+    "Local date and time": "Lokales Datum und Uhrzeit",
+    "Count rate [CPM]": "Zählrate [CPM]",
+    "Accepted CPM": "Akzeptierte CPM",
+    "Smoothed trend": "Geglätteter Trend",
+    "Accepted measurements": "Akzeptierte Messwerte",
+    "Selected period": "Ausgewählter Zeitraum",
+    "Data coverage": "Datenabdeckung",
+    "Expected from the configured scan interval": "Erwartet aus dem konfigurierten Messintervall",
+    "Mean count rate": "Mittlere Zählrate",
+    "Accepted values only": "Nur akzeptierte Werte",
+    "Median count rate": "Mediane Zählrate",
+    "Robust center of the selected period": "Robustes Zentrum des ausgewählten Zeitraums",
+    "Minimum / maximum": "Minimum / Maximum",
+    "Visible only when the raw-value layer is enabled": "Nur sichtbar, wenn die Rohwertebene aktiviert ist",
+    "Explore, compare and document accepted measurements for the selected GMC device.": "Akzeptierte Messwerte des ausgewählten GMC-Geräts untersuchen, vergleichen und dokumentieren.",
+    "Accepted count rates, smoothed trend, rejected raw values and event markers": "Akzeptierte Zählraten, geglätteter Trend, verworfene Rohwerte und Ereignismarker",
+    "Quick ranges": "Schnellzeiträume",
+    "7 days": "7 Tage",
+    "30 days": "30 Tage",
+    "90 days": "90 Tage",
+    "Event note": "Ereignisnotiz",
+    "Document movement, maintenance, shielding changes or an unknown cause": "Bewegung, Wartung, Abschirmungsänderungen oder eine unbekannte Ursache dokumentieren",
+    "History management": "Historienverwaltung",
+    "History management enabled": "Historienverwaltung aktiviert",
+    "Restore and complete deletion are available. Disable the configuration switch again after maintenance.": "Wiederherstellung und vollständiges Löschen sind verfügbar. Den Konfigurationsschalter nach der Wartung wieder deaktivieren.",
+    "History management protected": "Historienverwaltung geschützt",
+    "Restore and complete deletion remain locked during normal operation.": "Wiederherstellung und vollständiges Löschen bleiben im Normalbetrieb gesperrt.",
+    "Export, back up, restore or deliberately remove stored radiation history from one protected workspace.": "Gespeicherte Strahlungshistorie in einem geschützten Arbeitsbereich exportieren, sichern, wiederherstellen oder gezielt löschen.",
+    "Preview and merge a compatible SQLite backup": "Kompatible SQLite-Sicherung prüfen und zusammenführen",
+    "Permanently remove app and Recorder history after explicit confirmation": "App- und Recorder-Historie nach ausdrücklicher Bestätigung dauerhaft entfernen",
+    "Enable history management in the app configuration and restart only when maintenance is planned.": "Historienverwaltung in der App-Konfiguration aktivieren und nur für geplante Wartungsarbeiten neu starten.",
+    "Enable “{setting}” in the app configuration and restart only when history maintenance is planned.": "„{setting}“ in der App-Konfiguration aktivieren und nur für geplante Arbeiten an der Historie neu starten.",
+})
+
+REPORT_820_EN = {
+    "The professional five-page PDF report starts with an executive beta/gamma assessment, followed by correctly labelled CPM time series, distribution and Poisson reference, temporal heat maps, statistical significance, events and traceability. CPM remains the primary measurement; derived µSv/h values are not independent dosimetry. CSV files preserve accepted measurements without interpolation, and ZIP bundles additionally contain machine-readable analysis and specialist graphics.": "The professional five-page PDF report starts with an executive beta/gamma assessment, followed by correctly labelled CPM time series, distribution and Poisson reference, temporal heat maps, statistical significance, events and traceability. CPM remains the primary measurement; derived µSv/h values are not independent dosimetry. CSV files preserve accepted measurements without interpolation, and ZIP bundles additionally contain machine-readable analysis and specialist graphics.",
+}
+for _catalogue in (EN, DE, FR, ES, IT, NL, PL, HR):
+    _catalogue.update(REPORT_820_EN)
+DE.update({
+    "The professional five-page PDF report starts with an executive beta/gamma assessment, followed by correctly labelled CPM time series, distribution and Poisson reference, temporal heat maps, statistical significance, events and traceability. CPM remains the primary measurement; derived µSv/h values are not independent dosimetry. CSV files preserve accepted measurements without interpolation, and ZIP bundles additionally contain machine-readable analysis and specialist graphics.": "Der professionelle fünfseitige PDF-Bericht beginnt mit einer kompakten Beta-/Gamma-Gesamtbewertung. Es folgen korrekt beschriftete CPM-Zeitreihen, Verteilung und Poisson-Referenz, zeitliche Heatmaps, Signifikanzbewertung, Ereignisse und Nachvollziehbarkeit. CPM bleibt die primäre Messgröße; abgeleitete µSv/h-Werte sind keine unabhängige Dosimetrie. CSV-Dateien bewahren akzeptierte Messwerte ohne Interpolation, ZIP-Pakete enthalten zusätzlich maschinenlesbare Analysen und Spezialgrafiken.",
+})
+
 WORKFLOW_CATALOGS = {"en": EN, "de": DE, "fr": FR, "es": ES, "it": IT, "nl": NL, "pl": PL, "hr": HR}
+
+# Keep the protected history-management label identical to the Home Assistant
+# configuration translation in every supported dashboard language.
+ES.update({"History management": "Gestión del historial"})
+FR.update({"History management": "Gestion de l'historique"})
+HR.update({"History management": "Upravljanje poviješću"})
+IT.update({"History management": "Gestione cronologia"})
+NL.update({"History management": "Historiebeheer"})
+PL.update({"History management": "Zarządzanie historią"})

@@ -5,6 +5,7 @@ import html
 import logging
 import os
 import secrets
+import statistics
 import threading
 import time
 from datetime import UTC, datetime, timedelta
@@ -155,8 +156,9 @@ class ReportApplication(WorkflowApplicationMixin):
         safety_danger_usvh: float = 0.651,
         ui_mode: str = "advanced",
         ui_language: str = "auto",
-        restore_enabled: bool = False,
-        purge_all_history_enabled: bool = False,
+        history_management_enabled: bool = False,
+        restore_enabled: bool | None = None,
+        purge_all_history_enabled: bool | None = None,
         home_assistant_client: HomeAssistantConfigClient | None = None,
         pressure_client: HomeAssistantPressureClient | None = None,
         cosmic_hint_enabled: bool = True,
@@ -177,8 +179,10 @@ class ReportApplication(WorkflowApplicationMixin):
         self.safety_danger_usvh = safety_danger_usvh
         self.ui_mode = ui_mode if ui_mode in {"simple", "advanced"} else "advanced"
         self.ui_language = ui_language
-        self.restore_enabled = bool(restore_enabled)
-        self.purge_all_history_enabled = bool(purge_all_history_enabled)
+        legacy_history_management = bool(restore_enabled) or bool(purge_all_history_enabled)
+        self.history_management_enabled = bool(history_management_enabled) or legacy_history_management
+        self.restore_enabled = self.history_management_enabled
+        self.purge_all_history_enabled = self.history_management_enabled
         self.report_slot = threading.BoundedSemaphore(1)
         self.csrf_tokens = CsrfTokenManager(lifetime_seconds=900, maximum_tokens=256)
         self.analysis_cache = RevisionCache(max_entries=16, ttl_seconds=300.0)
@@ -535,7 +539,7 @@ class ReportApplication(WorkflowApplicationMixin):
 """
         purge_controls = (
             f'<div class="note"><strong>{html.escape(t("Deletion is disabled by default."))}</strong><br>'
-            f"{html.escape(t('Enable complete history deletion in the app configuration and restart only when deletion is planned.'))}"
+            f"{html.escape(t('Enable history management in the app configuration and restart only when maintenance is planned.'))}"
             "</div>"
         )
         if self.purge_all_history_enabled:
@@ -602,9 +606,22 @@ class ReportApplication(WorkflowApplicationMixin):
         else:
             restore_controls = (
                 f'<div class="note"><strong>{html.escape(t("Restore is disabled by default."))}</strong><br>'
-                f"{html.escape(t('Enable “{setting}” in the app configuration and restart only when a restore is planned.', setting=t('Allow restore')))}"
+                f"{html.escape(t('Enable “{setting}” in the app configuration and restart only when history maintenance is planned.', setting=t('History management')))}"
                 "</div>"
             )
+        history_management_banner = (
+            '<div class="history-management-status enabled"><span class="status-dot"></span><div><strong>'
+            + html.escape(t("History management enabled"))
+            + '</strong><small>'
+            + html.escape(t("Restore and complete deletion are available. Disable the configuration switch again after maintenance."))
+            + '</small></div></div>'
+            if self.history_management_enabled
+            else '<div class="history-management-status disabled"><span class="status-dot"></span><div><strong>'
+            + html.escape(t("History management protected"))
+            + '</strong><small>'
+            + html.escape(t("Restore and complete deletion remain locked during normal operation."))
+            + '</small></div></div>'
+        )
         analysis_html = self._render_analysis(
             analysis,
             advanced=True,
@@ -715,6 +732,19 @@ class ReportApplication(WorkflowApplicationMixin):
             else []
         )
         explorer_points = downsample_history(explorer_rows, maximum_points=600)
+        expected_history_samples = max(
+            1, round((explorer_end - explorer_start) / max(1, selected_scan_interval))
+        )
+        history_values = [float(row.cpm) for row in explorer_rows]
+        history_summary = {
+            "samples": len(explorer_rows),
+            "coverage_percent": min(100.0, 100.0 * len(explorer_rows) / expected_history_samples),
+            "mean_cpm": statistics.fmean(history_values) if history_values else None,
+            "median_cpm": statistics.median(history_values) if history_values else None,
+            "minimum_cpm": min(history_values) if history_values else None,
+            "maximum_cpm": max(history_values) if history_values else None,
+            "rejected_raw_count": None,
+        }
         show_raw_history = str(history_raw_override or "").strip().lower() in {"1", "true", "yes", "on"}
         raw_history_points = []
         if show_raw_history and selected_serial:
@@ -722,6 +752,7 @@ class ReportApplication(WorkflowApplicationMixin):
                 explorer_start, explorer_end, device_serial=selected_serial
             )
             rejected_rows = [row for row in raw_rows if not bool(row.get("accepted"))]
+            history_summary["rejected_raw_count"] = len(rejected_rows)
             step = max(1, (len(rejected_rows) + 499) // 500)
             raw_history_points = [
                 {
@@ -777,6 +808,7 @@ class ReportApplication(WorkflowApplicationMixin):
             history_dates=history_dates,
             history_start_utc=explorer_start,
             history_end_utc=explorer_end,
+            history_summary=history_summary,
         )
         workflow_html = render_workflow_section(
             t=t,
@@ -962,23 +994,22 @@ class ReportApplication(WorkflowApplicationMixin):
 <details class="download-group advanced-only" id="reports-export-details">
 <summary><span class="summary-copy">{html.escape(t("Export details"))}<small>{html.escape(t("What each report preserves and how periods are defined"))}</small></span></summary>
 <div class="group-body">
-<p>{html.escape(t("CSV files preserve every accepted measurement without interpolation. PNG reports include CPM, temperature, voltage, optional raw signed gyro diagnostics, summary statistics, sample completeness, device identity, timezone, period and generation time. ZIP bundles additionally contain analysis JSON, daily summaries, events, histogram, heatmap and a multi-page PDF report."))}</p>
+<p>{html.escape(t("The professional five-page PDF report starts with an executive beta/gamma assessment, followed by correctly labelled CPM time series, distribution and Poisson reference, temporal heat maps, statistical significance, events and traceability. CPM remains the primary measurement; derived µSv/h values are not independent dosimetry. CSV files preserve accepted measurements without interpolation, and ZIP bundles additionally contain machine-readable analysis and specialist graphics."))}</p>
 <small>{html.escape(t("{gyro_note} History retention: {days} days. Daily periods are local calendar days; weekly periods are ISO weeks from Monday through Sunday.", gyro_note=gyro_note, days=self.store.retention_days))}</small>
 </div>
 </details>
 </section>
 
-<section class="advanced-only" id="maintenance">
-<h2>{html.escape(t("History maintenance"))}</h2>
+<section class="advanced-only history-management-section" id="maintenance">
+<div class="history-section-heading"><div><h2>{html.escape(t("History management"))}</h2><p>{html.escape(t("Export, back up, restore or deliberately remove stored radiation history from one protected workspace."))}</p></div></div>
+{history_management_banner}
 <div class="actions maintenance-actions">
-<a class="button" href="?action=history-export">{html.escape(t("Full history ZIP"))}</a>
+<a class="button primary" href="?action=history-export">{html.escape(t("Full history ZIP"))}</a>
 <a class="button" href="?action=diagnostics">{html.escape(t("Diagnostics JSON"))}</a>
 </div>
 {managed_backups_html}
-<h3>{html.escape(t("Restore history"))}</h3>
-{restore_controls}
-<h3>{html.escape(t("Delete history"))}</h3>
-{purge_controls}
+<details class="analysis-group history-management-tool" id="history-restore"><summary><span class="summary-copy">{html.escape(t("Restore history"))}<small>{html.escape(t("Preview and merge a compatible SQLite backup"))}</small></span></summary><div class="group-body">{restore_controls}</div></details>
+<details class="analysis-group history-management-tool" id="history-delete"><summary><span class="summary-copy">{html.escape(t("Delete history"))}<small>{html.escape(t("Permanently remove app and Recorder history after explicit confirmation"))}</small></span></summary><div class="group-body">{purge_controls}</div></details>
 </section>
 </main></div>
 <script nonce="{html.escape(script_nonce, quote=True)}">{render_dashboard_script(selected_serial=selected_serial, language=language, translator=t)}</script></body></html>"""
@@ -1555,8 +1586,15 @@ def run_report_server() -> None:
     scan_interval = int(os.environ.get("SCAN_INTERVAL", "60"))
     retention_days = int(os.environ.get("HISTORY_RETENTION_DAYS", "90"))
     read_gyro = os.environ.get("READ_GYRO", "false").strip().lower() == "true"
-    restore_enabled = os.environ.get("ENABLE_RESTORE", "false").strip().lower() == "true"
-    purge_all_history_enabled = os.environ.get("ENABLE_PURGE_ALL_HISTORY", "false").strip().lower() == "true"
+    history_management_enabled = (
+        os.environ.get(
+            "HISTORY_MANAGEMENT_ENABLED",
+            os.environ.get("ENABLE_RESTORE", os.environ.get("ENABLE_PURGE_ALL_HISTORY", "false")),
+        )
+        .strip()
+        .lower()
+        == "true"
+    )
     cpm_per_usvh = float(os.environ.get("CPM_PER_USVH", "154.0"))
     traffic_light_yellow_percent = float(os.environ.get("TRAFFIC_LIGHT_YELLOW_PERCENT", "125.0"))
     traffic_light_red_percent = float(os.environ.get("TRAFFIC_LIGHT_RED_PERCENT", "175.0"))
@@ -1632,8 +1670,7 @@ def run_report_server() -> None:
         safety_danger_usvh=safety_danger_usvh,
         ui_mode=ui_mode,
         ui_language=ui_language,
-        restore_enabled=restore_enabled,
-        purge_all_history_enabled=purge_all_history_enabled,
+        history_management_enabled=history_management_enabled,
         home_assistant_client=home_assistant_client,
         pressure_client=pressure_client,
         cosmic_hint_enabled=cosmic_hint_enabled,

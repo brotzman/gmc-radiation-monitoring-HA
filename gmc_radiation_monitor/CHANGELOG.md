@@ -1,15 +1,16 @@
 # Changelog
 
-## 8.1.1
+## 8.2.0
 
-- Renamed the Home Assistant sidebar panel to **Radiation Monitoring**.
-- Updated release metadata and manuals for version 8.1.1.
-
-- Promoted the statistical-analysis feature set to the 8.1.1 feature release.
-- Added an explicit Poisson rate-change significance assessment for the recent one-hour window against prior quality-filtered history.
-- Added two-sided p-values, sigma significance, data-quality-adjusted confidence, empirical historical percentile and a "one in N historical hours" rarity estimate.
-- Integrated significance and rarity into the explainable radiation-intelligence result without changing safety thresholds or alarm semantics.
-- Added regression tests for significant increases, normal counting variation, insufficient history and intelligence integration.
+- Rebuilt the primary PDF export as a professional five-page beta/gamma radiation report with executive summary, recommendations, statistical analysis, anomaly events and technical traceability.
+- Added explicit, unit-correct chart labels for CPM count rate, accepted sample counts, local date/time, local hour and heat-map CPM color scales.
+- Clarified throughout the report that Geiger-Mueller data represent a combined beta/gamma detector response, do not separate radiation types or identify radionuclides, and that µSv/h is derived rather than independently measured.
+- Added weekday/hour and calendar heat maps, Poisson distribution context, daily minimum/median/maximum comparison and selected measurement tables.
+- Integrated data quality, baseline deviation and drift, recent-change significance, two-sided p-value, historical rarity and persistent level-shift results into the PDF.
+- Optimized the History explorer with quick ranges, explicit local-time filters, coverage and distribution summaries, a smoothed trend, event markers and responsive mobile chart handling.
+- Replaced the separate restore and complete-delete configuration switches with one protected `history_management_enabled` switch while retaining internal migration compatibility.
+- Renamed the protected maintenance workspace to History management and clarified enabled/locked states.
+- Retained the Home Assistant sidebar title **Radiation Monitoring** and promoted the complete feature set to version 8.2.0.
 
 ## 8.0.14
 

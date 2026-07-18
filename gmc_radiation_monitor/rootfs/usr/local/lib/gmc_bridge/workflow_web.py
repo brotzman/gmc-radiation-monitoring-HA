@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import html
 import json
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any, Protocol
 from urllib.parse import quote_plus
 
@@ -57,42 +57,101 @@ def _comparison_html(comparison: PeriodComparison, t: TranslatorLike) -> str:
     )
 
 
-def _history_chart(points: list[dict[str, Any]], raw_points: list[dict[str, Any]], annotations: list[dict[str, Any]], t: TranslatorLike) -> str:
+def _history_chart(
+    points: list[dict[str, Any]],
+    raw_points: list[dict[str, Any]],
+    annotations: list[dict[str, Any]],
+    timezone,
+    t: TranslatorLike,
+) -> str:
     if len(points) < 2:
         return f'<div class="empty-state"><strong>{html.escape(t("No history data in this period"))}</strong></div>'
     values = [float(point.get("cpm") or 0.0) for point in points]
     minimum = min(values)
     maximum = max(values)
-    span = maximum - minimum or 1.0
-    coords: list[str] = []
-    for index, value in enumerate(values):
-        x = 3.0 + 94.0 * index / max(1, len(values) - 1)
-        y = 35.0 - 29.0 * (value - minimum) / span
-        coords.append(f"{x:.2f},{y:.2f}")
+    span = maximum - minimum
+    padding = max(1.0, span * 0.08)
+    y_min = max(0.0, minimum - padding)
+    y_max = maximum + padding
+    y_span = max(1.0, y_max - y_min)
     start = int(points[0]["timestamp_utc"])
     end = int(points[-1]["timestamp_utc"])
     duration = max(1, end - start)
+
+    def x_for(timestamp: int) -> float:
+        return 13.0 + 101.0 * max(0.0, min(1.0, (timestamp - start) / duration))
+
+    def y_for(value: float) -> float:
+        return 42.0 - 35.0 * max(0.0, min(1.0, (value - y_min) / y_span))
+
+    coords = [
+        f"{x_for(int(point['timestamp_utc'])):.2f},{y_for(value):.2f}"
+        for point, value in zip(points, values, strict=True)
+    ]
+    smooth_window = max(3, min(21, len(values) // 24 or 3))
+    smooth_values: list[float] = []
+    for index in range(len(values)):
+        first = max(0, index - smooth_window + 1)
+        window = values[first : index + 1]
+        smooth_values.append(sum(window) / len(window))
+    smooth_coords = [
+        f"{x_for(int(point['timestamp_utc'])):.2f},{y_for(value):.2f}"
+        for point, value in zip(points, smooth_values, strict=True)
+    ]
+
+    y_grid: list[str] = []
+    for index in range(5):
+        value = y_min + (y_max - y_min) * index / 4
+        y = y_for(value)
+        y_grid.append(
+            f'<line x1="13" y1="{y:.2f}" x2="114" y2="{y:.2f}" class="history-grid-line"/>'
+            f'<text x="11.2" y="{y + 0.9:.2f}" text-anchor="end" class="history-axis-label">{value:.1f}</text>'
+        )
+    x_grid: list[str] = []
+    for fraction in (0.0, 0.5, 1.0):
+        timestamp = start + round(duration * fraction)
+        x = x_for(timestamp)
+        label = datetime.fromtimestamp(timestamp, UTC).astimezone(timezone).strftime("%d.%m.%Y %H:%M")
+        anchor = "start" if fraction == 0 else "end" if fraction == 1 else "middle"
+        x_grid.append(
+            f'<line x1="{x:.2f}" y1="7" x2="{x:.2f}" y2="42" class="history-grid-line"/>'
+            f'<text x="{x:.2f}" y="46.3" text-anchor="{anchor}" class="history-axis-label">{html.escape(label)}</text>'
+        )
+
     raw_markers: list[str] = []
     for item in raw_points:
         timestamp = int(item.get("timestamp_utc") or start)
         value = float(item.get("cpm") or 0.0)
-        x = 3.0 + 94.0 * max(0.0, min(1.0, (timestamp - start) / duration))
-        y = 35.0 - 29.0 * max(0.0, min(1.0, (value - minimum) / span))
-        raw_markers.append(f'<circle cx="{x:.2f}" cy="{y:.2f}" r="0.8" class="raw-rejected-marker"><title>{value:.0f} CPM · {html.escape(str(item.get("gate_state") or ""))}</title></circle>')
-    markers = []
+        raw_markers.append(
+            f'<circle cx="{x_for(timestamp):.2f}" cy="{y_for(value):.2f}" r="0.72" class="raw-rejected-marker">'
+            f'<title>{value:.0f} CPM · {html.escape(str(item.get("gate_state") or ""))}</title></circle>'
+        )
+    markers: list[str] = []
     for item in annotations:
         timestamp = int(item.get("start_timestamp_utc") or start)
-        x = 3.0 + 94.0 * max(0.0, min(1.0, (timestamp - start) / duration))
-        markers.append(f'<line x1="{x:.2f}" y1="5" x2="{x:.2f}" y2="36" class="event-marker"><title>{html.escape(str(item.get("note") or ""))}</title></line>')
+        markers.append(
+            f'<line x1="{x_for(timestamp):.2f}" y1="7" x2="{x_for(timestamp):.2f}" y2="42" class="event-marker">'
+            f'<title>{html.escape(str(item.get("note") or ""))}</title></line>'
+        )
+    mean = sum(values) / len(values)
     return (
-        '<figure class="workflow-history-chart"><svg viewBox="0 0 100 40" role="img" aria-label="'
-        + html.escape(t("CPM history explorer"), quote=True) + '">'
-        '<line x1="3" y1="36" x2="97" y2="36" class="chart-axis"/>'
+        '<figure class="workflow-history-chart"><svg viewBox="0 0 120 54" role="img" aria-label="'
+        + html.escape(t("CPM history explorer"), quote=True)
+        + '">'
+        + ''.join(y_grid)
+        + ''.join(x_grid)
+        + '<line x1="13" y1="42" x2="114" y2="42" class="chart-axis"/>'
+        + '<line x1="13" y1="7" x2="13" y2="42" class="chart-axis"/>'
         + ''.join(markers)
         + ''.join(raw_markers)
-        + '<polyline points="' + ' '.join(coords) + '" class="chart-line" vector-effect="non-scaling-stroke"/>'
-        '</svg><figcaption><span>' + html.escape(t("Minimum")) + f': {minimum:.1f} CPM</span>'
-        '<span>' + html.escape(t("Maximum")) + f': {maximum:.1f} CPM</span>'
+        + '<polyline points="' + ' '.join(coords) + '" class="chart-line history-accepted-line" vector-effect="non-scaling-stroke"/>'
+        + '<polyline points="' + ' '.join(smooth_coords) + '" class="history-trend-line" vector-effect="non-scaling-stroke"/>'
+        + f'<text x="63.5" y="52.2" text-anchor="middle" class="history-axis-title">{html.escape(t("Local date and time"))}</text>'
+        + f'<text x="2.2" y="24.5" text-anchor="middle" transform="rotate(-90 2.2 24.5)" class="history-axis-title">{html.escape(t("Count rate [CPM]"))}</text>'
+        + '</svg><figcaption>'
+        + f'<span>{html.escape(t("Minimum"))}: {minimum:.1f} CPM</span>'
+        + f'<span>{html.escape(t("Mean"))}: {mean:.1f} CPM</span>'
+        + f'<span>{html.escape(t("Maximum"))}: {maximum:.1f} CPM</span>'
         + (f'<span>{html.escape(t("Rejected raw values"))}: {len(raw_points)}</span>' if raw_points else '')
         + '</figcaption></figure>'
     )
@@ -215,6 +274,7 @@ def render_history_section(
     history_dates: dict[str, str],
     history_start_utc: int,
     history_end_utc: int,
+    history_summary: dict[str, Any],
 ) -> str:
     annotation_rows = _render_annotation_rows(
         t=t,
@@ -222,22 +282,49 @@ def render_history_section(
         annotations=annotations,
         annotation_csrf=annotation_csrf,
     )
+    end_date = datetime.fromisoformat(history_dates["end"]).date()
+    range_links: list[str] = []
+    for days, label in ((1, "24 h"), (7, "7 days"), (30, "30 days"), (90, "90 days")):
+        start_date = end_date - timedelta(days=max(1, days) - 1)
+        href = (
+            f"?device={quote_plus(selected_serial)}&lang={quote_plus(t.language)}&mode=advanced"
+            f"&history_start={start_date.isoformat()}&history_end={end_date.isoformat()}"
+            + ("&history_raw=1" if show_raw_history else "")
+            + "#history-explorer"
+        )
+        range_links.append(f'<a class="history-range-button" href="{html.escape(href, quote=True)}">{html.escape(t(label))}</a>')
+
+    def shown(value: Any, *, decimals: int = 1, suffix: str = "") -> str:
+        if value is None:
+            return "—"
+        return f"{float(value):.{decimals}f}{suffix}"
+
+    summary_metrics = (
+        _metric(t("Accepted measurements"), f"{int(history_summary.get('samples') or 0):,}", t("Selected period"))
+        + _metric(t("Data coverage"), shown(history_summary.get("coverage_percent"), decimals=1, suffix="%"), t("Expected from the configured scan interval"))
+        + _metric(t("Mean count rate"), shown(history_summary.get("mean_cpm"), decimals=1, suffix=" CPM"), t("Accepted values only"))
+        + _metric(t("Median count rate"), shown(history_summary.get("median_cpm"), decimals=1, suffix=" CPM"), t("Robust center of the selected period"))
+        + _metric(t("Minimum / maximum"), f"{shown(history_summary.get('minimum_cpm'), decimals=1)} / {shown(history_summary.get('maximum_cpm'), decimals=1)} CPM", t("Accepted values only"))
+        + _metric(t("Rejected raw values"), (f"{int(history_summary['rejected_raw_count']):,}" if history_summary.get('rejected_raw_count') is not None else "—"), t("Visible only when the raw-value layer is enabled"))
+    )
     return f"""
 <section class="advanced-only history-section" id="history">
-<h2>{html.escape(t("History"))}</h2>
-<p>{html.escape(t("Explore accepted measurements and document events for the selected GMC device."))}</p>
+<div class="history-section-heading"><div><h2>{html.escape(t("History"))}</h2><p>{html.escape(t("Explore, compare and document accepted measurements for the selected GMC device."))}</p></div><div class="history-period-label"><strong>{html.escape(history_dates['start'])}</strong><span>→</span><strong>{html.escape(history_dates['end'])}</strong></div></div>
 
-<details class="analysis-group" id="history-event-notes"><summary><span class="summary-copy">{html.escape(t("Event notes"))}<small>{html.escape(t("Document ventilation, movement, maintenance or an unknown cause"))}</small></span></summary><div class="group-body">
+<details class="analysis-group" id="history-explorer" open><summary><span class="summary-copy">{html.escape(t("History explorer"))}<small>{html.escape(t("Accepted count rates, smoothed trend, rejected raw values and event markers"))}</small></span></summary><div class="group-body">
+<form method="get" class="history-filter-form"><input type="hidden" name="device" value="{html.escape(selected_serial, quote=True)}"><input type="hidden" name="lang" value="{html.escape(t.language, quote=True)}"><input type="hidden" name="mode" value="advanced"><div class="history-filter-grid"><label>{html.escape(t("History from"))}<input type="date" name="history_start" value="{html.escape(history_dates['start'], quote=True)}"></label><label>{html.escape(t("History to"))}<input type="date" name="history_end" value="{html.escape(history_dates['end'], quote=True)}"></label><label class="toggle-row history-raw-toggle"><input type="checkbox" name="history_raw" value="1"{_checked(show_raw_history)}><span>{html.escape(t("Show rejected raw values"))}</span></label><button class="primary" type="submit">{html.escape(t("Show period"))}</button></div><div class="history-quick-ranges"><span>{html.escape(t("Quick ranges"))}</span>{''.join(range_links)}</div></form>
+<div class="metrics history-summary-metrics">{summary_metrics}</div>
+{_history_chart(history_points, raw_history_points, annotations, timezone, t)}
+<div class="history-chart-help"><span class="history-key accepted"></span>{html.escape(t("Accepted CPM"))}<span class="history-key trend"></span>{html.escape(t("Smoothed trend"))}<span class="history-key event"></span>{html.escape(t("Event note"))}<span class="history-key rejected"></span>{html.escape(t("Rejected raw value"))}</div>
+<div class="actions"><a class="button" href="./api/v1/history?device={quote_plus(selected_serial)}&amp;start_utc={history_start_utc}&amp;end_utc={history_end_utc}{'&amp;raw=1' if show_raw_history else ''}">{html.escape(t("Open history JSON"))}</a><a class="button" href="./api/v1/events?device={quote_plus(selected_serial)}&amp;start_utc={history_start_utc}&amp;end_utc={history_end_utc}">{html.escape(t("Open events JSON"))}</a></div></div></details>
+
+<details class="analysis-group" id="history-event-notes"><summary><span class="summary-copy">{html.escape(t("Event notes"))}<small>{html.escape(t("Document movement, maintenance, shielding changes or an unknown cause"))}</small></span></summary><div class="group-body">
 <form method="post" action="?action=annotation-add" class="annotation-form"><input type="hidden" name="csrf_token" value="{html.escape(annotation_csrf, quote=True)}"><input type="hidden" name="device_serial" value="{html.escape(selected_serial, quote=True)}"><div class="annotation-form-grid">
 <label>{html.escape(t("Start"))}<input type="datetime-local" name="start_local" required></label><label>{html.escape(t("End"))}<input type="datetime-local" name="end_local"></label>
 <label>{html.escape(t("Category"))}<select name="category"><option value="window">{html.escape(t("Window opened"))}</option><option value="ventilation">{html.escape(t("Ventilation"))}</option><option value="device_moved">{html.escape(t("Device moved"))}</option><option value="maintenance">{html.escape(t("Maintenance"))}</option><option value="unknown">{html.escape(t("Unknown cause"))}</option><option value="other">{html.escape(t("Other"))}</option></select></label>
 <label>{html.escape(t("Status"))}<select name="status"><option value="note">{html.escape(t("Note"))}</option><option value="confirmed">{html.escape(t("Confirmed"))}</option><option value="dismissed">{html.escape(t("Dismissed"))}</option></select></label>
 <label class="annotation-note-field">{html.escape(t("Note"))}<textarea name="note" maxlength="2000" required></textarea></label></div><button class="primary" type="submit">{html.escape(t("Add event note"))}</button></form>
 <div class="annotation-list">{annotation_rows}</div></div></details>
-
-<details class="analysis-group" id="history-explorer" open><summary><span class="summary-copy">{html.escape(t("History explorer"))}<small>{html.escape(t("Accepted CPM values with event markers in a freely selected period"))}</small></span></summary><div class="group-body">
-<form method="get" class="history-filter-form"><input type="hidden" name="device" value="{html.escape(selected_serial, quote=True)}"><input type="hidden" name="lang" value="{html.escape(t.language, quote=True)}"><input type="hidden" name="mode" value="advanced"><div class="comparison-form-grid"><label>{html.escape(t("History from"))}<input type="date" name="history_start" value="{html.escape(history_dates['start'], quote=True)}"></label><label>{html.escape(t("History to"))}<input type="date" name="history_end" value="{html.escape(history_dates['end'], quote=True)}"></label><label class="toggle-row"><input type="checkbox" name="history_raw" value="1"{_checked(show_raw_history)}><span>{html.escape(t("Show rejected raw values"))}</span></label><button class="primary" type="submit">{html.escape(t("Show period"))}</button></div></form>
-{_history_chart(history_points, raw_history_points, annotations, t)}<div class="actions"><a class="button" href="./api/v1/history?device={quote_plus(selected_serial)}&amp;start_utc={history_start_utc}&amp;end_utc={history_end_utc}{'&amp;raw=1' if show_raw_history else ''}">{html.escape(t("Open history JSON"))}</a><a class="button" href="./api/v1/events?device={quote_plus(selected_serial)}&amp;start_utc={history_start_utc}&amp;end_utc={history_end_utc}">{html.escape(t("Open events JSON"))}</a></div></div></details>
 </section>
 """
 

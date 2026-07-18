@@ -87,7 +87,7 @@ The workflow area provides configurable Home Assistant notifications, event anno
 
 The internal SQLite schema is migrated automatically to version 8. Existing measurement and device data remain compatible.
 
-Version 8.1.1 removes the mandatory GitHub Container Registry image reference. Home Assistant now builds the app directly from the included Dockerfile, avoiding registry-denied installation failures when a package is private or not yet published. The GitHub workflow verifies source builds for amd64 and aarch64 without publishing an image. Measurements, storage, MQTT entities, device communication, Ingress routes and user configuration remain unchanged. The dashboard opens the 8.1.1 manual that matches the selected UI language: German, English, Spanish, French, Italian, Dutch, Polish or Croatian.
+Version 8.2.0 introduces professionally structured five-page beta/gamma reports, explicit unit-correct CPM axes, statistical significance and traceability sections, an optimized responsive History explorer, and one protected History management switch for restore and complete deletion. It retains the local Home Assistant source-build installation introduced in 8.0.14, so no mandatory private GHCR image is required. Serial measurement, MQTT Discovery, SQLite history and existing download formats remain compatible. The dashboard opens the 8.2.0 manual that matches the selected UI language: German, English, Spanish, French, Italian, Dutch, Polish or Croatian.
 
 ## Installation
 
@@ -95,7 +95,7 @@ Version 8.1.1 removes the mandatory GitHub Container Registry image reference. H
 2. Connect the GMC counter to the Home Assistant host by USB.
 3. Ensure that an MQTT service is available.
 4. Start the add-on. Compatible GMC counters are detected and connected automatically.
-5. Open **GMC Radiation Monitoring** from the sidebar.
+5. Open **Radiation Monitoring** from the sidebar.
 
 
 ### Independent multi-device availability
@@ -160,8 +160,7 @@ gmcmap:
 history:
   retention_days: 90
   report_timezone: Europe/Berlin
-  enable_restore: false
-  enable_purge_all_history: false
+  history_management_enabled: false
 
 analysis:
   traffic_light_yellow_percent: 125.0
@@ -304,8 +303,7 @@ It is separate from the absolute safety assessment.
 history:
   retention_days: 90
   report_timezone: Europe/Berlin
-  enable_restore: false
-  enable_purge_all_history: false
+  history_management_enabled: false
 
 interface:
   publish_advanced_sensors: true
@@ -319,6 +317,8 @@ system:
 Set `interface.ui_language` to `de`, `en`, `fr`, `es`, `it`, `nl`, `pl` or `hr` for a fixed language.
 `auto` follows the browser language in the Ingress dashboard. Machine-readable CSV and JSON identifiers
 remain stable for automation compatibility.
+
+The History view is designed as a dedicated explorer: quick ranges for 24 hours, 7, 30 and 90 days, explicit start/end filters, coverage and distribution summaries, a smoothed trend and event markers are shown together. Every chart labels the horizontal local-time axis and the vertical count-rate axis (`CPM`) explicitly; rejected raw values remain a separate optional layer.
 
 ## Understanding the analysis page
 
@@ -362,7 +362,15 @@ Availability depends on the detected device and firmware. Typical entities inclu
 
 The global report settings show the location configured in **Home Assistant → Settings → System → General**, including the location name, coordinates, elevation and country when available. The add-on reads this information only through Home Assistant’s authenticated internal Core API and does not send it to an external geocoding service. If the Home Assistant location is unavailable, the dashboard continues to work and shows a localized notice instead.
 
-The Ingress dashboard provides current status, daily and weekly reports, event history, diagnostics and downloadable CSV, JSON, PNG, ZIP and SQLite files. Large files are generated on disk and streamed to avoid excessive memory use. Download actions remain on the current Ingress URL so Home Assistant proxy routing is preserved.
+The Ingress dashboard provides current status, daily and weekly reports, event history, diagnostics and downloadable CSV, JSON, PNG, ZIP and SQLite files. The primary PDF is a professionally structured five-page beta/gamma report:
+
+1. executive summary with last value, mean, maximum, period assessment and recommendation;
+2. correctly labelled CPM time series, distribution, Poisson reference and daily range comparison;
+3. weekday/hour and calendar heat maps with explicit CPM color scales;
+4. data quality, baseline deviation, significance, historical rarity, level shifts and anomaly events;
+5. device metadata, traceability, method limits and selected measurements.
+
+The report evaluates the detector's combined beta/gamma response. It does not separate beta from gamma, identify radionuclides or claim independent dosimetry. CPM is the primary measurement; µSv/h is clearly marked as derived from the configured conversion factor. Large files are generated on disk and streamed to avoid excessive memory use. Download actions remain on the current Ingress URL so Home Assistant proxy routing is preserved.
 
 ## Backup and restore
 
@@ -370,11 +378,10 @@ SQLite backup and full-history export are available in the advanced interface. R
 
 ```yaml
 history:
-  enable_restore: false
-  enable_purge_all_history: false
+  history_management_enabled: false
 ```
 
-Enable restore only for a planned import and disable it again afterwards. Uploads are streamed to temporary storage and the database must pass a full SQLite integrity check before data is merged. Enable `enable_purge_all_history` only when the complete-history danger card and its server-side action are intentionally needed; disabling it hides the card and blocks direct purge requests.
+Enable `history_management_enabled` only for planned history maintenance and disable it again afterwards. The single protected switch unlocks both backup restore and complete deletion. Restore uploads are streamed to temporary storage and must pass a full SQLite integrity check before data is merged; deletion still requires explicit text confirmation and is blocked server-side while history management is disabled.
 
 ## Troubleshooting
 

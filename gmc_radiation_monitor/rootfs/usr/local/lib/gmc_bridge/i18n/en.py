@@ -2248,3 +2248,12 @@ CATALOG.update({
     'Open user manual PDF': 'Open user manual PDF',
     'User manual is not available': 'User manual is not available',
 })
+
+# Version 8.2.0 report and history labels.
+CATALOG.update({
+    'Accepted measurements [count]': 'Accepted measurements [count]',
+    'Local hour [h]': 'Local hour [h]',
+    'Mean count rate [CPM]': 'Mean count rate [CPM]',
+    'Radiation Monitoring': 'Radiation Monitoring',
+    'Rejected raw value': 'Rejected raw value',
+})

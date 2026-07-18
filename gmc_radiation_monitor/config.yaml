@@ -1,7 +1,7 @@
 name: GMC Radiation Monitor
 description: Local GQ GMC monitoring with MQTT Discovery, configurable safety profiles,
   background anomaly detection, diagnostics, reports, backups and streamed exports
-version: 8.1.1
+version: 8.2.0
 slug: gmc_radiation_monitor
 url: https://github.com/brotzman/gmc-homeassistant/tree/main/gmc_radiation_monitor
 stage: stable
@@ -80,8 +80,7 @@ options:
   history:
     retention_days: 90
     report_timezone: Europe/Berlin
-    enable_restore: false
-    enable_purge_all_history: false
+    history_management_enabled: false
   analysis:
     traffic_light_yellow_percent: 125.0
     traffic_light_red_percent: 175.0
@@ -148,8 +147,7 @@ schema:
   history:
     retention_days: int(7,3650)
     report_timezone: str
-    enable_restore: bool
-    enable_purge_all_history: bool
+    history_management_enabled: bool
   analysis:
     traffic_light_yellow_percent: float(100.0,)
     traffic_light_red_percent: float(100.0,)

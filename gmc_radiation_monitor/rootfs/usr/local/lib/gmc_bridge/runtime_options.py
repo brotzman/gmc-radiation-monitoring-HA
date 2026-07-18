@@ -96,12 +96,18 @@ def runtime_environment(options: dict[str, Any], service: str) -> dict[str, str]
     }
 
     if service_name == "reports":
+        legacy_history_management = bool(history.get("enable_restore", False)) or bool(
+            history.get("enable_purge_all_history", False)
+        )
+        history_management_enabled = _value(
+            history, "history_management_enabled", legacy_history_management
+        )
         return {
             **common,
-            "ENABLE_RESTORE": _value(history, "enable_restore", False),
-            "ENABLE_PURGE_ALL_HISTORY": _value(
-                history, "enable_purge_all_history", False
-            ),
+            "HISTORY_MANAGEMENT_ENABLED": history_management_enabled,
+            # Backwards-compatible internal aliases; only one switch is exposed in Home Assistant.
+            "ENABLE_RESTORE": history_management_enabled,
+            "ENABLE_PURGE_ALL_HISTORY": history_management_enabled,
             "TRAFFIC_LIGHT_YELLOW_PERCENT": _value(
                 analysis, "traffic_light_yellow_percent", 125.0
             ),

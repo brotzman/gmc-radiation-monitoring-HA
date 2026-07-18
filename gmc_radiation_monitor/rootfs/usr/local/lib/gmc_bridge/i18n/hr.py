@@ -2148,3 +2148,12 @@ CATALOG.update({
     'Open user manual PDF': 'Otvori korisnički priručnik u PDF-u',
     'User manual is not available': 'Korisnički priručnik nije dostupan',
 })
+
+# Version 8.2.0 report and history labels.
+CATALOG.update({
+    'Accepted measurements [count]': 'Prihvaćena mjerenja [broj]',
+    'Local hour [h]': 'Lokalni sat [h]',
+    'Mean count rate [CPM]': 'Srednja brzina brojanja [CPM]',
+    'Radiation Monitoring': 'Praćenje zračenja',
+    'Rejected raw value': 'Odbačena sirova vrijednost',
+})
