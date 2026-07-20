@@ -1,15 +1,18 @@
-All GMC history was deleted: All GMC history was deleted
-Another report or maintenance job is running: Another report or maintenance job is running
-Complete history deletion failed: Complete history deletion failed
-Danger zone: Danger zone
-Delete all GMC history: Delete all GMC history
-Deletion confirmation text must be exactly DELETE ALL GMC HISTORY: Deletion confirmation text must be exactly DELETE ALL GMC HISTORY
-History deleted: History deleted
-Invalid deletion confirmation: Invalid deletion confirmation
-? Permanently delete all GMC history from this app and Home Assistant Recorder. This includes CPM, temperature, voltage, gyro and tube measurements for every known GMC and all time periods.
-: Permanently delete all GMC history from this app and Home Assistant Recorder. This includes CPM, temperature, voltage, gyro and tube measurements for every known GMC and all time periods.
-This cannot be undone. Delete all GMC history?: This cannot be undone. Delete all GMC history?
-Type DELETE ALL GMC HISTORY to confirm: Type DELETE ALL GMC HISTORY to confirm
+All GMC history was deleted: Se eliminó todo el historial de GMC
+Another report or maintenance job is running: Se está ejecutando otro informe o trabajo de mantenimiento.
+Complete history deletion failed: Error al eliminar el historial completo
+Danger zone: Zona de peligro
+Delete all GMC history: Eliminar todo el historial de GMC
+Deletion confirmation text must be exactly DELETE ALL GMC HISTORY: El texto de confirmación de eliminación debe
+  ser exactamente DELETE ALL GMC HISTORY
+History deleted: Historial eliminado
+Invalid deletion confirmation: Confirmación de eliminación no válida
+? Permanently delete all GMC history from this app and Home Assistant Recorder. This includes CPM, temperature,
+  voltage, gyro and tube measurements for every known GMC and all time periods.
+: Elimina permanentemente todo el historial de GMC de esta aplicación y de la grabadora Home Assistant. Esto incluye
+  mediciones de CPM, temperatura, voltaje, giroscopio y tubo para cada GMC conocido y todos los períodos de tiempo.
+This cannot be undone. Delete all GMC history?: Esto no se puede deshacer. ¿Eliminar todo el historial de GMC?
+Type DELETE ALL GMC HISTORY to confirm: Escriba DELETE ALL GMC HISTORY para confirmar
 configuration:
   analysis:
     description: Ajustes comunes de línea base, semáforo y eventos para todos los dispositivos.
@@ -18,16 +21,19 @@ configuration:
         description: Días de historial usados para la base de fondo local.
         name: Periodo de aprendizaje de referencia
       external_temperature_entity:
-        description: Home Assistant sensor used for CPM–temperature correlation when the GMC has no internal temperature sensor. The entity ID remains editable.
-        name: External temperature entity
+        description: Sensor de Home Assistant utilizado para correlacionar CPM y temperatura cuando el GMC no dispone
+          de sensor de temperatura interno. El ID de la entidad sigue siendo editable.
+        name: Entidad de temperatura externa
       external_temperature_max_age_seconds:
-        description: Older Home Assistant temperature states are not used for correlation.
-        name: Maximum external temperature age
+        description: Los estados de temperatura antiguos de Home Assistant no se utilizan para la correlación.
+        name: Antigüedad máxima de la temperatura externa
       external_temperature_name:
-        description: Friendly-name fallback used to locate the temperature sensor when the configured entity ID differs or was renamed.
-        name: External temperature search name
+        description: Nombre descriptivo alternativo utilizado para localizar el sensor de temperatura cuando el
+          ID de entidad configurado es distinto o se ha cambiado.
+        name: Nombre de búsqueda de temperatura externa
       cosmic_hint_enabled:
-        description: Aprende una firma de fondo prudente relacionada con la presión. Es solo una indicación estadística y no suprime alertas.
+        description: Aprende una firma de fondo prudente relacionada con la presión. Es solo una indicación estadística
+          y no suprime alertas.
         name: Indicación estadística de influencia cósmica
       pressure_weather_entity_primary:
         description: Entidad meteorológica principal de Home Assistant para la presión actual.
@@ -60,15 +66,18 @@ configuration:
         description: Umbral rojo de desviación; debe superar al amarillo. No es un límite de seguridad.
         name: 'Semáforo relativo: rojo'
       traffic_light_yellow_percent:
-        description: Desviación porcentual de la media de una hora respecto a la base aprendida. No es un límite de seguridad.
+        description: Desviación porcentual de la media de una hora respecto a la base aprendida. No es un límite
+          de seguridad.
         name: 'Semáforo relativo: amarillo'
     name: Análisis de fondo
   devices:
-    description: Configure cada contador GMC conectado de forma independiente. Añada una entrada por dispositivo físico.
+    description: Configure cada contador GMC conectado de forma independiente. Añada una entrada por dispositivo
+      físico.
     fields:
       auxiliary_read_interval:
-        description: Seconds between temperature, voltage, dual-tube, device-time and gyro reads. CPM still uses the measurement interval; 0 reads auxiliary values every cycle.
-        name: Auxiliary read interval
+        description: Segundos entre lecturas de temperatura, tensión, tubos dobles, hora del dispositivo y giroscopio.
+          CPM sigue usando el intervalo de medición; 0 lee los valores auxiliares en cada ciclo.
+        name: Intervalo de lectura auxiliar
       command_timeout:
         description: Espera máxima de respuesta en segundos.
         name: Tiempo de espera de respuesta
@@ -100,56 +109,62 @@ configuration:
         description: Segundos entre mediciones almacenadas.
         name: Intervalo de medición
       serial_debug:
-        description: Log bounded TX/RX hexadecimal and ASCII previews for this device. Enable only while diagnosing.
-        name: Serial frame debug
+        description: Registra vistas previas hexadecimales y ASCII de tamaño limitado de las tramas TX/RX de este
+          dispositivo. Actívelo solo durante el diagnóstico.
+        name: Depuración de tramas serie
       serial_debug_max_bytes:
-        description: Maximum number of bytes shown for each TX/RX frame.
-        name: Debug frame byte limit
+        description: Número máximo de bytes mostrados para cada trama TX/RX.
+        name: Límite de bytes de trama de depuración
       serial_startup_delay:
-        description: Desfase de inicio en segundos antes de inicializar este dispositivo. Se conservan los valores configurados mayores y siempre hay al menos 15 segundos entre dispositivos consecutivos.
-        name: Serial startup delay
+        description: Desfase de inicio en segundos antes de inicializar este dispositivo. Se conservan los valores
+          configurados mayores y siempre hay al menos 15 segundos entre dispositivos consecutivos.
+        name: Retardo de inicio serie
       orientation_calibration_enabled:
-        name: Orientation calibration
-        description: Use the configured offsets and scales for roll, pitch and inclination.
+        name: Calibración de orientación
+        description: Use los desplazamientos y escalas configurados para alabeo, cabeceo e inclinación.
       orientation_calibration_serial:
-        name: Calibration device serial
-        description: Serial number to which this calibration belongs.
+        name: Serie del dispositivo de calibración
+        description: Número de serie al que pertenece esta calibración.
       orientation_offset_x:
-        name: Orientation X offset
-        description: Raw X-axis zero offset from the six-position calibration.
+        name: Desplazamiento X de orientación
+        description: Desplazamiento cero sin procesar del eje X de la calibración de seis posiciones.
       orientation_offset_y:
-        name: Orientation Y offset
-        description: Raw Y-axis zero offset from the six-position calibration.
+        name: Desplazamiento Y de orientación
+        description: Desplazamiento cero sin procesar del eje Y de la calibración de seis posiciones.
       orientation_offset_z:
-        name: Orientation Z offset
-        description: Raw Z-axis zero offset from the six-position calibration.
+        name: Desplazamiento Z de orientación
+        description: Desplazamiento cero sin procesar del eje Z de la calibración de seis posiciones.
       orientation_scale_x:
-        name: Orientation X scale
-        description: Raw X-axis counts corresponding to 1 g.
+        name: Escala X de orientación
+        description: Cuentas sin procesar del eje X correspondientes a 1 g.
       orientation_scale_y:
-        name: Orientation Y scale
-        description: Raw Y-axis counts corresponding to 1 g.
+        name: Escala Y de orientación
+        description: Cuentas sin procesar del eje Y correspondientes a 1 g.
       orientation_scale_z:
-        name: Orientation Z scale
-        description: Raw Z-axis counts corresponding to 1 g.
+        name: Escala Z de orientación
+        description: Cuentas sin procesar del eje Z correspondientes a 1 g.
       orientation_calibration_name:
-        name: Calibration profile name
-        description: Name shown with the calculated orientation values.
+        name: Nombre del perfil de calibración
+        description: Nombre mostrado con los valores de orientación calculados.
     name: Dispositivos
   gmcmap:
-    description: Cuenta y ajustes de red comunes para cargas públicas. El ID del contador sigue siendo específico de cada dispositivo.
+    description: Cuenta y ajustes de red comunes para cargas públicas. El ID del contador sigue siendo específico
+      de cada dispositivo.
     fields:
       account_id:
-        description: ID de usuario de la cuenta registrada en GMCMap. No se registra ni se guarda en exportaciones de diagnóstico.
+        description: ID de usuario de la cuenta registrada en GMCMap. No se registra ni se guarda en exportaciones
+          de diagnóstico.
         name: ID de usuario (AID)
       enabled:
         description: Envía opcionalmente las mediciones al mapa mundial público GMCMap. Desactivado de forma predeterminada.
         name: Activar envíos públicos
       privacy_confirmed:
-        description: Debe activarse antes de enviar datos. La ubicación y los datos de la estación se gestionan en la cuenta de GMCMap y pueden ser públicos.
+        description: Debe activarse antes de enviar datos. La ubicación y los datos de la estación se gestionan
+          en la cuenta de GMCMap y pueden ser públicos.
         name: Confirmar transferencia pública de datos
       timeout:
-        description: Espera máxima por solicitud a GMCMap en segundos. Los errores se reintentan en segundo plano con espera progresiva.
+        description: Espera máxima por solicitud a GMCMap en segundos. Los errores se reintentan en segundo plano
+          con espera progresiva.
         name: Tiempo de espera de red
       upload_interval:
         description: Segundos entre envíos públicos por dispositivo. Se recomiendan al menos 120 a 300 segundos.
@@ -159,7 +174,8 @@ configuration:
     description: Retención local, zona horaria de informes y controles protegidos de gestión del historial.
     fields:
       history_management_enabled:
-        description: Activa las herramientas protegidas para restaurar y eliminar completamente el historial. Manténgalo desactivado durante el funcionamiento normal.
+        description: Activa las herramientas protegidas para restaurar y eliminar completamente el historial. Manténgalo
+          desactivado durante el funcionamiento normal.
         name: Gestión del historial
       report_timezone:
         description: Zona IANA para límites diarios y marcas de tiempo, por ejemplo Europe/Madrid.
@@ -191,7 +207,9 @@ configuration:
         description: Inicio de la zona roja para la tasa derivada.
         name: Peligro µSv/h personalizado
       profile:
-        description: GQ usa las bandas del fabricante. Las referencias BfS e ICRP convierten matemáticamente 1 y 20 mSv/año en una tasa continua; no son umbrales oficiales instantáneos. Personalizado usa los campos siguientes.
+        description: GQ usa las bandas del fabricante. Las referencias BfS e ICRP convierten matemáticamente 1 y
+          20 mSv/año en una tasa continua; no son umbrales oficiales instantáneos. Personalizado usa los campos
+          siguientes.
         name: Perfil de umbrales
       threshold_basis:
         description: Usa CPM, tasa derivada o el resultado más estricto. Solo funciona con Personalizado.
@@ -210,10 +228,16 @@ configuration:
         description: Nivel de detalle de los registros del complemento.
         name: Nivel de registro
       serial_scheduler_enabled:
-        description: Serialize command windows across counters sharing the host USB controller.
-        name: Shared serial scheduler
+        description: Serializa las ventanas de comandos de los contadores que comparten el controlador USB del host.
+        name: Planificador serie compartido
       serial_scheduler_gap_seconds:
-        description: Quiet time in seconds between command windows of different counters.
-        name: Scheduler quiet gap
+        description: Tiempo de espera en segundos entre las ventanas de comandos de distintos contadores.
+        name: Pausa del planificador
     name: Sistema
-'{count} measurements and {events} events were removed.': '{count} measurements and {events} events were removed.'
+'{count} measurements and {events} events were removed.': Se eliminaron {count} mediciones y {events} eventos.
+? All downloads below automatically use the GMC device currently shown in Analysis. Select another connected device
+  above to change the report source.
+: Todas las descargas siguientes utilizan automáticamente el dispositivo GMC que se muestra actualmente en Análisis.
+  Seleccione otro dispositivo conectado arriba para cambiar la fuente del informe.
+No connected GMC device: No hay ningún dispositivo GMC conectado
+Reports for the displayed analysis: Informes para el análisis mostrado.

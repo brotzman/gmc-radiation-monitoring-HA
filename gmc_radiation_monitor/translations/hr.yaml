@@ -1,15 +1,18 @@
-All GMC history was deleted: All GMC history was deleted
-Another report or maintenance job is running: Another report or maintenance job is running
-Complete history deletion failed: Complete history deletion failed
-Danger zone: Danger zone
-Delete all GMC history: Delete all GMC history
-Deletion confirmation text must be exactly DELETE ALL GMC HISTORY: Deletion confirmation text must be exactly DELETE ALL GMC HISTORY
-History deleted: History deleted
-Invalid deletion confirmation: Invalid deletion confirmation
-? Permanently delete all GMC history from this app and Home Assistant Recorder. This includes CPM, temperature, voltage, gyro and tube measurements for every known GMC and all time periods.
-: Permanently delete all GMC history from this app and Home Assistant Recorder. This includes CPM, temperature, voltage, gyro and tube measurements for every known GMC and all time periods.
-This cannot be undone. Delete all GMC history?: This cannot be undone. Delete all GMC history?
-Type DELETE ALL GMC HISTORY to confirm: Type DELETE ALL GMC HISTORY to confirm
+All GMC history was deleted: Sva GMC povijest je izbrisana
+Another report or maintenance job is running: Drugi izvještaj ili zadatak održavanja je u tijeku
+Complete history deletion failed: Potpuno brisanje povijesti nije uspjelo
+Danger zone: Opasna zona
+Delete all GMC history: Izbriši svu GMC povijest
+Deletion confirmation text must be exactly DELETE ALL GMC HISTORY: Tekst potvrde mora biti točno DELETE ALL GMC
+  HISTORY
+History deleted: Povijest izbrisana
+Invalid deletion confirmation: Nevažeća potvrda brisanja
+? Permanently delete all GMC history from this app and Home Assistant Recorder. This includes CPM, temperature,
+  voltage, gyro and tube measurements for every known GMC and all time periods.
+: Trajno izbrišite svu GMC povijest iz ove aplikacije i Home Assistant Recordera, uključujući CPM, temperaturu,
+  napon, žiroskop i mjerenja cijevi za sve poznate GMC uređaje i sva razdoblja.
+This cannot be undone. Delete all GMC history?: Ovo se ne može poništiti. Izbrisati svu GMC povijest?
+Type DELETE ALL GMC HISTORY to confirm: Za potvrdu upišite DELETE ALL GMC HISTORY
 configuration:
   analysis:
     description: Zajedničke postavke osnovne razine, semafora i događaja za sve uređaje.
@@ -18,16 +21,19 @@ configuration:
         description: Broj dana povijesti koji se koristi za lokalnu osnovnu vrijednost pozadine.
         name: Razdoblje učenja osnovne vrijednosti
       external_temperature_entity:
-        description: Home Assistant sensor used for CPM–temperature correlation when the GMC has no internal temperature sensor. The entity ID remains editable.
-        name: External temperature entity
+        description: Senzor Home Assistanta koji se koristi za korelaciju CPM-a i temperature kada GMC nema unutarnji
+          senzor temperature. ID entiteta ostaje moguće uređivati.
+        name: Entitet vanjske temperature
       external_temperature_max_age_seconds:
-        description: Older Home Assistant temperature states are not used for correlation.
-        name: Maximum external temperature age
+        description: Starija stanja temperature iz Home Assistanta ne koriste se za korelaciju.
+        name: Najveća starost vanjske temperature
       external_temperature_name:
-        description: Friendly-name fallback used to locate the temperature sensor when the configured entity ID differs or was renamed.
-        name: External temperature search name
+        description: Rezervni opisni naziv za pronalaženje senzora temperature kada se konfigurirani ID entiteta
+          razlikuje ili je preimenovan.
+        name: Naziv za pretraživanje vanjske temperature
       cosmic_hint_enabled:
-        description: Uči oprezan pozadinski potpis povezan s tlakom. To je samo statistička naznaka i ne potiskuje upozorenja.
+        description: Uči oprezan pozadinski potpis povezan s tlakom. To je samo statistička naznaka i ne potiskuje
+          upozorenja.
         name: Statistička naznaka kozmičkog utjecaja
       pressure_weather_entity_primary:
         description: Primarni Home Assistant vremenski entitet za trenutačni tlak.
@@ -67,8 +73,9 @@ configuration:
     description: Svaki povezani GMC brojač konfigurira se zasebno. Dodajte jedan unos za svaki fizički uređaj.
     fields:
       auxiliary_read_interval:
-        description: Seconds between temperature, voltage, dual-tube, device-time and gyro reads. CPM still uses the measurement interval; 0 reads auxiliary values every cycle.
-        name: Auxiliary read interval
+        description: Sekunde između očitanja temperature, napona, dviju cijevi, vremena uređaja i žiroskopa. CPM
+          i dalje koristi mjerni interval; 0 očitava pomoćne vrijednosti u svakom ciklusu.
+        name: Interval pomoćnog očitanja
       command_timeout:
         description: Najdulje čekanje odgovora u sekundama.
         name: Istek odgovora
@@ -100,41 +107,43 @@ configuration:
         description: Sekunde između spremljenih mjerenja.
         name: Interval mjerenja
       serial_debug:
-        description: Log bounded TX/RX hexadecimal and ASCII previews for this device. Enable only while diagnosing.
-        name: Serial frame debug
+        description: Bilježi ograničene heksadecimalne i ASCII preglede TX/RX okvira za ovaj uređaj. Omogući samo
+          tijekom dijagnostike.
+        name: Otklanjanje pogrešaka serijskih okvira
       serial_debug_max_bytes:
-        description: Maximum number of bytes shown for each TX/RX frame.
-        name: Debug frame byte limit
+        description: Najveći broj bajtova prikazanih za svaki TX/RX okvir.
+        name: Ograničenje bajtova okvira za dijagnostiku
       serial_startup_delay:
-        description: Odgoda pokretanja u sekundama prije inicijalizacije uređaja. Veće konfigurirane vrijednosti ostaju, a uzastopni uređaji uvijek su razmaknuti najmanje 15 sekundi.
-        name: Serial startup delay
+        description: Odgoda pokretanja u sekundama prije inicijalizacije uređaja. Veće konfigurirane vrijednosti
+          ostaju, a uzastopni uređaji uvijek su razmaknuti najmanje 15 sekundi.
+        name: Odgoda pokretanja serijske veze
       orientation_calibration_enabled:
-        name: Orientation calibration
-        description: Use the configured offsets and scales for roll, pitch and inclination.
+        name: Kalibracija orijentacije
+        description: Upotrijebi konfigurirane pomake i mjerila za nagib po uzdužnoj i poprečnoj osi te ukupni nagib.
       orientation_calibration_serial:
-        name: Calibration device serial
-        description: Serial number to which this calibration belongs.
+        name: Serijski broj kalibriranog uređaja
+        description: Serijski broj kojem pripada ova kalibracija.
       orientation_offset_x:
-        name: Orientation X offset
-        description: Raw X-axis zero offset from the six-position calibration.
+        name: Pomak orijentacije X
+        description: Neobrađeni pomak nule osi X iz kalibracije u šest položaja.
       orientation_offset_y:
-        name: Orientation Y offset
-        description: Raw Y-axis zero offset from the six-position calibration.
+        name: Pomak orijentacije Y
+        description: Neobrađeni pomak nule osi Y iz kalibracije u šest položaja.
       orientation_offset_z:
-        name: Orientation Z offset
-        description: Raw Z-axis zero offset from the six-position calibration.
+        name: Pomak orijentacije Z
+        description: Neobrađeni pomak nule osi Z iz kalibracije u šest položaja.
       orientation_scale_x:
-        name: Orientation X scale
-        description: Raw X-axis counts corresponding to 1 g.
+        name: Mjerilo orijentacije X
+        description: Broj neobrađenih jedinica osi X koji odgovara 1 g.
       orientation_scale_y:
-        name: Orientation Y scale
-        description: Raw Y-axis counts corresponding to 1 g.
+        name: Mjerilo orijentacije Y
+        description: Broj neobrađenih jedinica osi Y koji odgovara 1 g.
       orientation_scale_z:
-        name: Orientation Z scale
-        description: Raw Z-axis counts corresponding to 1 g.
+        name: Mjerilo orijentacije Z
+        description: Broj neobrađenih jedinica osi Z koji odgovara 1 g.
       orientation_calibration_name:
-        name: Calibration profile name
-        description: Name shown with the calculated orientation values.
+        name: Naziv kalibracijskog profila
+        description: Naziv prikazan uz izračunate vrijednosti orijentacije.
     name: Uređaji
   gmcmap:
     description: Zajednički račun i mrežne postavke za javno slanje. ID brojača ostaje vezan uz pojedini uređaj.
@@ -146,10 +155,12 @@ configuration:
         description: Po želji šalje mjerenja na javnu svjetsku kartu GMCMap. Zadano je onemogućeno.
         name: Omogući javno slanje
       privacy_confirmed:
-        description: Mora biti omogućeno prije slanja. Lokacija i podaci postaje uređuju se u GMCMap računu i mogu biti javno vidljivi.
+        description: Mora biti omogućeno prije slanja. Lokacija i podaci postaje uređuju se u GMCMap računu i mogu
+          biti javno vidljivi.
         name: Potvrdi javni prijenos podataka
       timeout:
-        description: Najdulje čekanje po GMCMap zahtjevu u sekundama. Pogreške se ponovno pokušavaju u pozadini s postupnim odmakom.
+        description: Najdulje čekanje po GMCMap zahtjevu u sekundama. Pogreške se ponovno pokušavaju u pozadini
+          s postupnim odmakom.
         name: Mrežno vremensko ograničenje
       upload_interval:
         description: Sekunde između javnih slanja za svaki uređaj. Preporučuje se najmanje 120 do 300 sekundi.
@@ -159,7 +170,8 @@ configuration:
     description: Lokalno zadržavanje, vremenska zona izvještaja i zaštićeno upravljanje poviješću.
     fields:
       history_management_enabled:
-        description: Omogućuje zaštićene alate za vraćanje i potpuno brisanje povijesti. Tijekom normalnog rada ostavite isključeno.
+        description: Omogućuje zaštićene alate za vraćanje i potpuno brisanje povijesti. Tijekom normalnog rada
+          ostavite isključeno.
         name: Upravljanje poviješću
       report_timezone:
         description: IANA vremenska zona za granice dana i vremenske oznake, npr. Europe/Zagreb.
@@ -191,10 +203,12 @@ configuration:
         description: Početak crvene razine za izvedenu brzinu doze.
         name: Prilagođena opasnost u µSv/h
       profile:
-        description: GQ koristi raspone proizvođača. BfS i ICRP reference matematički pretvaraju 1 i 20 mSv/godinu u kontinuiranu brzinu; nisu službeni trenutačni pragovi alarma. Prilagođeni profil koristi polja u nastavku.
+        description: GQ koristi raspone proizvođača. BfS i ICRP reference matematički pretvaraju 1 i 20 mSv/godinu
+          u kontinuiranu brzinu; nisu službeni trenutačni pragovi alarma. Prilagođeni profil koristi polja u nastavku.
         name: Profil pragova
       threshold_basis:
-        description: Upotrijebi CPM, izvedenu brzinu doze ili stroži rezultat. Primjenjuje se samo na prilagođeni profil.
+        description: Upotrijebi CPM, izvedenu brzinu doze ili stroži rezultat. Primjenjuje se samo na prilagođeni
+          profil.
         name: Procjena prilagođenog profila
       warning_cpm:
         description: Početak žute razine. Primjenjuje se samo na prilagođeni profil.
@@ -210,10 +224,16 @@ configuration:
         description: Razina pojedinosti u zapisnicima dodatka.
         name: Razina zapisivanja
       serial_scheduler_enabled:
-        description: Serialize command windows across counters sharing the host USB controller.
-        name: Shared serial scheduler
+        description: Serijalizira prozore naredbi brojača koji dijele USB kontroler glavnog računala.
+        name: Zajednički serijski raspoređivač
       serial_scheduler_gap_seconds:
-        description: Quiet time in seconds between command windows of different counters.
-        name: Scheduler quiet gap
+        description: Vrijeme mirovanja u sekundama između prozora naredbi različitih brojača.
+        name: Razmak mirovanja raspoređivača
     name: Sustav
-'{count} measurements and {events} events were removed.': '{count} measurements and {events} events were removed.'
+'{count} measurements and {events} events were removed.': Uklonjeno je {count} mjerenja i {events} događaja.
+? All downloads below automatically use the GMC device currently shown in Analysis. Select another connected device
+  above to change the report source.
+: Sva preuzimanja u nastavku automatski koriste GMC uređaj koji je trenutno prikazan u analizi. Odaberite drugi
+  povezani uređaj iznad da biste promijenili izvor izvješća.
+No connected GMC device: Nema povezanog GMC uređaja
+Reports for the displayed analysis: Izvješća za prikazanu analizu

@@ -121,15 +121,18 @@ def test_dashboard_browser_language_and_viewport_matrix(tmp_path: Path, engine: 
                     assert page.locator("html").get_attribute("lang") == language
 
                     resources = _boxes(page, ".header-resource-links > *", 2)
+                    language_links = _boxes(page, ".language-switcher > a", 2)
                     levels = _boxes(page, ".analysis-level-button", 3)
                     statuses = _boxes(page, ".status-strip-item", 3)
 
                     if viewport["width"] >= 900:
                         assert abs(resources[0]["y"] - resources[1]["y"]) < 2
+                        assert abs(language_links[0]["y"] - language_links[1]["y"]) < 2
                         assert abs(levels[0]["y"] - levels[1]["y"]) < 2
                         assert abs(statuses[0]["y"] - statuses[2]["y"]) < 2
                     elif viewport["width"] <= 620:
                         assert resources[1]["y"] > resources[0]["y"] + resources[0]["height"]
+                        assert abs(language_links[0]["y"] - language_links[1]["y"]) < 2
                         assert levels[1]["y"] > levels[0]["y"] + levels[0]["height"]
                         assert statuses[1]["y"] > statuses[0]["y"] + statuses[0]["height"]
 

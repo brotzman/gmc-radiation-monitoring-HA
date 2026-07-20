@@ -1,15 +1,18 @@
-All GMC history was deleted: All GMC history was deleted
-Another report or maintenance job is running: Another report or maintenance job is running
-Complete history deletion failed: Complete history deletion failed
-Danger zone: Danger zone
-Delete all GMC history: Delete all GMC history
-Deletion confirmation text must be exactly DELETE ALL GMC HISTORY: Deletion confirmation text must be exactly DELETE ALL GMC HISTORY
-History deleted: History deleted
-Invalid deletion confirmation: Invalid deletion confirmation
-? Permanently delete all GMC history from this app and Home Assistant Recorder. This includes CPM, temperature, voltage, gyro and tube measurements for every known GMC and all time periods.
-: Permanently delete all GMC history from this app and Home Assistant Recorder. This includes CPM, temperature, voltage, gyro and tube measurements for every known GMC and all time periods.
-This cannot be undone. Delete all GMC history?: This cannot be undone. Delete all GMC history?
-Type DELETE ALL GMC HISTORY to confirm: Type DELETE ALL GMC HISTORY to confirm
+All GMC history was deleted: Cała historia GMC została usunięta
+Another report or maintenance job is running: Trwa wykonywanie innego zadania raportu lub konserwacji
+Complete history deletion failed: Całkowite usunięcie historii nie powiodło się
+Danger zone: Strefa niebezpieczeństwa
+Delete all GMC history: Usuń całą historię GMC
+Deletion confirmation text must be exactly DELETE ALL GMC HISTORY: Tekst potwierdzenia usunięcia musi mieć dokładnie
+  postać DELETE ALL GMC HISTORY
+History deleted: Historia usunięta
+Invalid deletion confirmation: Nieprawidłowe potwierdzenie usunięcia
+? Permanently delete all GMC history from this app and Home Assistant Recorder. This includes CPM, temperature,
+  voltage, gyro and tube measurements for every known GMC and all time periods.
+: Trwale usuń całą historię GMC z tej aplikacji i rejestratora Home Assistant. Obejmuje to pomiary CPM, temperatury,
+  napięcia, żyroskopu i rurki dla każdego znanego GMC i wszystkich okresów.
+This cannot be undone. Delete all GMC history?: Tego nie można cofnąć. Usunąć całą historię GMC?
+Type DELETE ALL GMC HISTORY to confirm: Wpisz DELETE ALL GMC HISTORY, aby potwierdzić
 configuration:
   analysis:
     description: Wspólne ustawienia poziomu bazowego, sygnalizacji i zdarzeń dla wszystkich urządzeń.
@@ -18,16 +21,19 @@ configuration:
         description: Liczba dni historii używana do lokalnego poziomu tła.
         name: Okres uczenia poziomu bazowego
       external_temperature_entity:
-        description: Home Assistant sensor used for CPM–temperature correlation when the GMC has no internal temperature sensor. The entity ID remains editable.
-        name: External temperature entity
+        description: Czujnik Home Assistant używany do korelacji CPM z temperaturą, gdy GMC nie ma wewnętrznego
+          czujnika temperatury. Identyfikator encji pozostaje edytowalny.
+        name: Encja temperatury zewnętrznej
       external_temperature_max_age_seconds:
-        description: Older Home Assistant temperature states are not used for correlation.
-        name: Maximum external temperature age
+        description: Starsze stany temperatury Home Assistant nie są używane do korelacji.
+        name: Maksymalny wiek temperatury zewnętrznej
       external_temperature_name:
-        description: Friendly-name fallback used to locate the temperature sensor when the configured entity ID differs or was renamed.
-        name: External temperature search name
+        description: Zapasowa przyjazna nazwa używana do odnajdywania czujnika temperatury, gdy skonfigurowany identyfikator
+          encji jest inny lub został zmieniony.
+        name: Nazwa wyszukiwania temperatury zewnętrznej
       cosmic_hint_enabled:
-        description: Uczy ostrożnej sygnatury tła związanej z ciśnieniem. To tylko wskazanie statystyczne i nie wyłącza ostrzeżeń.
+        description: Uczy ostrożnej sygnatury tła związanej z ciśnieniem. To tylko wskazanie statystyczne i nie
+          wyłącza ostrzeżeń.
         name: Statystyczne wskazanie wpływu kosmicznego
       pressure_weather_entity_primary:
         description: Główna encja pogodowa Home Assistant dla bieżącego ciśnienia.
@@ -60,15 +66,17 @@ configuration:
         description: Czerwony próg odchylenia; musi być wyższy od żółtego. Nie jest limitem bezpieczeństwa.
         name: 'Względny sygnalizator: czerwony'
       traffic_light_yellow_percent:
-        description: Procentowe odchylenie średniej godzinowej od wyuczonego poziomu bazowego. Nie jest limitem bezpieczeństwa.
+        description: Procentowe odchylenie średniej godzinowej od wyuczonego poziomu bazowego. Nie jest limitem
+          bezpieczeństwa.
         name: 'Względny sygnalizator: żółty'
     name: Analiza tła
   devices:
     description: Skonfiguruj każdy podłączony licznik GMC niezależnie. Dodaj jeden wpis dla każdego urządzenia fizycznego.
     fields:
       auxiliary_read_interval:
-        description: Seconds between temperature, voltage, dual-tube, device-time and gyro reads. CPM still uses the measurement interval; 0 reads auxiliary values every cycle.
-        name: Auxiliary read interval
+        description: Liczba sekund między odczytami temperatury, napięcia, dwóch tub, czasu urządzenia i żyroskopu.
+          CPM nadal używa interwału pomiarowego; 0 odczytuje wartości pomocnicze w każdym cyklu.
+        name: Interwał odczytu pomocniczego
       command_timeout:
         description: Maksymalne oczekiwanie w sekundach.
         name: Limit czasu odpowiedzi
@@ -100,44 +108,47 @@ configuration:
         description: Sekundy między zapisanymi pomiarami.
         name: Interwał pomiaru
       serial_debug:
-        description: Log bounded TX/RX hexadecimal and ASCII previews for this device. Enable only while diagnosing.
-        name: Serial frame debug
+        description: Rejestruj ograniczone podglądy szesnastkowe i ASCII ramek TX/RX dla tego urządzenia. Włączaj
+          tylko podczas diagnostyki.
+        name: Debugowanie ramek szeregowych
       serial_debug_max_bytes:
-        description: Maximum number of bytes shown for each TX/RX frame.
-        name: Debug frame byte limit
+        description: Maksymalna liczba bajtów wyświetlanych dla każdej ramki TX/RX.
+        name: Limit bajtów ramki debugowania
       serial_startup_delay:
-        description: Opóźnienie uruchomienia w sekundach przed inicjalizacją urządzenia. Większe skonfigurowane wartości są zachowywane, a kolejne urządzenia są zawsze rozdzielone co najmniej 15 sekundami.
-        name: Serial startup delay
+        description: Opóźnienie uruchomienia w sekundach przed inicjalizacją urządzenia. Większe skonfigurowane
+          wartości są zachowywane, a kolejne urządzenia są zawsze rozdzielone co najmniej 15 sekundami.
+        name: Opóźnienie uruchomienia portu szeregowego
       orientation_calibration_enabled:
-        name: Orientation calibration
-        description: Use the configured offsets and scales for roll, pitch and inclination.
+        name: Kalibracja orientacji
+        description: Użyj skonfigurowanych przesunięć i skal dla przechyłu, pochylenia i nachylenia.
       orientation_calibration_serial:
-        name: Calibration device serial
-        description: Serial number to which this calibration belongs.
+        name: Numer seryjny urządzenia kalibracyjnego
+        description: Numer seryjny, do którego należy ta kalibracja.
       orientation_offset_x:
-        name: Orientation X offset
-        description: Raw X-axis zero offset from the six-position calibration.
+        name: Przesunięcie orientacji X
+        description: Surowe przesunięcie zera osi X z kalibracji w sześciu pozycjach.
       orientation_offset_y:
-        name: Orientation Y offset
-        description: Raw Y-axis zero offset from the six-position calibration.
+        name: Przesunięcie orientacji Y
+        description: Surowe przesunięcie zera osi Y z kalibracji w sześciu pozycjach.
       orientation_offset_z:
-        name: Orientation Z offset
-        description: Raw Z-axis zero offset from the six-position calibration.
+        name: Przesunięcie orientacji Z
+        description: Surowe przesunięcie zera osi Z z kalibracji w sześciu pozycjach.
       orientation_scale_x:
-        name: Orientation X scale
-        description: Raw X-axis counts corresponding to 1 g.
+        name: Skala orientacji X
+        description: Surowa liczba jednostek osi X odpowiadająca 1 g.
       orientation_scale_y:
-        name: Orientation Y scale
-        description: Raw Y-axis counts corresponding to 1 g.
+        name: Skala orientacji Y
+        description: Surowa liczba jednostek osi Y odpowiadająca 1 g.
       orientation_scale_z:
-        name: Orientation Z scale
-        description: Raw Z-axis counts corresponding to 1 g.
+        name: Skala orientacji Z
+        description: Surowa liczba jednostek osi Z odpowiadająca 1 g.
       orientation_calibration_name:
-        name: Calibration profile name
-        description: Name shown with the calculated orientation values.
+        name: Nazwa profilu kalibracji
+        description: Nazwa wyświetlana wraz z obliczonymi wartościami orientacji.
     name: Urządzenia
   gmcmap:
-    description: Wspólne konto i ustawienia sieciowe dla publicznych wysyłek. Identyfikator licznika pozostaje przypisany do urządzenia.
+    description: Wspólne konto i ustawienia sieciowe dla publicznych wysyłek. Identyfikator licznika pozostaje przypisany
+      do urządzenia.
     fields:
       account_id:
         description: Identyfikator zarejestrowanego konta GMCMap. Nie jest zapisywany w logach ani eksportach diagnostycznych.
@@ -146,20 +157,24 @@ configuration:
         description: Opcjonalnie wysyła pomiary na publiczną mapę świata GMCMap. Domyślnie wyłączone.
         name: Włącz publiczne wysyłanie
       privacy_confirmed:
-        description: Musi być włączone przed wysłaniem danych. Lokalizacja i dane stacji są zarządzane na koncie GMCMap i mogą być publiczne.
+        description: Musi być włączone przed wysłaniem danych. Lokalizacja i dane stacji są zarządzane na koncie
+          GMCMap i mogą być publiczne.
         name: Potwierdź publiczne przesyłanie danych
       timeout:
-        description: Maksymalny czas oczekiwania na żądanie GMCMap w sekundach. Błędy są ponawiane w tle z rosnącym opóźnieniem.
+        description: Maksymalny czas oczekiwania na żądanie GMCMap w sekundach. Błędy są ponawiane w tle z rosnącym
+          opóźnieniem.
         name: Limit czasu sieci
       upload_interval:
-        description: Liczba sekund między publicznymi wysłaniami dla każdego urządzenia. Zalecane jest co najmniej 120–300 sekund.
+        description: Liczba sekund między publicznymi wysłaniami dla każdego urządzenia. Zalecane jest co najmniej
+          120–300 sekund.
         name: Interwał wysyłania
     name: GMCMap (wspólne)
   history:
     description: Lokalne przechowywanie, strefa czasowa raportów i chronione zarządzanie historią.
     fields:
       history_management_enabled:
-        description: Włącza chronione narzędzia przywracania i całkowitego usuwania historii. Podczas normalnej pracy pozostaw wyłączone.
+        description: Włącza chronione narzędzia przywracania i całkowitego usuwania historii. Podczas normalnej
+          pracy pozostaw wyłączone.
         name: Zarządzanie historią
       report_timezone:
         description: Strefa IANA dla granic dni i znaczników czasu, np. Europe/Warsaw.
@@ -191,7 +206,8 @@ configuration:
         description: Początek czerwonego zakresu wyliczonej mocy dawki.
         name: Własne zagrożenie µSv/h
       profile:
-        description: GQ używa zakresów producenta. Odniesienia BfS i ICRP matematycznie przeliczają 1 i 20 mSv/rok na ciągłą moc dawki; nie są to oficjalne natychmiastowe progi alarmowe. Profil własny używa pól poniżej.
+        description: GQ używa zakresów producenta. Odniesienia BfS i ICRP matematycznie przeliczają 1 i 20 mSv/rok
+          na ciągłą moc dawki; nie są to oficjalne natychmiastowe progi alarmowe. Profil własny używa pól poniżej.
         name: Profil progów
       threshold_basis:
         description: Używa CPM, wyliczonej mocy dawki lub surowszego wyniku. Działa tylko dla profilu własnego.
@@ -210,10 +226,16 @@ configuration:
         description: Szczegółowość dzienników dodatku.
         name: Poziom logowania
       serial_scheduler_enabled:
-        description: Serialize command windows across counters sharing the host USB controller.
-        name: Shared serial scheduler
+        description: Szereguj okna poleceń liczników współdzielących kontroler USB hosta.
+        name: Współdzielony harmonogram portu szeregowego
       serial_scheduler_gap_seconds:
-        description: Quiet time in seconds between command windows of different counters.
-        name: Scheduler quiet gap
+        description: Czas ciszy w sekundach między oknami poleceń różnych liczników.
+        name: Przerwa harmonogramu
     name: System
-'{count} measurements and {events} events were removed.': '{count} measurements and {events} events were removed.'
+'{count} measurements and {events} events were removed.': Usunięto pomiary {count} i zdarzenia {events}
+? All downloads below automatically use the GMC device currently shown in Analysis. Select another connected device
+  above to change the report source.
+: Wszystkie poniższe pliki do pobrania automatycznie korzystają z urządzenia GMC aktualnie wyświetlanego w Analizie.
+  Wybierz powyżej inne podłączone urządzenie, aby zmienić źródło raportu.
+No connected GMC device: Brak podłączonego urządzenia GMC
+Reports for the displayed analysis: Raporty dla wyświetlanej analizy

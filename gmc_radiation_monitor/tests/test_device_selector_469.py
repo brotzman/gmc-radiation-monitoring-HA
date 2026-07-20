@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def test_manual_serial_fields_are_absent_from_configuration():
     config = yaml.safe_load((ROOT / "config.yaml").read_text())
 
-    assert config["version"] == "8.2.1"
+    assert config["version"] == "8.2.2"
     assert config["uart"] is True
     assert len(config["options"]["devices"]) == 2
     for device in config["options"]["devices"]:

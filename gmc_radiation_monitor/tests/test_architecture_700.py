@@ -23,9 +23,9 @@ LIB = ROOT / "rootfs/usr/local/lib/gmc_bridge"
 
 
 def test_current_release_version() -> None:
-    assert APP_VERSION == "8.2.1"
-    assert "version: 8.2.1" in (ROOT / "config.yaml").read_text(encoding="utf-8")
-    assert (ROOT / "RELEASE_NOTES_8.2.1.md").is_file()
+    assert APP_VERSION == "8.2.2"
+    assert "version: 8.2.2" in (ROOT / "config.yaml").read_text(encoding="utf-8")
+    assert (ROOT / "RELEASE_NOTES_8.2.2.md").is_file()
 
 
 def test_large_web_and_translation_modules_are_split_by_responsibility() -> None:

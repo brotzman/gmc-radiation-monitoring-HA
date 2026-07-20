@@ -24,6 +24,7 @@ def test_global_worldmap_link_is_rendered():
     assert 'href="https://www.gmcmap.com/index.php"' in rendered
     assert 'target="_blank"' in rendered
     assert 'rel="noopener noreferrer external"' in rendered
-    assert "Geiger Counter World Map" in rendered
+    assert "GMCMap-Weltkarte" in rendered
+    assert "Geiger Counter World Map" not in rendered
     assert "<small>gmcmap.com</small>" in rendered
     assert '<details class="location-details">' in rendered
