@@ -87,7 +87,7 @@ The workflow area provides configurable Home Assistant notifications, event anno
 
 The internal SQLite schema is migrated automatically to version 8. Existing measurement and device data remain compatible.
 
-Version 8.2.1 introduces professionally structured five-page beta/gamma reports, explicit unit-correct CPM axes, statistical significance and traceability sections, an optimized responsive History explorer, and one protected History management switch for restore and complete deletion. It retains the local Home Assistant source-build installation introduced in 8.0.14, so no mandatory private GHCR image is required. Serial measurement, MQTT Discovery, SQLite history and existing download formats remain compatible. The dashboard opens the 8.2.1 manual that matches the selected UI language: German, English, Spanish, French, Italian, Dutch, Polish or Croatian.
+Version 8.2.2 adds a directly accessible language switcher to the dashboard header, including automatic browser/system-language selection. It completes the runtime translation audit, localizes the GMCMap world-map link and improves keyboard focus plus compact mobile navigation. Serial measurement, MQTT Discovery, SQLite history and existing download formats remain compatible. The dashboard opens the 8.2.2 manual that matches the selected UI language: German, English, Spanish, French, Italian, Dutch, Polish or Croatian.
 
 ## Installation
 

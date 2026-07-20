@@ -1,5 +1,14 @@
 # Changelog
 
+## 8.2.2
+
+- Added a directly accessible language switcher to the dashboard header for Auto, German, English, Spanish, French, Croatian, Italian, Dutch and Polish.
+- Made the Auto choice follow the browser or system language even when a fixed app language is configured.
+- Localized the GMCMap world-map link and removed remaining English runtime fallbacks from non-English dashboards.
+- Improved the header hierarchy, focus states and compact horizontal language navigation on small screens.
+- Added release-blocking tests for language switching, automatic locale resolution, translated resource links and fallback detection.
+- Updated runtime, package, release-note and all integrated manual version references to 8.2.2.
+
 ## 8.2.1
 
 - Completed localization of the statistical significance and historical-rarity explanations in all eight supported dashboard languages.
