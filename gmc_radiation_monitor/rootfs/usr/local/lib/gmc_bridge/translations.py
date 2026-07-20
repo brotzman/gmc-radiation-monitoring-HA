@@ -25,6 +25,8 @@ def resolve_language(
 ) -> str:
     if override and override in SUPPORTED_UI_LANGUAGES:
         return override
+    if override == "auto":
+        configured = "auto"
     if configured in SUPPORTED_UI_LANGUAGES:
         return configured
     if configured != "auto":

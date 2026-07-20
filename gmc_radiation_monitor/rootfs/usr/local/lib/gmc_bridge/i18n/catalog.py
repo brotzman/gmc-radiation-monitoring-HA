@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from string import Formatter
 
 from .de import CATALOG as DE_CATALOG
@@ -25,6 +27,14 @@ CATALOGS: dict[str, dict[str, str]] = {
 }
 for _language, _workflow_catalog in WORKFLOW_CATALOGS.items():
     CATALOGS[_language].update(_workflow_catalog)
+
+# Version 8.2.2 completes the audit of newer workflow, diagnostics and
+# maintenance strings that previously used their English key as a fallback.
+_release_overrides = json.loads(
+    Path(__file__).with_name("release_822.json").read_text(encoding="utf-8")
+)
+for _language, _catalogue in _release_overrides.items():
+    CATALOGS[_language].update(_catalogue)
 
 
 # Two legacy indirection labels intentionally carry format fields only in their

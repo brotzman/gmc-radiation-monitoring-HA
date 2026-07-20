@@ -383,6 +383,13 @@ class ReportApplication(WorkflowApplicationMixin):
         language = resolve_language(
             self.ui_language, accept_language=accept_language, override=language_override
         )
+        language_preference = (
+            language_override
+            if language_override in {"auto", *SUPPORTED_UI_LANGUAGES}
+            else self.ui_language
+            if self.ui_language in {"auto", *SUPPORTED_UI_LANGUAGES}
+            else "auto"
+        )
         t = Translator(language)
         all_sorted_devices = sorted(
             status.get("devices", []),
@@ -848,6 +855,42 @@ class ReportApplication(WorkflowApplicationMixin):
                 ("heatmap-png", "Heatmap PNG"),
             )
         )
+        language_query_suffix = f"&amp;mode={quote_plus(mode)}"
+        if selected_serial:
+            language_query_suffix += f"&amp;device={quote_plus(selected_serial)}"
+        language_options = (
+            ("auto", "Auto"),
+            ("de", "Deutsch"),
+            ("en", "English"),
+            ("es", "Español"),
+            ("fr", "Français"),
+            ("hr", "Hrvatski"),
+            ("it", "Italiano"),
+            ("nl", "Nederlands"),
+            ("pl", "Polski"),
+        )
+        language_links = []
+        for language_code, language_name in language_options:
+            current = ' aria-current="page"' if language_code == language_preference else ""
+            language_attribute = (
+                f' lang="{html.escape(language_code, quote=True)}"'
+                if language_code != "auto"
+                else ""
+            )
+            title = (
+                f' title="{html.escape(t("Use the browser or system language"), quote=True)}"'
+                if language_code == "auto"
+                else ""
+            )
+            language_links.append(
+                f'<a href="?lang={quote_plus(language_code)}{language_query_suffix}"'
+                f"{language_attribute}{title}{current}>{html.escape(language_name)}</a>"
+            )
+        language_switcher_html = (
+            f'<nav class="language-switcher" aria-label="{html.escape(t("Language"), quote=True)}">'
+            + "".join(language_links)
+            + "</nav>"
+        )
         page = f"""<!doctype html>
 <html lang="{language}">
 <head>
@@ -860,12 +903,14 @@ class ReportApplication(WorkflowApplicationMixin):
 <header class="report-header">
 <div class="header-intro">
 <h1>{html.escape(t("GMC Radiation Monitoring"))}</h1>
+<p>{html.escape(t("Local monitoring for GQ GMC Geiger counters"))}</p>
+{language_switcher_html}
 </div>
 {location_details_html}
 <div class="header-resource-links">
-<a class="location-details external-map-link" href="https://www.gmcmap.com/index.php" target="_blank" rel="noopener noreferrer external" aria-label="Geiger Counter World Map">
+<a class="location-details external-map-link" href="https://www.gmcmap.com/index.php" target="_blank" rel="noopener noreferrer external" aria-label="{html.escape(t("Open GMCMap world map"), quote=True)}">
 <span class="details-summary-icon" aria-hidden="true">🌐</span>
-<span class="external-map-copy"><strong>Geiger Counter World Map</strong><small>gmcmap.com</small></span>
+<span class="external-map-copy"><strong>{html.escape(t("GMCMap world map"))}</strong><small>gmcmap.com</small></span>
 <span class="external-link-mark" aria-hidden="true">↗</span>
 </a>
 <a class="location-details manual-link" href="./docs/user-manual.pdf?lang={quote_plus(language)}" target="_blank" rel="noopener" aria-label="{html.escape(t("Open user manual PDF"), quote=True)}">
