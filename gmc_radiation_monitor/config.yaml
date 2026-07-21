@@ -1,7 +1,7 @@
 name: GMC Radiation Monitor
 description: Local GQ GMC monitoring with MQTT Discovery, configurable safety profiles, background anomaly 
   detection, diagnostics, reports, backups and streamed exports
-version: 8.4.6
+version: 8.4.7
 slug: gmc_radiation_monitor
 url: https://github.com/brotzman/gmc-homeassistant/tree/main/gmc_radiation_monitor
 stage: stable
@@ -81,12 +81,12 @@ options:
     rapid_rise_window_minutes: 10
     sustained_alert_minutes: 30
     baseline_learning_days: 7
-    external_temperature_entity: sensor.arbeitszimmer_temperatur
-    external_temperature_name: Raumklima (Arbeitszimmer)
+    external_temperature_entity: ''
+    external_temperature_name: ''
     external_temperature_max_age_seconds: 900
-    cosmic_hint_enabled: true
-    pressure_weather_entity_primary: weather.forecast_home_2
-    pressure_weather_entity_secondary: weather.forecast_balkon
+    cosmic_hint_enabled: false
+    pressure_weather_entity_primary: ''
+    pressure_weather_entity_secondary: ''
     pressure_weather_source_name: Meteorologisk institutt (Met.no)
     pressure_weather_max_age_seconds: 7200
     pressure_weather_max_difference_hpa: 5.0

@@ -89,7 +89,7 @@ The internal SQLite schema is migrated automatically to version 8. Existing meas
 
 Version 8.4.3 is a compatibility patch for the 8.4.2 device-option migration. Existing split GMC-500+ settings are still merged losslessly, but the cleaned options are now sent to the Home Assistant Supervisor as one structured JSON document instead of embedding arrays and calibration text in a jq expression. This prevents startup failures with quotes, plus signs, percentages and Unicode units such as `µSv/h`. The detector profiles, database schema and measurement algorithms are unchanged from 8.4.2.
 
-Version 8.4.6 moves the CPM-to-dose conversion factor from the general device-information grid into the profile card of the physical tube to which it applies. Dual-tube devices with a calibrated M4011 and an uncalibrated SI-3BG are shown as partially calibrated; the SI-3BG explicitly displays that no conversion factor is configured.
+Version 8.4.5 moved the CPM-to-dose conversion factor from the general device-information grid into the profile card of the physical tube to which it applies. Dual-tube devices with a calibrated M4011 and an uncalibrated SI-3BG are shown as partially calibrated; the SI-3BG explicitly displays that no conversion factor is configured.
 
 ## Installation
 
@@ -244,7 +244,7 @@ The `gmc_320_plus_v4` preset represents exactly one M4011 tube and supplies 154 
 
 The `gmc_500_plus` preset represents two physical tubes: M4011 as the primary/normal-range tube and SI-3BG as the second/high-dose tube. The M4011 profile uses 154 CPM/(µSv/h), 120 µs and a 30,000 CPM working limit. The SI-3BG conversion factor remains intentionally empty until a verified value is entered; CPM stays visible, but an unsupported derived dose is not produced.
 
-The normal calibration fields under `devices` override the only tube of a single-tube counter. A `dual_tube_devices` entry is a complete physical device configuration: it includes common serial/measurement settings, the primary profile, the operating mode and exactly one set of `high_dose_*` values for the second tube. An optional `device_serial` verifies the physical counter at connection time and prevents a profile from following the wrong device after port changes. Version 8.4.6 merges legacy split GMC-500+ entries losslessly at startup. This keeps the GMC-320 form free of dual-tube controls and removes duplicate SI-3BG fields.
+The normal calibration fields under `devices` override the only tube of a single-tube counter. A `dual_tube_devices` entry is a complete physical device configuration: it includes common serial/measurement settings, the primary profile, the operating mode and exactly one set of `high_dose_*` values for the second tube. An optional `device_serial` verifies the physical counter at connection time and prevents a profile from following the wrong device after port changes. Version 8.4.2 introduced the lossless merge of legacy split GMC-500+ entries; version 8.4.3 fixed persistence of that migration through the Supervisor API. This keeps the GMC-320 form free of dual-tube controls and removes duplicate SI-3BG fields.
 
 Device-specific orientation calibration is never shipped with public defaults. It must be enabled explicitly with the matching serial number and the six-position values measured for that individual counter.
 
@@ -253,7 +253,7 @@ Predefined values are transparent application working values, not a traceable ca
 
 ### Scientific detector and calibration workflow (8.4.0)
 
-The Expert view places **Detector profile** directly below each connected device. Single-tube counters show one tube card; the GMC-500+ shows M4011 and SI-3BG separately with the active channel, calibration availability and dead time. Current CPM and the conversion factor are not repeated in this card because they are already shown in the device summary. The SI-3BG channel remains explicitly uncalibrated for dose conversion until a verified device-specific factor is stored.
+The Expert view places **Detector profile** directly below each connected device. Single-tube counters show one tube card; the GMC-500+ shows M4011 and SI-3BG separately with the active channel, calibration availability and dead time. Current CPM is not repeated in this card. The CPM-to-dose conversion factor is shown in the physical tube profile to which it applies. The SI-3BG channel remains explicitly uncalibrated for dose conversion until a verified device-specific factor is stored.
 
 For every accepted measurement, the app records raw CPM, corrected CPM, detector load, estimated dead-time loss, correction factor, active tube, calibration source/status, dose quality and a 0–100 measurement-quality index. The dashboard converts these fields into a five-star quality display, a green/yellow/red detector-load bar, a live dead-time monitor and targeted plausibility warnings.
 
@@ -481,7 +481,7 @@ devices:
 
 ## External temperature fallback
 
-For GMC models without an internal temperature sensor, version 4.7.0 can use a Home Assistant temperature entity for CPM–temperature correlation. The default is `sensor.arbeitszimmer_temperatur`; if that ID does not exist, the app searches for a temperature sensor whose friendly name contains `Raumklima (Arbeitszimmer)`. The entity ID, search name and maximum accepted state age remain editable under **Analysis**.
+For GMC models without an internal temperature sensor, the app can use an optional Home Assistant temperature entity for CPM–temperature correlation. Public defaults do not contain an installation-specific entity ID or friendly name. Configure the entity ID, optional search name and maximum accepted state age under **Analysis** when this correlation is required.
 
 ## Shared serial scheduler and frame diagnostics (4.7.0)
 
@@ -511,13 +511,13 @@ The adaptive background cards use a roomier two-column layout, stability metadat
 
 ## Barometric background model and cosmic-influence hint (6.2.0)
 
-The add-on can learn a cautious statistical relationship between the quality-filtered measurement-site CPM profile and air pressure from Home Assistant weather entities. The supplied defaults use:
+The add-on can learn a cautious statistical relationship between the quality-filtered measurement-site CPM profile and air pressure from Home Assistant weather entities. Public defaults leave this optional feature disabled until one or two installation-specific weather entities are configured:
 
 ```yaml
 analysis:
-  cosmic_hint_enabled: true
-  pressure_weather_entity_primary: weather.forecast_home_2
-  pressure_weather_entity_secondary: weather.forecast_balkon
+  cosmic_hint_enabled: false
+  pressure_weather_entity_primary: ''
+  pressure_weather_entity_secondary: ''
   pressure_weather_source_name: Meteorologisk institutt (Met.no)
   pressure_weather_max_age_seconds: 7200
   pressure_weather_max_difference_hpa: 5.0
@@ -578,3 +578,11 @@ Generated bytecode and test caches are excluded from releases, historical releas
 The **Connected GMC devices** card now presents device identity, connection state and the latest accepted measurement in that order. The derived dose value is split into a dominant number and a smaller unit; CPM, active detector and quality remain compact context values. The age of the latest measurement appears beside the connection badge.
 
 Under the add-on **Interface** options, `main_value_size` accepts `small`, `medium`, `large` or `custom`. When `custom` is selected, `custom_value_font_size_px` accepts 20–64 px. The same choices are available inside the dashboard under **Measurement display** and are stored locally in the current browser, allowing an immediate per-browser override of the add-on default.
+
+### Maintenance and diagnostic cleanup (8.4.7)
+
+Version 8.4.7 treats `devices` and `dual_tube_devices` as equal physical-device lists during validation. A dual-tube counter no longer has to be duplicated in the single-tube list. Self-test JSON includes concrete configuration problems and separates health from warning state: warnings keep `healthy` and `ok` true while `status` is `warning`; error checks mark the app unhealthy.
+
+A browser-local main-value size is labelled **Local browser setting active** and can be removed with **Reset to app default**. The detector Expert view now uses the same top-right disclosure control and full-width layout as the other expandable cards. Public defaults no longer ship installation-specific temperature or weather entity IDs; pressure-based hints remain disabled until entities are configured.
+
+For a future major release, the large report, web and service modules should be split into smaller components and embedded CSS/JavaScript moved into dedicated assets. This is planned architecture work, not a functional change in 8.4.7.

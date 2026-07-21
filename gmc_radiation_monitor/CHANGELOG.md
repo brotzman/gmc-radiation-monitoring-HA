@@ -1,5 +1,17 @@
 # Changelog
 
+## 8.4.7
+
+- Corrected configuration validation so `devices` and `dual_tube_devices` are independent, equal physical-device lists.
+- Removed the false `references unknown device name` warning for GMC-500+ entries configured only under `dual_tube_devices`.
+- Added cross-list device-name uniqueness checks and a combined at-least-one-device requirement.
+- Included concrete configuration problems in self-test JSON and separated warning state from health state.
+- Added a visible browser-local font-size override indicator and an **App default** reset action.
+- Reworked the detector Expert disclosure into a full-width panel with its plus/minus control in the top-right header.
+- Removed installation-specific temperature and weather entities from public defaults and disabled the optional pressure hint until configured.
+- Corrected README/DOCS release attribution and recorded major web-module decomposition as future version-9 work.
+- Kept database schema 8 and all measurement and metrology algorithms unchanged.
+
 ## 8.4.6
 
 - Redesigned the connected-device cards with clearer identity, status and live-measurement hierarchy.
