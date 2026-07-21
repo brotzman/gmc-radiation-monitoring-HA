@@ -592,6 +592,15 @@ The **Connected GMC devices** card now presents device identity, connection stat
 
 Under the add-on **Interface** options, `main_value_size` accepts `small`, `medium`, `large` or `custom`. When `custom` is selected, `custom_value_font_size_px` accepts 20–64 px. The same choices are available inside the dashboard under **Measurement display** and are stored locally in the current browser, allowing an immediate per-browser override of the add-on default.
 
+
+### Watchdog health and always-visible measurement details (8.4.8)
+
+Version 8.4.8 replaces the fixed `/health` response with a lightweight real health assessment. The Home Assistant watchdog now receives HTTP 200 for healthy or warning states and HTTP 503 only when a critical check fails. The response is JSON and includes service uptime, SQLite integrity, schema version, configuration validity, device connectivity, measurement freshness and free storage. Startup and reconnect grace periods prevent transient device states from immediately triggering a restart.
+
+Configuration validation now comes from one shared validator used by runtime option loading, dashboard validation, self-tests, health checks and migrated options. Each issue has a severity, code, path and readable message. This reduces the risk that startup and diagnostics apply different rules to `devices` and `dual_tube_devices`.
+
+At the app-wide **Expert** level, detector diagnostics are now shown in a permanent **Measurement details** section. Raw CPM, corrected CPM, dead-time loss, correction factor and measurement quality are immediately visible. The nested “Expert view” heading and its plus/minus disclosure control were removed because they duplicated the already-selected app-wide Expert level. The section remains hidden at Summary and Analysis levels and uses the same responsive two-column/one-column layout as before.
+
 ### Maintenance and diagnostic cleanup (8.4.7)
 
 Version 8.4.7 treats `devices` and `dual_tube_devices` as equal physical-device lists during validation. A dual-tube counter no longer has to be duplicated in the single-tube list. Self-test JSON includes concrete configuration problems and separates health from warning state: warnings keep `healthy` and `ok` true while `status` is `warning`; error checks mark the app unhealthy.

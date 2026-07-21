@@ -1,5 +1,15 @@
 # Changelog
 
+## 8.4.8
+
+- Replaced the unconditional `/health` response with a structured health assessment and HTTP 503 only for critical failures.
+- Added database, schema, configuration, device-connection, measurement-freshness and storage checks with startup grace periods.
+- Centralized option validation for runtime loading, self-tests, health checks, dashboard validation and startup migration.
+- Replaced the nested detector “Expert view” disclosure with an always-visible **Measurement details** section at the app-wide Expert level.
+- Removed the redundant disclosure control and duplicate Expert-view title from the detector panel.
+- Added localized measurement-detail labels and regression tests for the new health and UI behavior.
+- Kept database schema 8 and all radiation-measurement algorithms unchanged.
+
 ## 8.4.7
 
 - Corrected configuration validation so `devices` and `dual_tube_devices` are independent, equal physical-device lists.
