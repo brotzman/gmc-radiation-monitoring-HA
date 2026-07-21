@@ -1,5 +1,15 @@
 # Changelog
 
+## 8.4.9
+
+- Added an independent atomic bridge heartbeat for the acquisition supervisor.
+- Added a dedicated bridge-liveness check to `/health`, separate from device connectivity and measurement freshness.
+- Added configurable startup, bridge and measurement health thresholds under **System**.
+- Added range, ordering and cadence validation for the new timing settings.
+- Included bridge state, process IDs, assigned-device count and last child exit status in health diagnostics.
+- Added localized option descriptions and release-specific regression tests.
+- Kept database schema 8 and all measurement, detector and metrology algorithms unchanged.
+
 ## 8.4.8
 
 - Replaced the unconditional `/health` response with a structured health assessment and HTTP 503 only for critical failures.

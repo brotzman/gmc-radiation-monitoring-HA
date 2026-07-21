@@ -417,6 +417,24 @@ configuration:
   system:
     description: Wspólne ustawienia techniczne całego dodatku.
     fields:
+      bridge_heartbeat_interval_seconds:
+        description: Interwał w sekundach, z jakim usługa pomiarowa atomowo aktualizuje własny sygnał żywotności w /data.
+        name: Interwał heartbeat bridge
+      health_startup_grace_seconds:
+        description: Okres ochronny po uruchomieniu, zanim brak urządzeń lub pomiarów stanie się błędem krytycznym.
+        name: Okres ochronny health po starcie
+      health_bridge_warning_seconds:
+        description: Wiek heartbeat bridge w sekundach, po którym zgłaszane jest ostrzeżenie.
+        name: Próg ostrzeżenia heartbeat bridge
+      health_bridge_error_seconds:
+        description: Wiek heartbeat bridge w sekundach, po którym zgłaszany jest błąd krytyczny.
+        name: Próg błędu heartbeat bridge
+      health_measurement_warning_seconds:
+        description: Wiek ostatniego pomiaru w sekundach, po którym zgłaszane jest ostrzeżenie.
+        name: Próg ostrzeżenia wieku pomiaru
+      health_measurement_error_seconds:
+        description: Wiek ostatniego pomiaru w sekundach, po którym zgłaszany jest błąd krytyczny.
+        name: Próg błędu wieku pomiaru
       log_level:
         description: Szczegółowość dzienników dodatku.
         name: Poziom logowania

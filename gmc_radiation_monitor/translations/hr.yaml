@@ -414,6 +414,24 @@ configuration:
   system:
     description: Zajedničke tehničke postavke cijelog dodatka.
     fields:
+      bridge_heartbeat_interval_seconds:
+        description: Interval u sekundama kojim servis mjerenja atomski ažurira vlastiti zapis aktivnosti u /data.
+        name: Interval heartbeat-a bridgea
+      health_startup_grace_seconds:
+        description: Razdoblje po pokretanju prije nego što nedostupni uređaji ili mjerenja postanu kritična pogreška.
+        name: Početno razdoblje tolerancije
+      health_bridge_warning_seconds:
+        description: Starost heartbeat-a bridgea u sekundama nakon koje se prijavljuje upozorenje.
+        name: Prag upozorenja bridgea
+      health_bridge_error_seconds:
+        description: Starost heartbeat-a bridgea u sekundama nakon koje se prijavljuje kritična pogreška.
+        name: Prag pogreške bridgea
+      health_measurement_warning_seconds:
+        description: Starost posljednjeg mjerenja u sekundama nakon koje se prijavljuje upozorenje.
+        name: Prag upozorenja mjerenja
+      health_measurement_error_seconds:
+        description: Starost posljednjeg mjerenja u sekundama nakon koje se prijavljuje kritična pogreška.
+        name: Prag pogreške mjerenja
       log_level:
         description: Razina pojedinosti u zapisnicima dodatka.
         name: Razina zapisivanja

@@ -426,6 +426,24 @@ configuration:
   system:
     description: Paramètres techniques communs à l’ensemble du module.
     fields:
+      bridge_heartbeat_interval_seconds:
+        description: Intervalle en secondes auquel le service d’acquisition met à jour atomiquement son état de vie dans /data.
+        name: Intervalle du heartbeat du bridge
+      health_startup_grace_seconds:
+        description: Délai de grâce après le démarrage avant que l’absence d’appareil ou de mesure devienne une erreur critique.
+        name: Délai de grâce du contrôle de santé
+      health_bridge_warning_seconds:
+        description: Âge du heartbeat du bridge en secondes à partir duquel un avertissement est signalé.
+        name: Seuil d’avertissement du bridge
+      health_bridge_error_seconds:
+        description: Âge du heartbeat du bridge en secondes à partir duquel une erreur critique est signalée.
+        name: Seuil d’erreur du bridge
+      health_measurement_warning_seconds:
+        description: Âge de la dernière mesure en secondes à partir duquel un avertissement est signalé.
+        name: Seuil d’avertissement de mesure
+      health_measurement_error_seconds:
+        description: Âge de la dernière mesure en secondes à partir duquel une erreur critique est signalée.
+        name: Seuil d’erreur de mesure
       log_level:
         description: Niveau de détail des journaux du module.
         name: Niveau de journalisation

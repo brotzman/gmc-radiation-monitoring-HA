@@ -423,6 +423,24 @@ configuration:
   system:
     description: Gemeinsame technische Einstellungen für das gesamte Add-on.
     fields:
+      bridge_heartbeat_interval_seconds:
+        description: Intervall in Sekunden, in dem der Erfassungsdienst seinen eigenen Lebensstatus atomar in /data aktualisiert.
+        name: Bridge-Heartbeat-Intervall
+      health_startup_grace_seconds:
+        description: Schonzeit nach dem Start, bevor fehlende Geräte oder Messwerte als kritischer Fehler gelten.
+        name: Health-Startschonzeit
+      health_bridge_warning_seconds:
+        description: Alter des Bridge-Heartbeats in Sekunden, ab dem der Health-Check eine Warnung meldet.
+        name: Bridge-Heartbeat Warnschwelle
+      health_bridge_error_seconds:
+        description: Alter des Bridge-Heartbeats in Sekunden, ab dem der Health-Check einen kritischen Fehler meldet.
+        name: Bridge-Heartbeat Fehlerschwelle
+      health_measurement_warning_seconds:
+        description: Alter des letzten Messwerts in Sekunden, ab dem eine Warnung ausgegeben wird.
+        name: Messwertalter Warnschwelle
+      health_measurement_error_seconds:
+        description: Alter des letzten Messwerts in Sekunden, ab dem ein kritischer Fehler ausgegeben wird.
+        name: Messwertalter Fehlerschwelle
       log_level:
         description: Detailgrad der Add-on-Protokolle.
         name: Protokollierungsstufe

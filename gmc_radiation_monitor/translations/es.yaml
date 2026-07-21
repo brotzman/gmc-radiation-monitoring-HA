@@ -418,6 +418,24 @@ configuration:
   system:
     description: Ajustes técnicos compartidos para todo el complemento.
     fields:
+      bridge_heartbeat_interval_seconds:
+        description: Intervalo en segundos con el que el servicio de adquisición actualiza de forma atómica su estado de actividad en /data.
+        name: Intervalo de latido del bridge
+      health_startup_grace_seconds:
+        description: Periodo de gracia tras el inicio antes de que la falta de dispositivos o mediciones sea un error crítico.
+        name: Gracia de inicio de salud
+      health_bridge_warning_seconds:
+        description: Antigüedad del latido del bridge en segundos a partir de la cual se muestra una advertencia.
+        name: Umbral de advertencia del bridge
+      health_bridge_error_seconds:
+        description: Antigüedad del latido del bridge en segundos a partir de la cual se muestra un error crítico.
+        name: Umbral de error del bridge
+      health_measurement_warning_seconds:
+        description: Antigüedad de la última medición en segundos a partir de la cual se muestra una advertencia.
+        name: Umbral de advertencia de medición
+      health_measurement_error_seconds:
+        description: Antigüedad de la última medición en segundos a partir de la cual se muestra un error crítico.
+        name: Umbral de error de medición
       log_level:
         description: Nivel de detalle de los registros del complemento.
         name: Nivel de registro

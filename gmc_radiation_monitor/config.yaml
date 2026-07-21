@@ -1,7 +1,7 @@
 name: GMC Radiation Monitor
 description: Local GQ GMC monitoring with MQTT Discovery, configurable safety profiles, background anomaly 
   detection, diagnostics, reports, backups and streamed exports
-version: 8.4.8
+version: 8.4.9
 slug: gmc_radiation_monitor
 url: https://github.com/brotzman/gmc-homeassistant/tree/main/gmc_radiation_monitor
 stage: stable
@@ -107,6 +107,12 @@ options:
     log_level: info
     serial_scheduler_enabled: true
     serial_scheduler_gap_seconds: 2.0
+    bridge_heartbeat_interval_seconds: 15
+    health_startup_grace_seconds: 900
+    health_bridge_warning_seconds: 45
+    health_bridge_error_seconds: 120
+    health_measurement_warning_seconds: 600
+    health_measurement_error_seconds: 1200
 schema:
   devices:
   - name: str?
@@ -227,3 +233,9 @@ schema:
     log_level: list(debug|info|warning|error)
     serial_scheduler_enabled: bool
     serial_scheduler_gap_seconds: float(0.0,30.0)
+    bridge_heartbeat_interval_seconds: int(5,60)
+    health_startup_grace_seconds: int(30,3600)
+    health_bridge_warning_seconds: int(10,600)
+    health_bridge_error_seconds: int(20,1800)
+    health_measurement_warning_seconds: int(30,86400)
+    health_measurement_error_seconds: int(60,172800)

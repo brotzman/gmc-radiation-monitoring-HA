@@ -419,6 +419,24 @@ configuration:
   system:
     description: Gedeelde technische instellingen voor de volledige add-on.
     fields:
+      bridge_heartbeat_interval_seconds:
+        description: Interval in seconden waarmee de meetdienst zijn eigen levenssignaal atomair in /data bijwerkt.
+        name: Bridge-heartbeatinterval
+      health_startup_grace_seconds:
+        description: Respijtperiode na het starten voordat ontbrekende apparaten of metingen als kritieke fout gelden.
+        name: Opstartrespijt voor health-check
+      health_bridge_warning_seconds:
+        description: Leeftijd van de bridge-heartbeat in seconden waarna een waarschuwing wordt gemeld.
+        name: Waarschuwingsdrempel bridge-heartbeat
+      health_bridge_error_seconds:
+        description: Leeftijd van de bridge-heartbeat in seconden waarna een kritieke fout wordt gemeld.
+        name: Foutdrempel bridge-heartbeat
+      health_measurement_warning_seconds:
+        description: Leeftijd van de laatste meting in seconden waarna een waarschuwing wordt gemeld.
+        name: Waarschuwingsdrempel meetwaarde
+      health_measurement_error_seconds:
+        description: Leeftijd van de laatste meting in seconden waarna een kritieke fout wordt gemeld.
+        name: Foutdrempel meetwaarde
       log_level:
         description: Detailniveau van de add-onlogboeken.
         name: Logniveau

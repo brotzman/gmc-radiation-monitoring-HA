@@ -409,6 +409,24 @@ configuration:
   system:
     description: Shared technical settings for the complete add-on.
     fields:
+      bridge_heartbeat_interval_seconds:
+        description: Interval in seconds at which the acquisition service atomically updates its own liveness record in /data.
+        name: Bridge heartbeat interval
+      health_startup_grace_seconds:
+        description: Grace period after startup before missing devices or measurements become critical errors.
+        name: Health startup grace period
+      health_bridge_warning_seconds:
+        description: Bridge heartbeat age in seconds at which the health check reports a warning.
+        name: Bridge heartbeat warning threshold
+      health_bridge_error_seconds:
+        description: Bridge heartbeat age in seconds at which the health check reports a critical error.
+        name: Bridge heartbeat error threshold
+      health_measurement_warning_seconds:
+        description: Age of the latest measurement in seconds at which a warning is reported.
+        name: Measurement age warning threshold
+      health_measurement_error_seconds:
+        description: Age of the latest measurement in seconds at which a critical error is reported.
+        name: Measurement age error threshold
       log_level:
         description: Detail level of add-on logs.
         name: Log level
