@@ -527,17 +527,26 @@ def render_dashboard_script(*, selected_serial: str, language: str, translator: 
   }}
   const preferences = readJson(uiStorageKey, {{ cards: {{}}, groups: {{}}, pinned: [], reportForms: {{}}, lastSection: '', analysisLevel: '' }});
   const allowedMainValueSizes = new Set(['small', 'medium', 'large', 'custom']);
+  const appMainValueSize = allowedMainValueSizes.has(document.body.dataset.mainValueSize)
+    ? document.body.dataset.mainValueSize
+    : 'large';
+  const configuredCustomValue = Number(document.body.dataset.customValueFontSizePx || 36);
+  const appCustomValueFontSizePx = Math.min(64, Math.max(20, Number.isFinite(configuredCustomValue) ? Math.round(configuredCustomValue) : 36));
+  function hasLocalMeasurementDisplayOverride() {{
+    return Object.prototype.hasOwnProperty.call(preferences, 'mainValueSize')
+      || Object.prototype.hasOwnProperty.call(preferences, 'customValueFontSizePx');
+  }}
   function applyMeasurementDisplayPreferences() {{
-    const configuredSize = document.body.dataset.mainValueSize || 'large';
-    const requestedSize = preferences.mainValueSize || configuredSize;
-    const size = allowedMainValueSizes.has(requestedSize) ? requestedSize : configuredSize;
-    const configuredCustom = Number(document.body.dataset.customValueFontSizePx || 36);
-    const requestedCustom = Number(preferences.customValueFontSizePx || configuredCustom);
-    const customPx = Math.min(64, Math.max(20, Number.isFinite(requestedCustom) ? Math.round(requestedCustom) : 36));
+    const requestedSize = preferences.mainValueSize || appMainValueSize;
+    const size = allowedMainValueSizes.has(requestedSize) ? requestedSize : appMainValueSize;
+    const requestedCustom = Number(preferences.customValueFontSizePx ?? appCustomValueFontSizePx);
+    const customPx = Math.min(64, Math.max(20, Number.isFinite(requestedCustom) ? Math.round(requestedCustom) : appCustomValueFontSizePx));
     document.body.dataset.mainValueSize = size;
     document.body.style.setProperty('--custom-main-value-font-size', `${{customPx}}px`);
     document.querySelectorAll('input[name="main-value-size"]').forEach((input) => {{ input.checked = input.value === size; }});
     document.querySelectorAll('#custom-value-font-size').forEach((input) => {{ input.value = String(customPx); input.disabled = size !== 'custom'; }});
+    const overrideStatus = document.getElementById('measurement-override-status');
+    if (overrideStatus) overrideStatus.hidden = !hasLocalMeasurementDisplayOverride();
   }}
   applyMeasurementDisplayPreferences();
 
@@ -551,7 +560,7 @@ def render_dashboard_script(*, selected_serial: str, language: str, translator: 
     }}
     const customInput = event.target.closest('#custom-value-font-size');
     if (customInput) {{
-      preferences.customValueFontSizePx = Math.min(64, Math.max(20, Number(customInput.value || 36)));
+      preferences.customValueFontSizePx = Math.min(64, Math.max(20, Number(customInput.value || appCustomValueFontSizePx)));
       writeJson(uiStorageKey, preferences);
       applyMeasurementDisplayPreferences();
     }}
@@ -559,8 +568,17 @@ def render_dashboard_script(*, selected_serial: str, language: str, translator: 
   document.addEventListener('input', (event) => {{
     const customInput = event.target.closest('#custom-value-font-size');
     if (!customInput || document.body.dataset.mainValueSize !== 'custom') return;
-    const px = Math.min(64, Math.max(20, Number(customInput.value || 36)));
+    const px = Math.min(64, Math.max(20, Number(customInput.value || appCustomValueFontSizePx)));
     document.body.style.setProperty('--custom-main-value-font-size', `${{px}}px`);
+  }});
+  document.addEventListener('click', (event) => {{
+    const resetButton = event.target.closest('#reset-main-value-size');
+    if (!resetButton) return;
+    event.preventDefault();
+    delete preferences.mainValueSize;
+    delete preferences.customValueFontSizePx;
+    writeJson(uiStorageKey, preferences);
+    applyMeasurementDisplayPreferences();
   }});
   const analysisLevelPanel = document.getElementById('analysis-level-panel');
   const allowedAnalysisLevels = new Set(['summary', 'analysis', 'expert']);
@@ -1098,5 +1116,69 @@ body[data-main-value-size="custom"] { --main-value-font-size:var(--custom-main-v
   .device-freshness { max-width:none; text-align:left; }
   .measurement-size-options { grid-template-columns:1fr; }
   .measurement-size-options .custom-font-size { grid-column:auto; }
+}
+"""
+
+DASHBOARD_CSS += r"""
+/* 8.4.7 maintenance polish: explicit local override state, clearer self-test details
+   and a consistent top-right disclosure control for detector Expert diagnostics. */
+.measurement-override-row {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:.75rem;
+  margin:0 .78rem .78rem;
+  padding:.62rem .7rem;
+  border:1px solid color-mix(in srgb,var(--blue) 42%,var(--border));
+  border-radius:9px;
+  background:color-mix(in srgb,var(--blue) 7%,Canvas);
+  color:var(--muted);
+  font-size:.8rem;
+}
+.measurement-override-row[hidden] { display:none; }
+.measurement-override-row button { min-height:2.2rem; padding:.35rem .65rem; white-space:nowrap; }
+.self-test-problems { margin:.45rem 0 0; padding-left:1.1rem; color:var(--muted); font-size:.78rem; line-height:1.4; }
+.self-test-problems li + li { margin-top:.25rem; }
+.expert-details {
+  display:block;
+  position:relative;
+  overflow:hidden;
+  margin-top:.7rem;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:color-mix(in srgb,CanvasText 2%,transparent);
+}
+.expert-details > summary {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  width:100%;
+  min-height:3rem;
+  padding:.75rem .85rem;
+  background:color-mix(in srgb,CanvasText 3%,transparent);
+  font-size:1rem;
+  font-weight:760;
+}
+.expert-details > summary::after { margin-left:auto; align-self:flex-start; }
+.expert-details[open] > summary { border-bottom:1px solid var(--border); }
+.expert-details-body { padding:.8rem .9rem .9rem; }
+.expert-details-body > .expert-statistics { margin:0; gap:.38rem; }
+.expert-details-body > .expert-statistics > div {
+  grid-template-columns:minmax(12rem,34%) minmax(0,1fr);
+  padding:.2rem 0;
+  border-bottom:1px solid color-mix(in srgb,var(--border) 58%,transparent);
+}
+.expert-details-body > .expert-statistics > div:last-child { border-bottom:0; }
+.expert-details-body .measurement-quality-row { align-items:center; }
+.expert-details-body .measurement-quality-explanation {
+  margin:.65rem 0 0;
+  padding-top:.65rem;
+  border-top:1px solid var(--border);
+  max-width:62rem;
+}
+@media(max-width:650px){
+  .measurement-override-row { align-items:flex-start; flex-direction:column; }
+  .measurement-override-row button { width:100%; white-space:normal; }
+  .expert-details-body > .expert-statistics > div { grid-template-columns:1fr; row-gap:.12rem; }
 }
 """

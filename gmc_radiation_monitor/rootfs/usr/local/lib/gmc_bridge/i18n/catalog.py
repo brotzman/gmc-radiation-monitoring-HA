@@ -981,3 +981,17 @@ _release_846_display_translations = {
 }
 for _language, _catalogue in _release_846_display_translations.items():
     CATALOGS[_language].update(_catalogue)
+
+# Version 8.4.7: make browser-local measurement display overrides explicit.
+_release_847_display_translations = {
+    "en": {"Local browser setting active": "Local browser setting active", "Reset to app default": "Reset to app default"},
+    "de": {"Local browser setting active": "Lokale Browser-Einstellung aktiv", "Reset to app default": "Auf App-Standard zurücksetzen"},
+    "fr": {"Local browser setting active": "Réglage local du navigateur actif", "Reset to app default": "Rétablir le réglage de l’application"},
+    "es": {"Local browser setting active": "Ajuste local del navegador activo", "Reset to app default": "Restablecer el valor de la aplicación"},
+    "it": {"Local browser setting active": "Impostazione locale del browser attiva", "Reset to app default": "Ripristina il valore dell’app"},
+    "nl": {"Local browser setting active": "Lokale browserinstelling actief", "Reset to app default": "Terug naar app-standaard"},
+    "pl": {"Local browser setting active": "Aktywne lokalne ustawienie przeglądarki", "Reset to app default": "Przywróć ustawienie aplikacji"},
+    "hr": {"Local browser setting active": "Aktivna je lokalna postavka preglednika", "Reset to app default": "Vrati na zadanu postavku aplikacije"},
+}
+for _language, _catalogue in _release_847_display_translations.items():
+    CATALOGS[_language].update(_catalogue)

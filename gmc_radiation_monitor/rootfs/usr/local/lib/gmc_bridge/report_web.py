@@ -1683,12 +1683,12 @@ def run_report_server() -> None:
     ui_language = os.environ.get("UI_LANGUAGE", "auto").strip().lower()
     main_value_size = os.environ.get("MAIN_VALUE_SIZE", "large").strip().lower()
     custom_value_font_size_px = int(os.environ.get("CUSTOM_VALUE_FONT_SIZE_PX", "36"))
-    cosmic_hint_enabled = os.environ.get("COSMIC_HINT_ENABLED", "true").strip().lower() == "true"
+    cosmic_hint_enabled = os.environ.get("COSMIC_HINT_ENABLED", "false").strip().lower() == "true"
     pressure_weather_entity_primary = os.environ.get(
-        "PRESSURE_WEATHER_ENTITY_PRIMARY", "weather.forecast_home"
+        "PRESSURE_WEATHER_ENTITY_PRIMARY", ""
     ).strip()
     pressure_weather_entity_secondary = os.environ.get(
-        "PRESSURE_WEATHER_ENTITY_SECONDARY", "weather.forecast_balkon"
+        "PRESSURE_WEATHER_ENTITY_SECONDARY", ""
     ).strip()
     pressure_weather_source_name = os.environ.get(
         "PRESSURE_WEATHER_SOURCE_NAME", "Meteorologisk institutt (Met.no)"

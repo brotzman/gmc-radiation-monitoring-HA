@@ -164,9 +164,14 @@ class WorkflowApplicationMixin:
             home_assistant_available=bool((status.get("home_assistant_location") or {}).get("available")),
             backup_directory=self.backup_manager.directory,
         )
+        has_errors = any(item.status == "error" for item in checks)
+        has_warnings = any(item.status == "warning" for item in checks)
+        overall_status = "error" if has_errors else "warning" if has_warnings else "ok"
         return {
             "generated_at_utc": datetime.now(UTC).isoformat(),
-            "ok": all(item.status == "ok" for item in checks),
+            "ok": not has_errors,
+            "healthy": not has_errors,
+            "status": overall_status,
             "checks": [item.as_dict() for item in checks],
         }
 

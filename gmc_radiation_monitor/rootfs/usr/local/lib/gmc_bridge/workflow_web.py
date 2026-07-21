@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import html
 import json
+from collections.abc import Mapping
 from datetime import UTC, datetime, timedelta
 from typing import Any, Protocol
 from urllib.parse import quote_plus
@@ -358,17 +359,28 @@ def render_workflow_section(
         for serial, label in device_options
     )
     status_overview_checks = {"database", "devices", "connections", "freshness"}
-    checks_html = "".join(
-        '<div class="self-test-item '
-        + html.escape(check.status, quote=True)
-        + '"><span class="status-dot"></span><span><strong>'
-        + html.escape(t(check.title_key))
-        + "</strong><small>"
-        + html.escape(t(check.detail_key, **dict(check.values)))
-        + "</small></span></div>"
-        for check in self_tests
-        if check.key not in status_overview_checks
-    )
+    check_cards: list[str] = []
+    for check in self_tests:
+        if check.key in status_overview_checks:
+            continue
+        problem_values = check.values.get("problems") if isinstance(check.values, Mapping) else None
+        problem_rows = ""
+        if isinstance(problem_values, list) and problem_values:
+            problem_rows = '<ul class="self-test-problems">' + "".join(
+                f'<li>{html.escape(str(problem))}</li>' for problem in problem_values
+            ) + "</ul>"
+        check_cards.append(
+            '<div class="self-test-item '
+            + html.escape(check.status, quote=True)
+            + '"><span class="status-dot"></span><span><strong>'
+            + html.escape(t(check.title_key))
+            + "</strong><small>"
+            + html.escape(t(check.detail_key, **dict(check.values)))
+            + "</small>"
+            + problem_rows
+            + "</span></div>"
+        )
+    checks_html = "".join(check_cards)
     scheduler = automation_status.get("scheduler") if isinstance(automation_status.get("scheduler"), dict) else {}
     notifications = automation_status.get("notifications") if isinstance(automation_status.get("notifications"), dict) else {}
     schedule_detail = t("No scheduled report has run yet")

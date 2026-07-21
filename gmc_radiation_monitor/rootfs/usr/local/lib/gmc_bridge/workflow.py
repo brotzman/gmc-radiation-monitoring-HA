@@ -291,7 +291,15 @@ def run_self_test(
         try:
             payload = json.loads(options.read_text(encoding="utf-8"))
             config_problems = validate_candidate_options(payload)
-            results.append(CheckResult("configuration", "ok" if not config_problems else "warning", "App configuration", "Configuration is valid" if not config_problems else "Configuration warnings: {count}", {"count": len(config_problems)}))
+            results.append(
+                CheckResult(
+                    "configuration",
+                    "ok" if not config_problems else "warning",
+                    "App configuration",
+                    "Configuration is valid" if not config_problems else "Configuration warnings: {count}",
+                    {"count": len(config_problems), "problems": config_problems},
+                )
+            )
         except (OSError, json.JSONDecodeError, ValueError) as exc:
             results.append(CheckResult("configuration", "error", "App configuration", "Configuration cannot be read: {error}", {"error": str(exc)}))
     else:
@@ -312,67 +320,84 @@ def validate_candidate_options(payload: object) -> list[str]:
     problems: list[str] = []
     if not isinstance(payload, dict):
         return ["Configuration must be a JSON object"]
+
     known_groups = {"devices", "dual_tube_devices", "gmcmap", "history", "analysis", "safety", "interface", "system"}
     unknown = sorted(set(payload) - known_groups)
     if unknown:
         problems.append("Unknown top-level groups: " + ", ".join(unknown))
-    devices = payload.get("devices", [])
-    if not isinstance(devices, list) or not devices:
-        problems.append("At least one device configuration is required")
+
+    devices_raw = payload.get("devices", [])
+    dual_devices_raw = payload.get("dual_tube_devices", [])
+    devices: list[object]
+    dual_devices: list[object]
+    if devices_raw in (None, []):
+        devices = []
+    elif isinstance(devices_raw, list):
+        devices = devices_raw
     else:
-        names: set[str] = set()
-        for index, item in enumerate(devices):
-            if not isinstance(item, dict):
-                problems.append(f"devices[{index}] must be an object")
-                continue
-            name = str(item.get("name") or "").strip()
-            if name and name.casefold() in names:
-                problems.append(f"Duplicate device name: {name}")
-            names.add(name.casefold())
-            try:
-                if int(item.get("scan_interval", 60)) < 5:
-                    problems.append(f"devices[{index}].scan_interval must be at least 5 seconds")
-            except (TypeError, ValueError):
-                problems.append(f"devices[{index}].scan_interval must be numeric")
-            try:
-                delay = float(item.get("serial_startup_delay", 0 if index == 0 else 15))
-                if index > 0 and delay < 15:
-                    problems.append(f"devices[{index}].serial_startup_delay should be at least 15 seconds")
-            except (TypeError, ValueError):
-                problems.append(f"devices[{index}].serial_startup_delay must be numeric")
-    dual_devices = payload.get("dual_tube_devices", [])
-    if dual_devices not in (None, []):
-        if not isinstance(dual_devices, list):
-            problems.append("dual_tube_devices must be a list")
+        devices = []
+        problems.append("devices must be a list")
+    if dual_devices_raw in (None, []):
+        dual_devices = []
+    elif isinstance(dual_devices_raw, list):
+        dual_devices = dual_devices_raw
+    else:
+        dual_devices = []
+        problems.append("dual_tube_devices must be a list")
+
+    if not devices and not dual_devices:
+        problems.append("At least one device configuration is required across devices and dual_tube_devices")
+
+    names: dict[str, str] = {}
+    device_ordinal = 0
+
+    def validate_common_device(group: str, index: int, item: object) -> dict[str, Any] | None:
+        nonlocal device_ordinal
+        if not isinstance(item, dict):
+            problems.append(f"{group}[{index}] must be an object")
+            return None
+        name = str(item.get("name") or "").strip()
+        folded = name.casefold()
+        if not name:
+            problems.append(f"{group}[{index}].name is required")
+        elif folded in names:
+            problems.append(
+                f"Duplicate device name across devices and dual_tube_devices: {name} "
+                f"(already used by {names[folded]})"
+            )
         else:
-            configured_names = {
-                str(item.get("name") or "").strip().casefold()
-                for item in devices
-                if isinstance(item, dict) and str(item.get("name") or "").strip()
-            } if isinstance(devices, list) else set()
-            seen_dual_names: set[str] = set()
-            for index, item in enumerate(dual_devices):
-                if not isinstance(item, dict):
-                    problems.append(f"dual_tube_devices[{index}] must be an object")
-                    continue
-                name = str(item.get("name") or "").strip()
-                folded = name.casefold()
-                if not name:
-                    problems.append(f"dual_tube_devices[{index}].name is required")
-                elif folded not in configured_names:
-                    problems.append(f"dual_tube_devices[{index}] references unknown device name: {name}")
-                elif folded in seen_dual_names:
-                    problems.append(f"Duplicate dual-tube device name: {name}")
-                seen_dual_names.add(folded)
-                mode = str(item.get("dual_tube_mode") or "separate").strip().lower()
-                if mode not in {"separate", "curve"}:
-                    problems.append(f"dual_tube_devices[{index}].dual_tube_mode must be separate or curve")
-                try:
-                    switch = item.get("dual_tube_switch_cpm")
-                    if switch not in (None, "") and int(switch) <= 0:
-                        problems.append(f"dual_tube_devices[{index}].dual_tube_switch_cpm must be greater than zero")
-                except (TypeError, ValueError):
-                    problems.append(f"dual_tube_devices[{index}].dual_tube_switch_cpm must be numeric")
+            names[folded] = f"{group}[{index}]"
+        try:
+            if int(item.get("scan_interval", 60)) < 5:
+                problems.append(f"{group}[{index}].scan_interval must be at least 5 seconds")
+        except (TypeError, ValueError):
+            problems.append(f"{group}[{index}].scan_interval must be numeric")
+        try:
+            default_delay = 0 if device_ordinal == 0 else 15
+            delay = float(item.get("serial_startup_delay", default_delay))
+            if device_ordinal > 0 and delay < 15:
+                problems.append(f"{group}[{index}].serial_startup_delay should be at least 15 seconds")
+        except (TypeError, ValueError):
+            problems.append(f"{group}[{index}].serial_startup_delay must be numeric")
+        device_ordinal += 1
+        return item
+
+    for index, item in enumerate(devices):
+        validate_common_device("devices", index, item)
+
+    for index, item in enumerate(dual_devices):
+        validated = validate_common_device("dual_tube_devices", index, item)
+        if validated is None:
+            continue
+        mode = str(validated.get("dual_tube_mode") or "separate").strip().lower()
+        if mode not in {"separate", "curve"}:
+            problems.append(f"dual_tube_devices[{index}].dual_tube_mode must be separate or curve")
+        try:
+            switch = validated.get("dual_tube_switch_cpm")
+            if switch not in (None, "") and int(switch) <= 0:
+                problems.append(f"dual_tube_devices[{index}].dual_tube_switch_cpm must be greater than zero")
+        except (TypeError, ValueError):
+            problems.append(f"dual_tube_devices[{index}].dual_tube_switch_cpm must be numeric")
 
     history = payload.get("history", {})
     if isinstance(history, dict):

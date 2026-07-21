@@ -97,5 +97,9 @@ def render_measurement_display_settings(*, t: TranslatorLike, custom_px: int) ->
         f'<div class="measurement-size-options" role="radiogroup" aria-label="{html.escape(t("Main measurement font size"), quote=True)}">'
         f'{options}<label class="custom-font-size"><span>{html.escape(t("Custom font size"))}</span>'
         f'<input type="number" id="custom-value-font-size" min="20" max="64" step="1" value="{custom_px}"><span>px</span></label>'
+        '</div>'
+        f'<div class="measurement-override-row" id="measurement-override-status" hidden aria-live="polite">'
+        f'<span>{html.escape(t("Local browser setting active"))}</span>'
+        f'<button type="button" id="reset-main-value-size" class="button secondary">{html.escape(t("Reset to app default"))}</button>'
         '</div></details>'
     )

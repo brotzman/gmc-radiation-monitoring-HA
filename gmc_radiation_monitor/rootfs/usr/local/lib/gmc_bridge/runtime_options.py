@@ -103,12 +103,12 @@ def runtime_environment(options: dict[str, Any], service: str) -> dict[str, str]
         "REPORT_TIMEZONE": _value(history, "report_timezone", "Europe/Berlin"),
         "LOG_LEVEL": _value(system, "log_level", "info"),
         "UI_LANGUAGE": _value(interface, "ui_language", "auto"),
-        "COSMIC_HINT_ENABLED": _value(analysis, "cosmic_hint_enabled", True),
+        "COSMIC_HINT_ENABLED": _value(analysis, "cosmic_hint_enabled", False),
         "PRESSURE_WEATHER_ENTITY_PRIMARY": _value(
-            analysis, "pressure_weather_entity_primary", "weather.forecast_home_2"
+            analysis, "pressure_weather_entity_primary", ""
         ),
         "PRESSURE_WEATHER_ENTITY_SECONDARY": _value(
-            analysis, "pressure_weather_entity_secondary", "weather.forecast_balkon"
+            analysis, "pressure_weather_entity_secondary", ""
         ),
         "PRESSURE_WEATHER_SOURCE_NAME": _value(
             analysis, "pressure_weather_source_name", "Meteorologisk institutt (Met.no)"
@@ -178,7 +178,7 @@ def runtime_environment(options: dict[str, Any], service: str) -> dict[str, str]
             analysis, "external_temperature_entity", ""
         ),
         "EXTERNAL_TEMPERATURE_NAME": _value(
-            analysis, "external_temperature_name", "Raumklima (Arbeitszimmer)"
+            analysis, "external_temperature_name", ""
         ),
         "EXTERNAL_TEMPERATURE_MAX_AGE_SECONDS": _value(
             analysis, "external_temperature_max_age_seconds", 900
