@@ -526,6 +526,42 @@ def render_dashboard_script(*, selected_serial: str, language: str, translator: 
     try {{ localStorage.setItem(key, JSON.stringify(value)); }} catch (_error) {{}}
   }}
   const preferences = readJson(uiStorageKey, {{ cards: {{}}, groups: {{}}, pinned: [], reportForms: {{}}, lastSection: '', analysisLevel: '' }});
+  const allowedMainValueSizes = new Set(['small', 'medium', 'large', 'custom']);
+  function applyMeasurementDisplayPreferences() {{
+    const configuredSize = document.body.dataset.mainValueSize || 'large';
+    const requestedSize = preferences.mainValueSize || configuredSize;
+    const size = allowedMainValueSizes.has(requestedSize) ? requestedSize : configuredSize;
+    const configuredCustom = Number(document.body.dataset.customValueFontSizePx || 36);
+    const requestedCustom = Number(preferences.customValueFontSizePx || configuredCustom);
+    const customPx = Math.min(64, Math.max(20, Number.isFinite(requestedCustom) ? Math.round(requestedCustom) : 36));
+    document.body.dataset.mainValueSize = size;
+    document.body.style.setProperty('--custom-main-value-font-size', `${{customPx}}px`);
+    document.querySelectorAll('input[name="main-value-size"]').forEach((input) => {{ input.checked = input.value === size; }});
+    document.querySelectorAll('#custom-value-font-size').forEach((input) => {{ input.value = String(customPx); input.disabled = size !== 'custom'; }});
+  }}
+  applyMeasurementDisplayPreferences();
+
+  document.addEventListener('change', (event) => {{
+    const sizeInput = event.target.closest('input[name="main-value-size"]');
+    if (sizeInput) {{
+      preferences.mainValueSize = sizeInput.value;
+      writeJson(uiStorageKey, preferences);
+      applyMeasurementDisplayPreferences();
+      return;
+    }}
+    const customInput = event.target.closest('#custom-value-font-size');
+    if (customInput) {{
+      preferences.customValueFontSizePx = Math.min(64, Math.max(20, Number(customInput.value || 36)));
+      writeJson(uiStorageKey, preferences);
+      applyMeasurementDisplayPreferences();
+    }}
+  }});
+  document.addEventListener('input', (event) => {{
+    const customInput = event.target.closest('#custom-value-font-size');
+    if (!customInput || document.body.dataset.mainValueSize !== 'custom') return;
+    const px = Math.min(64, Math.max(20, Number(customInput.value || 36)));
+    document.body.style.setProperty('--custom-main-value-font-size', `${{px}}px`);
+  }});
   const analysisLevelPanel = document.getElementById('analysis-level-panel');
   const allowedAnalysisLevels = new Set(['summary', 'analysis', 'expert']);
   function setAnalysisLevel(requestedLevel, persist = true) {{
@@ -795,7 +831,7 @@ def render_dashboard_script(*, selected_serial: str, language: str, translator: 
           const nextSerial = nextSection.dataset.selectedSerial || ''; if (nextSerial) currentUrl.searchParams.set('device', nextSerial); else currentUrl.searchParams.delete('device');
           window.location.replace(currentUrl.toString()); return;
         }}
-        nextSection.open = currentSection.open; currentSection.replaceWith(nextSection); applyCardPreferences();
+        nextSection.open = currentSection.open; currentSection.replaceWith(nextSection); applyCardPreferences(); applyMeasurementDisplayPreferences();
       }}
     }} catch (error) {{ console.debug('GMC device display refresh skipped', error); }}
     finally {{ requestAnimationFrame(() => {{ if (pageScroll) pageScroll.scrollTop = savedScrollTop; else window.scrollTo({{top:savedScrollTop,behavior:'instant'}}); }}); deviceRefreshRunning = false; }}
@@ -1006,4 +1042,61 @@ DASHBOARD_CSS += r"""
 .expert-details { display:block; border:1px solid var(--border); border-radius:10px; margin-top:.7rem; }
 .expert-details > summary { padding:.7rem .8rem; min-height:auto; }
 .expert-details > .expert-statistics, .expert-details > .measurement-quality-explanation { margin:.7rem; }
+"""
+
+
+DASHBOARD_CSS += r"""
+/* 8.4.6 connected-device card hierarchy and configurable live-value size. */
+body { --main-value-font-size:clamp(2.15rem,5.2vw,3.25rem); --custom-main-value-font-size:36px; }
+body[data-main-value-size="small"] { --main-value-font-size:clamp(1.45rem,3vw,1.85rem); }
+body[data-main-value-size="medium"] { --main-value-font-size:clamp(1.8rem,4vw,2.45rem); }
+body[data-main-value-size="large"] { --main-value-font-size:clamp(2.15rem,5.2vw,3.25rem); }
+body[data-main-value-size="custom"] { --main-value-font-size:var(--custom-main-value-font-size,36px); }
+.device-card { padding:1.05rem; border-radius:14px; }
+.device-card-header { align-items:center; margin-bottom:.9rem; }
+.device-card-title { align-items:center; }
+.device-card-title-copy { display:grid; gap:.08rem; }
+.device-card-title-copy h3 { margin:0; font-size:1.08rem; line-height:1.2; }
+.device-model-line { color:var(--muted); font-size:.86rem; line-height:1.3; overflow-wrap:anywhere; }
+.device-id { color:var(--muted); font-size:.72rem; letter-spacing:.015em; }
+.device-status-stack { display:grid; justify-items:end; gap:.22rem; min-width:max-content; }
+.device-freshness { max-width:11rem; color:var(--muted); font-size:.72rem; text-align:right; line-height:1.25; }
+.measurement-hero { grid-template-columns:minmax(0,1fr) auto; gap:.35rem .9rem; padding:1rem 1.05rem; }
+.dose-reading { display:flex; align-items:baseline; gap:.28em; min-width:0; font-size:var(--main-value-font-size); font-weight:850; line-height:.95; font-variant-numeric:tabular-nums; letter-spacing:-.035em; }
+.dose-number { min-width:0; overflow-wrap:anywhere; }
+.dose-unit { flex:0 0 auto; font-size:.38em; font-weight:700; letter-spacing:0; color:var(--muted); white-space:nowrap; }
+.measurement-hero .quality-stars { align-self:center; padding:.24rem .42rem; border-radius:999px; background:var(--panel); }
+.measurement-context { gap:.4rem; margin-top:.45rem; }
+.measurement-context .measurement-chip { display:inline-flex; align-items:center; min-height:1.8rem; padding:.2rem .58rem; border:1px solid color-mix(in srgb,var(--border) 78%,transparent); background:var(--panel); font-size:.8rem; font-weight:650; }
+.measurement-display-settings { margin:0 0 .85rem; border:1px solid var(--border); border-radius:11px; background:color-mix(in srgb,var(--panel) 88%,transparent); }
+.measurement-display-settings > summary { display:flex; align-items:center; min-height:2.8rem; padding:.62rem .78rem; cursor:pointer; }
+.measurement-display-settings > summary span { display:grid; gap:.08rem; }
+.measurement-display-settings > summary strong,.measurement-display-settings > summary small { display:block; }
+.measurement-display-settings > summary small { color:var(--muted); font-size:.76rem; }
+.measurement-size-options { display:flex; flex-wrap:wrap; gap:.45rem; align-items:center; padding:0 .78rem .78rem; }
+.measurement-size-options label { display:inline-flex; align-items:center; gap:.36rem; min-height:2.35rem; padding:.38rem .58rem; border:1px solid var(--border); border-radius:9px; background:Canvas; cursor:pointer; font-size:.82rem; }
+.measurement-size-options label:has(input:checked) { border-color:var(--blue); background:color-mix(in srgb,var(--blue) 8%,Canvas); }
+.measurement-size-options input[type="radio"] { width:auto; margin:0; }
+.measurement-size-options .custom-font-size { margin-left:auto; cursor:default; }
+.custom-font-size input { width:4.7rem; min-height:2rem; padding:.25rem .4rem; }
+@media(max-width:650px){
+  .device-card { padding:.85rem; }
+  .device-card-header { align-items:flex-start; }
+  .device-card-icon { min-width:2.8rem; height:2.8rem; }
+  .device-status-stack { min-width:0; }
+  .device-freshness { max-width:8rem; }
+  .measurement-hero { grid-template-columns:1fr; align-items:start; padding:.85rem; }
+  .measurement-hero .quality-stars { justify-self:start; }
+  .dose-reading { max-width:100%; }
+  .measurement-size-options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .measurement-size-options label { width:100%; }
+  .measurement-size-options .custom-font-size { grid-column:1/-1; margin-left:0; justify-content:space-between; }
+}
+@media(max-width:390px){
+  .device-card-header { display:grid; grid-template-columns:1fr; }
+  .device-status-stack { justify-items:start; }
+  .device-freshness { max-width:none; text-align:left; }
+  .measurement-size-options { grid-template-columns:1fr; }
+  .measurement-size-options .custom-font-size { grid-column:auto; }
+}
 """

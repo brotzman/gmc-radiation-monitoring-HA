@@ -147,6 +147,8 @@ def runtime_environment(options: dict[str, Any], service: str) -> dict[str, str]
             "SAFETY_WARNING_USVH": _value(safety, "warning_usvh", 0.326),
             "SAFETY_DANGER_USVH": _value(safety, "danger_usvh", 0.651),
             "UI_MODE": _value(interface, "ui_mode", "simple"),
+            "MAIN_VALUE_SIZE": _value(interface, "main_value_size", "large"),
+            "CUSTOM_VALUE_FONT_SIZE_PX": _value(interface, "custom_value_font_size_px", 36),
             # Internal safety limits are intentionally not user-configurable.
             "HTTP_MAX_WORKERS": "12",
             "HTTP_SOCKET_TIMEOUT_SECONDS": "30",

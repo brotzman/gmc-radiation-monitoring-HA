@@ -330,7 +330,7 @@ def render_calibration_panel(*, item: dict[str, Any], latest_cpm: object, t: Tra
         f'<div><strong>{html.escape(t("Correction"))}</strong><span>{html.escape(correction_label)}</span></div>'
         f'<div><strong>{html.escape(t("Live dose quality"))}</strong><span>{html.escape(_value(dose, " µSv/h", 4))} · {html.escape(accuracy_label)}</span></div>'
         '</div></div>'
-        '<details class="tube-profile-grid expert-details" data-analysis-tier="expert"><summary>'
+        '<details class="tube-profile-grid" data-analysis-tier="expert"><summary>'
         f'{html.escape(t("Expert view"))}</summary><div class="expert-statistics">'
         f'<div><strong>{html.escape(t("Raw CPM"))}</strong><span>{html.escape(_value(latest_cpm, " CPM"))}</span></div>'
         f'<div><strong>{html.escape(t("Corrected CPM"))}</strong><span>{html.escape(_value(corrected, " CPM", 1))}</span></div>'

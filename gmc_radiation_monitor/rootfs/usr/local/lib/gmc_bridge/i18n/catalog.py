@@ -397,7 +397,7 @@ def _fields(text: str) -> set[str]:
 
 
 
-# Version 8.4.5: dual-tube detector profile calibration status.
+# Version 8.4.6: dual-tube detector profile calibration status.
 _partial_calibration_overrides = {
     "en": {"Partially calibrated": "Partially calibrated"},
     "de": {"Partially calibrated": "Teilweise kalibriert"},
@@ -965,4 +965,19 @@ _release_842_overrides = {
     },
 }
 for _language, _catalogue in _release_842_overrides.items():
+    CATALOGS[_language].update(_catalogue)
+
+
+# Version 8.4.6: connected-device card display controls.
+_release_846_display_translations = {
+    "en": {"Measurement display": "Measurement display", "Main measurement font size": "Main measurement font size", "Small": "Small", "Medium": "Medium", "Large": "Large", "Custom": "Custom", "Custom font size": "Custom font size"},
+    "de": {"Measurement display": "Messwertdarstellung", "Main measurement font size": "Hauptmesswert Schriftgröße", "Small": "Klein", "Medium": "Mittel", "Large": "Groß", "Custom": "Benutzerdefiniert", "Custom font size": "Benutzerdefinierte Schriftgröße"},
+    "fr": {"Measurement display": "Affichage des mesures", "Main measurement font size": "Taille du résultat principal", "Small": "Petite", "Medium": "Moyenne", "Large": "Grande", "Custom": "Personnalisée", "Custom font size": "Taille personnalisée"},
+    "es": {"Measurement display": "Visualización de mediciones", "Main measurement font size": "Tamaño del valor principal", "Small": "Pequeño", "Medium": "Mediano", "Large": "Grande", "Custom": "Personalizado", "Custom font size": "Tamaño personalizado"},
+    "it": {"Measurement display": "Visualizzazione misura", "Main measurement font size": "Dimensione valore principale", "Small": "Piccola", "Medium": "Media", "Large": "Grande", "Custom": "Personalizzata", "Custom font size": "Dimensione personalizzata"},
+    "nl": {"Measurement display": "Meetwaardeweergave", "Main measurement font size": "Tekengrootte hoofdmeetwaarde", "Small": "Klein", "Medium": "Middel", "Large": "Groot", "Custom": "Aangepast", "Custom font size": "Aangepaste tekengrootte"},
+    "pl": {"Measurement display": "Wyświetlanie pomiaru", "Main measurement font size": "Rozmiar głównej wartości", "Small": "Mały", "Medium": "Średni", "Large": "Duży", "Custom": "Własny", "Custom font size": "Własny rozmiar"},
+    "hr": {"Measurement display": "Prikaz mjerenja", "Main measurement font size": "Veličina glavne vrijednosti", "Small": "Mala", "Medium": "Srednja", "Large": "Velika", "Custom": "Prilagođena", "Custom font size": "Prilagođena veličina"},
+}
+for _language, _catalogue in _release_846_display_translations.items():
     CATALOGS[_language].update(_catalogue)

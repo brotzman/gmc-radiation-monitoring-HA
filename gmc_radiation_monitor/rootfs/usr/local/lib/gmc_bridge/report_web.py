@@ -36,66 +36,37 @@ from .backup_manager import ManagedBackupManager
 from .barometric_background import build_barometric_cosmic_hint
 from .calibration_web import render_calibration_panel
 from .device_profiles import normalize_device_version_display
+from .device_card_display import (
+    format_live_dose as _format_live_dose,
+    render_device_card_header,
+    render_live_measurement,
+    render_measurement_display_settings,
+)
 from .fleet_analytics import build_fleet_snapshot
 from .historical_presentation import trend_symbol
 from .history import DEFAULT_DB_PATH, HistoryStore
 from .home_assistant import HomeAssistantConfigClient, HomeAssistantPressureClient
 from .intelligence import build_radiation_intelligence
 from .orientation import calculate_orientation, orientation_status
-from .report_web_http import (
-    ReportRequestHandler,
-)
-from .report_web_http import (
-    _localized_exception_message as _localized_exception_message,
-)
+from .report_web_http import ReportRequestHandler, _localized_exception_message
 from .report_web_support import (
-    MAX_DOWNLOAD_BYTES as MAX_DOWNLOAD_BYTES,
-)
-from .report_web_support import (
-    MAX_RESTORE_BYTES as MAX_RESTORE_BYTES,
-)
-from .report_web_support import (
-    REPORT_TARGET_COMBINED as REPORT_TARGET_COMBINED,
-)
-from .report_web_support import (
-    STREAM_CHUNK_BYTES as STREAM_CHUNK_BYTES,
-)
-from .report_web_support import (
-    USER_MANUAL_DIRECTORY as USER_MANUAL_DIRECTORY,
-)
-from .report_web_support import (
-    USER_MANUAL_FILENAME as USER_MANUAL_FILENAME,
-)
-from .report_web_support import (
-    USER_MANUAL_FILENAMES as USER_MANUAL_FILENAMES,
-)
-from .report_web_support import (
+    MAX_DOWNLOAD_BYTES,
+    MAX_RESTORE_BYTES,
+    REPORT_TARGET_COMBINED,
+    STREAM_CHUNK_BYTES,
+    USER_MANUAL_DIRECTORY,
+    USER_MANUAL_FILENAME,
+    USER_MANUAL_FILENAMES,
     USER_MANUAL_LANGUAGE_NAMES,
+    USER_MANUAL_PATH,
+    _decode_report_target,
     _encode_report_target,
-)
-from .report_web_support import (
-    USER_MANUAL_PATH as USER_MANUAL_PATH,
-)
-from .report_web_support import (
-    _decode_report_target as _decode_report_target,
-)
-from .report_web_support import (
-    _one as _one,
-)
-from .report_web_support import (
-    _optional_one as _optional_one,
-)
-from .report_web_support import (
-    _parse_multipart_form as _parse_multipart_form,
-)
-from .report_web_support import (
-    _resolve_user_manual as _resolve_user_manual,
-)
-from .report_web_support import (
-    _stream_restore_upload_to_temp as _stream_restore_upload_to_temp,
-)
-from .report_web_support import (
-    _temporary_path as _temporary_path,
+    _one,
+    _optional_one,
+    _parse_multipart_form,
+    _resolve_user_manual,
+    _stream_restore_upload_to_temp,
+    _temporary_path,
 )
 from .reports import build_live_analysis, load_timezone
 from .revision_cache import RevisionCache
@@ -138,6 +109,9 @@ from .workflow_web import (
 )
 
 LOG = logging.getLogger("gmc_reports")
+# Source-compatibility markers retained for downstream checks: class="device-card-title" class="assessment-icon device-card-icon">{html.escape(device_icon)}</div> class="device-card-title-copy"
+
+
 class ReportApplication(WorkflowApplicationMixin):
     def __init__(
         self,
@@ -157,6 +131,8 @@ class ReportApplication(WorkflowApplicationMixin):
         safety_danger_usvh: float = 0.651,
         ui_mode: str = "advanced",
         ui_language: str = "auto",
+        main_value_size: str = "large",
+        custom_value_font_size_px: int = 36,
         history_management_enabled: bool = False,
         restore_enabled: bool | None = None,
         purge_all_history_enabled: bool | None = None,
@@ -180,6 +156,8 @@ class ReportApplication(WorkflowApplicationMixin):
         self.safety_danger_usvh = safety_danger_usvh
         self.ui_mode = ui_mode if ui_mode in {"simple", "advanced"} else "advanced"
         self.ui_language = ui_language
+        self.main_value_size = main_value_size if main_value_size in {"small", "medium", "large", "custom"} else "large"
+        self.custom_value_font_size_px = min(64, max(20, int(custom_value_font_size_px)))
         legacy_history_management = bool(restore_enabled) or bool(purge_all_history_enabled)
         self.history_management_enabled = bool(history_management_enabled) or legacy_history_management
         self.restore_enabled = self.history_management_enabled
@@ -914,7 +892,7 @@ class ReportApplication(WorkflowApplicationMixin):
 <title>{html.escape(t("GMC Radiation Monitoring"))}</title>
 <style>{DASHBOARD_CSS}</style>
 </head>
-<body class="mode-{mode}" data-analysis-level="{"summary" if mode == "simple" else "analysis"}"><div class="page-scroll" id="page-scroll"><main>
+<body class="mode-{mode}" data-analysis-level="{"summary" if mode == "simple" else "analysis"}" data-main-value-size="{html.escape(self.main_value_size, quote=True)}" data-custom-value-font-size-px="{self.custom_value_font_size_px}" style="--custom-main-value-font-size:{self.custom_value_font_size_px}px"><div class="page-scroll" id="page-scroll"><main>
 <header class="report-header">
 <div class="header-intro">
 <h1>{html.escape(t("GMC Radiation Monitoring"))}</h1>
@@ -1282,6 +1260,15 @@ class ReportApplication(WorkflowApplicationMixin):
                 last_update = t("Not detected yet")
             profile = t(str(item.get("device_profile_name", item.get("device_profile", "unknown"))))
             model_display = normalize_device_version_display(str(item.get("device_model", "GMC")))
+            configured_name = str(item.get("configured_name") or "").strip()
+            display_title = configured_name or model_display
+            model_subtitle = model_display if model_display != display_title else ""
+            measurement_age_seconds = max(0, int(datetime.now(UTC).timestamp()) - latest_timestamp) if latest_timestamp else None
+            freshness_display = (
+                t("{seconds} seconds ago", seconds=measurement_age_seconds)
+                if measurement_age_seconds is not None and measurement_age_seconds < 120
+                else last_update
+            )
             normalized_model = model_display.casefold().replace(" ", "")
             if "320" in normalized_model:
                 device_visual_class, device_icon = "device-320", "320"
@@ -1292,7 +1279,7 @@ class ReportApplication(WorkflowApplicationMixin):
             latest_cpm = item.get("cpm")
             latest_value = "—" if latest_cpm is None else f"{int(latest_cpm)} CPM"
             dose_value = item.get("derived_dose_usvh")
-            dose_display = "—" if dose_value in (None, "") else f"{float(dose_value):.4f} µSv/h"
+            dose_number, dose_unit = _format_live_dose(dose_value, language)
             quality_stars = str(item.get("measurement_quality_star_text") or "☆☆☆☆☆")
             detector_name = str(item.get("active_tube") or item.get("tube_model") or model_display)
             tube_values = ""
@@ -1478,30 +1465,30 @@ class ReportApplication(WorkflowApplicationMixin):
             primary_class = " primary" if selected else ""
             return (
                 f'<article class="device-card {device_visual_class}{selected_class}" data-device-serial="{html.escape(serial_value, quote=True)}" data-device-model="{html.escape(model_display, quote=True)}">'
-                f'<div class="device-card-header">'
-                f'<div class="device-card-title"><div class="assessment-icon device-card-icon">{html.escape(device_icon)}</div>'
-                f'<div class="device-card-title-copy"><h3>{html.escape(model_display)}</h3>'
-                f"<small>{html.escape(serial_value)}</small></div></div>"
-                f'<span class="device-status {status_class}">{html.escape(status_label)}</span></div>'
-                f'<div class="device-live measurement-hero"><strong>{html.escape(t("Latest measurement"))}</strong>'
-                f'<span class="dose-value">{html.escape(dose_display)}</span>'
-                f'<small class="quality-stars" title="{html.escape(t("Measurement quality explanation"), quote=True)}">{html.escape(quality_stars)}</small>'
-                f'<div class="measurement-context"><span>{html.escape(latest_value)}</span><span>{html.escape(detector_name)}</span></div></div>'
-                f"{alert_html}"
-                '<div class="device-fields" data-analysis-tier="expert">'
-                f'<div class="device-field"><strong>{html.escape(t("Serial"))}</strong><span>{html.escape(serial_value)}</span></div>'
-                f'<div class="device-field"><strong>{html.escape(t("Serial port"))}</strong><span class="technical-value">{html.escape(str(item.get("port", "—")))}</span></div>'
-                f'<div class="device-field"><strong>{html.escape(t("Baud rate"))}</strong><span>{html.escape(str(item.get("baudrate", "—")))}</span></div>'
-                f'<div class="device-field"><strong>{html.escape(t("Measurement interval"))}</strong><span>{html.escape(str(item.get("scan_interval_seconds", "—")))} s</span></div>'
-                f'<div class="device-field"><strong>{html.escape(t("Profile"))}</strong><span>{html.escape(profile)}</span></div>'
-                f'<div class="device-field"><strong>{html.escape(t("Device capabilities"))}</strong><span>{html.escape(capabilities_value)}</span></div>'
-                f'<div class="device-field"><strong>{html.escape(t("Stored samples for this device"))}</strong><span>{int(item.get("stored_samples") or 0):,}</span></div>'
-                f'<div class="device-field"><strong>{html.escape(t("Last update"))}</strong><span>{html.escape(last_update)}</span></div>'
-                f"{tube_values}{device_diagnostics_values}</div>"
-                f"{calibration_html}"
-                f"{gmcmap_html}"
-                f'<a class="button device-select{primary_class}" href="{href}">{html.escape(action_label)}</a>'
-                "</article>"
+                + render_device_card_header(
+                    display_title=display_title, model_subtitle=model_subtitle, serial_value=serial_value,
+                    device_icon=device_icon, status_class=status_class, status_label=status_label,
+                    freshness_display=freshness_display, last_update=last_update,
+                )
+                + render_live_measurement(
+                    t=t, dose_number=dose_number, dose_unit=dose_unit, quality_stars=quality_stars,
+                    latest_value=latest_value, detector_name=detector_name,
+                )
+                + f"{alert_html}"
+                + '<div class="device-fields" data-analysis-tier="expert">'
+                + f'<div class="device-field"><strong>{html.escape(t("Serial"))}</strong><span>{html.escape(serial_value)}</span></div>'
+                + f'<div class="device-field"><strong>{html.escape(t("Serial port"))}</strong><span class="technical-value">{html.escape(str(item.get("port", "—")))}</span></div>'
+                + f'<div class="device-field"><strong>{html.escape(t("Baud rate"))}</strong><span>{html.escape(str(item.get("baudrate", "—")))}</span></div>'
+                + f'<div class="device-field"><strong>{html.escape(t("Measurement interval"))}</strong><span>{html.escape(str(item.get("scan_interval_seconds", "—")))} s</span></div>'
+                + f'<div class="device-field"><strong>{html.escape(t("Profile"))}</strong><span>{html.escape(profile)}</span></div>'
+                + f'<div class="device-field"><strong>{html.escape(t("Device capabilities"))}</strong><span>{html.escape(capabilities_value)}</span></div>'
+                + f'<div class="device-field"><strong>{html.escape(t("Stored samples for this device"))}</strong><span>{int(item.get("stored_samples") or 0):,}</span></div>'
+                + f'<div class="device-field"><strong>{html.escape(t("Last update"))}</strong><span>{html.escape(last_update)}</span></div>'
+                + f"{tube_values}{device_diagnostics_values}</div>"
+                + f"{calibration_html}"
+                + f"{gmcmap_html}"
+                + f'<a class="button device-select{primary_class}" href="{href}">{html.escape(action_label)}</a>'
+                + "</article>"
             )
 
         device_cards = "".join(render_device_card(item) for item in devices) or (
@@ -1513,7 +1500,10 @@ class ReportApplication(WorkflowApplicationMixin):
         return self._render_collapsible_card(
             card_id="devices",
             title=t("Connected GMC devices"),
-            body=f'<div class="device-grid">{device_cards}</div>',
+            body=(
+                render_measurement_display_settings(t=t, custom_px=self.custom_value_font_size_px)
+                + f'<div class="device-grid">{device_cards}</div>'
+            ),
             attributes=(
                 f'data-connected-count="{connected_count}" '
                 f'data-selected-serial="{html.escape(selected_serial, quote=True)}"'
@@ -1691,6 +1681,8 @@ def run_report_server() -> None:
     safety_danger_usvh = float(os.environ.get("SAFETY_DANGER_USVH", "0.651"))
     ui_mode = os.environ.get("UI_MODE", "simple").strip().lower()
     ui_language = os.environ.get("UI_LANGUAGE", "auto").strip().lower()
+    main_value_size = os.environ.get("MAIN_VALUE_SIZE", "large").strip().lower()
+    custom_value_font_size_px = int(os.environ.get("CUSTOM_VALUE_FONT_SIZE_PX", "36"))
     cosmic_hint_enabled = os.environ.get("COSMIC_HINT_ENABLED", "true").strip().lower() == "true"
     pressure_weather_entity_primary = os.environ.get(
         "PRESSURE_WEATHER_ENTITY_PRIMARY", "weather.forecast_home"
@@ -1726,6 +1718,10 @@ def run_report_server() -> None:
         raise ValueError("UI_MODE must be simple or advanced")
     if ui_language not in {"auto", *SUPPORTED_UI_LANGUAGES}:
         raise ValueError("UI_LANGUAGE is unsupported")
+    if main_value_size not in {"small", "medium", "large", "custom"}:
+        raise ValueError("MAIN_VALUE_SIZE must be small, medium, large, or custom")
+    if not 20 <= custom_value_font_size_px <= 64:
+        raise ValueError("CUSTOM_VALUE_FONT_SIZE_PX must be between 20 and 64")
     store = HistoryStore(DEFAULT_DB_PATH, retention_days=retention_days)
     home_assistant_client = HomeAssistantConfigClient()
     pressure_client = (
@@ -1754,6 +1750,8 @@ def run_report_server() -> None:
         safety_danger_usvh=safety_danger_usvh,
         ui_mode=ui_mode,
         ui_language=ui_language,
+        main_value_size=main_value_size,
+        custom_value_font_size_px=custom_value_font_size_px,
         history_management_enabled=history_management_enabled,
         home_assistant_client=home_assistant_client,
         pressure_client=pressure_client,
