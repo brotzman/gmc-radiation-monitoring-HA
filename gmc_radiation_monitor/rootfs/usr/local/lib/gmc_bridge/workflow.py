@@ -312,7 +312,7 @@ def validate_candidate_options(payload: object) -> list[str]:
     problems: list[str] = []
     if not isinstance(payload, dict):
         return ["Configuration must be a JSON object"]
-    known_groups = {"devices", "gmcmap", "history", "analysis", "safety", "interface", "system"}
+    known_groups = {"devices", "dual_tube_devices", "gmcmap", "history", "analysis", "safety", "interface", "system"}
     unknown = sorted(set(payload) - known_groups)
     if unknown:
         problems.append("Unknown top-level groups: " + ", ".join(unknown))
@@ -340,6 +340,40 @@ def validate_candidate_options(payload: object) -> list[str]:
                     problems.append(f"devices[{index}].serial_startup_delay should be at least 15 seconds")
             except (TypeError, ValueError):
                 problems.append(f"devices[{index}].serial_startup_delay must be numeric")
+    dual_devices = payload.get("dual_tube_devices", [])
+    if dual_devices not in (None, []):
+        if not isinstance(dual_devices, list):
+            problems.append("dual_tube_devices must be a list")
+        else:
+            configured_names = {
+                str(item.get("name") or "").strip().casefold()
+                for item in devices
+                if isinstance(item, dict) and str(item.get("name") or "").strip()
+            } if isinstance(devices, list) else set()
+            seen_dual_names: set[str] = set()
+            for index, item in enumerate(dual_devices):
+                if not isinstance(item, dict):
+                    problems.append(f"dual_tube_devices[{index}] must be an object")
+                    continue
+                name = str(item.get("name") or "").strip()
+                folded = name.casefold()
+                if not name:
+                    problems.append(f"dual_tube_devices[{index}].name is required")
+                elif folded not in configured_names:
+                    problems.append(f"dual_tube_devices[{index}] references unknown device name: {name}")
+                elif folded in seen_dual_names:
+                    problems.append(f"Duplicate dual-tube device name: {name}")
+                seen_dual_names.add(folded)
+                mode = str(item.get("dual_tube_mode") or "separate").strip().lower()
+                if mode not in {"separate", "curve"}:
+                    problems.append(f"dual_tube_devices[{index}].dual_tube_mode must be separate or curve")
+                try:
+                    switch = item.get("dual_tube_switch_cpm")
+                    if switch not in (None, "") and int(switch) <= 0:
+                        problems.append(f"dual_tube_devices[{index}].dual_tube_switch_cpm must be greater than zero")
+                except (TypeError, ValueError):
+                    problems.append(f"dual_tube_devices[{index}].dual_tube_switch_cpm must be numeric")
+
     history = payload.get("history", {})
     if isinstance(history, dict):
         try:

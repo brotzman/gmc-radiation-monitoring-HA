@@ -1,5 +1,15 @@
 # Changelog
 
+## 8.4.1
+
+- Renamed the connected-device scientific card to **Detector Profile**.
+- Removed repeated current-CPM and conversion-factor rows from the detector-profile card.
+- Added a responsive label/value grid so Expert statistics and dead-time values have clear spacing on desktop and mobile.
+- Removed dual-tube and second-tube controls from the common device schema used by the GMC-320.
+- Added one dedicated GMC-500+ dual-tube configuration group and merged it into the matching device by name at runtime.
+- Eliminated duplicate SI-3BG configuration fields while retaining legacy inline values for migration compatibility.
+- Reviewed and corrected all eight configuration translations for the new single-/dual-tube grouping.
+
 ## 8.4.0
 
 - Added an Expert-view **Detector and calibration** panel to every device card with single- and dual-tube rendering.

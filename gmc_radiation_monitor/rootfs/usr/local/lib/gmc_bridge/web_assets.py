@@ -969,6 +969,13 @@ DASHBOARD_CSS += r"""
 .data-mode-switch a.active { background:var(--blue); color:white; border-color:var(--blue); }
 @media(max-width:700px){.detector-tube-grid,.detector-tube-card dl{grid-template-columns:1fr}.measurement-quality-card{align-items:flex-start}.calibration-wizard{grid-template-columns:1fr}.calibration-wizard .arrow{display:none}}
 
+/* 8.4.1: keep expert labels and values visually separated on all widths. */
+.expert-statistics,.dead-time-monitor { display:grid; gap:.28rem; }
+.expert-statistics > div,.dead-time-monitor > div { display:grid; grid-template-columns:minmax(9.5rem,max-content) minmax(0,1fr); column-gap:.75rem; align-items:baseline; min-width:0; }
+.expert-statistics > div > strong,.dead-time-monitor > div > strong { margin-right:.15rem; }
+.expert-statistics > div > span,.dead-time-monitor > div > span { min-width:0; overflow-wrap:anywhere; }
+@media(max-width:560px){.expert-statistics > div,.dead-time-monitor > div{grid-template-columns:1fr;row-gap:.08rem}}
+
 """
 
 DASHBOARD_CSS += r"""

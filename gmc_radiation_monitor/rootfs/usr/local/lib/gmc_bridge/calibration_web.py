@@ -128,8 +128,6 @@ def _tube_card(
         f'<div class="tube-title"><strong>{html.escape(profile.tube_model or heading)}</strong>{active_label}</div>'
         f'<div class="tube-state"><span>{state_icon}</span>{html.escape(state_label)}</div>'
         '<dl>'
-        f'<div><dt>{html.escape(t("Current CPM"))}</dt><dd>{html.escape(_value(cpm, " CPM"))}</dd></div>'
-        f'<div><dt>{html.escape(t("Calibration"))}</dt><dd>{html.escape(_value(profile.cpm_per_usvh, " CPM/(µSv/h)"))}</dd></div>'
         f'<div><dt>{html.escape(t("Dead time"))}</dt><dd>{html.escape(_value(profile.dead_time_us, " µs"))}</dd></div>'
         f'<div><dt>{html.escape(t("Model"))}</dt><dd>{html.escape(t("Non-Paralyzable") if profile.dead_time_model == "nonparalyzable" else t("None"))}</dd></div>'
         '</dl></div>'
@@ -253,10 +251,10 @@ def render_calibration_panel(*, item: dict[str, Any], latest_cpm: object, t: Tra
     )
     return (
         f'<section class="calibration-panel calibration-{html.escape(calibration_status)}" data-quality-index="{quality_index}">'
-        '<span class="legacy-calibration-label" hidden>Detektor und Kalibrierung</span>'
+        '<span class="legacy-calibration-label" hidden>Detektorprofil</span>'
         f'{legacy_status_html}'
         '<div class="calibration-panel-header"><div>'
-        f'<strong title="{html.escape(t("Detector and calibration"), quote=True)}">{html.escape(t("Detector and calibration"))}</strong>'
+        f'<strong title="{html.escape(t("Detector profile"), quote=True)}">{html.escape(t("Detector profile"))}</strong>'
         f'<small>{html.escape(source_label)}</small></div>'
         f'<span class="calibration-status">{status_icon} {html.escape(status_label)}</span></div>'
         f'<div class="detector-tube-grid">{tube_html}</div>'

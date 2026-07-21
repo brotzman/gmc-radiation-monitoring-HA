@@ -195,7 +195,7 @@ _calibration_panel_overrides = {
         "Unknown tube": "Unbekanntes Zählrohr",
         "Active tube profile": "Aktives Röhrenprofil",
         "Not available: selected tube is not calibrated": "Nicht verfügbar: Das ausgewählte Zählrohr ist nicht kalibriert",
-        "Detector profile": "Detektorprofil",
+        "Detector profile": "Detektor Profil",
         "Low-dose tube profile": "Niedrigdosis-Röhrenprofil",
         "High-dose tube profile": "Hochdosis-Röhrenprofil",
         "Detector and calibration": "Detektor und Kalibrierung",
@@ -553,6 +553,7 @@ for _language, _catalogue in _calibration_profile_835_overrides.items():
     CATALOGS[_language].update(_catalogue)
 
 # Version 8.4.0 scientific detector, calibration and raw/corrected workflow.
+# Version 8.4.1 reuses these keys with corrected layout and configuration grouping.
 _release_840_overrides = {
     "en": {
         "Detector and calibration": "Detector and calibration",

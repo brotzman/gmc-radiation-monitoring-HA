@@ -87,7 +87,7 @@ The workflow area provides configurable Home Assistant notifications, event anno
 
 The internal SQLite schema is migrated automatically to version 8. Existing measurement and device data remain compatible.
 
-Version 8.4.0 adds a scientific detector and calibration layer. Connected GMC-300, GMC-320, GMC-500+ and GMC-600/600+ counters are resolved to model-aware application profiles automatically. The dashboard shows the physical detector, active tube, calibration state, raw and corrected CPM, detector load, dead-time losses, correction factor and measurement quality. GMC-500+ channels remain separate, custom calibration changes are audited, and history and reports can display raw, corrected or comparison data. An optional scientific PDF adds a sixth metrology page. Predefined values are labelled as application profiles rather than traceable factory certificates.
+Version 8.4.1 refines the scientific detector and calibration layer introduced in 8.4.0. Connected GMC-300, GMC-320, GMC-500+ and GMC-600/600+ counters are resolved to model-aware application profiles automatically. The dashboard shows the physical detector, active tube, calibration state, raw and corrected CPM, detector load, dead-time losses, correction factor and measurement quality. GMC-500+ channels remain separate, custom calibration changes are audited, and history and reports can display raw, corrected or comparison data. An optional scientific PDF adds a sixth metrology page. Predefined values are labelled as application profiles rather than traceable factory certificates.
 
 ## Installation
 
@@ -206,12 +206,11 @@ devices:
     read_device_time: true
     device_clock_warning_seconds: 120
     heartbeat_enabled: true
-    # Only verified deviations from the preset belong here, for example:
-    # high_dose_cpm_per_usvh: 5.15
+    # Only verified deviations for the only/primary tube belong here.
     gmcmap_counter_id: ""
 ```
 
-`detector_profile` selects the physical tube arrangement and its predefined application working values. The normal calibration fields are optional overrides for the only/primary tube. `high_dose_*` fields apply only to a second tube on a dual-tube device. CPM remains the primary measurement; µSv/h is derived from the active tube profile and is not automatically a traceable calibrated dose-rate reading.
+`detector_profile` selects the physical tube arrangement and its predefined application working values. The normal calibration fields are optional overrides for the only/primary tube. Advanced dual-tube and second-tube values are kept in the separate `dual_tube_devices` section so they are not shown inside the GMC-320 configuration. CPM remains the primary measurement; µSv/h is derived from the active tube profile and is not automatically a traceable calibrated dose-rate reading.
 
 The high-CPM plausibility gate is intentionally not exposed as an input field. Its conservative fixed limit is 10,000 CPM, its adaptive trigger is learned per device, and exactly three consecutive similar suspicious readings are required. This prevents an accidental configuration change from disabling the protection.
 
@@ -223,7 +222,7 @@ between regular stored samples. SQLite history continues to use the device's `sc
 
 ### Detector presets and GMC-500+ dual-tube calibration
 
-Use `detector_profile` to describe the physical detector layout. The preset resolves the working values at runtime, so they do not have to be repeated in every device entry. The dashboard shows the resolved values in **Detector and calibration**.
+Use `detector_profile` to describe the physical detector layout. The preset resolves the working values at runtime, so they do not have to be repeated in every device entry. The dashboard shows the resolved values in **Detector Profile**.
 
 ```yaml
 devices:
@@ -232,11 +231,17 @@ devices:
 
   - name: GMC-500+
     detector_profile: gmc_500_plus
-    # Enter these only when a verified, device-specific SI-3BG calibration exists:
+
+dual_tube_devices:
+  - name: GMC-500+
+    dual_tube_mode: separate
+    dual_tube_switch_cpm: 30000
+    high_dose_tube_model: SI-3BG
+    high_dose_dead_time_us: 30
+    high_dose_dead_time_model: nonparalyzable
+    # Enter only when a verified, device-specific SI-3BG calibration exists:
     # high_dose_cpm_per_usvh: 5.15
-    # high_dose_dead_time_us: 30
     # high_dose_reliable_max_cpm: 100000
-    # high_dose_dead_time_model: nonparalyzable
     # high_dose_calibration_reference: "Certificate or measurement reference"
 ```
 
@@ -244,14 +249,14 @@ The `gmc_320_plus_v4` preset represents exactly one M4011 tube and supplies 154 
 
 The `gmc_500_plus` preset represents two physical tubes: M4011 as the primary/normal-range tube and SI-3BG as the second/high-dose tube. The M4011 profile uses 154 CPM/(µSv/h), 120 µs and a 30,000 CPM working limit. The SI-3BG conversion factor remains intentionally empty until a verified value is entered; CPM stays visible, but an unsupported derived dose is not produced.
 
-The normal calibration fields in the Home Assistant form are optional overrides for the only tube on a single-tube device or the primary tube on a dual-tube device. `high_dose_*` fields apply exclusively to the second tube of a dual-tube device. `dual_tube_mode` and `dual_tube_switch_cpm` are advanced overrides and are normally supplied by the preset. Old `low_dose_*` or nested tube blocks remain readable only for migration and should not be used in new configurations.
+The normal calibration fields under `devices` are optional overrides for the only tube on a single-tube device or the primary tube on a dual-tube device. `dual_tube_devices` contains the advanced operating mode and exactly one set of `high_dose_*` values for the second tube. Its `name` must match a device entry. This keeps the GMC-320 form free of dual-tube controls and avoids duplicate SI-3BG fields. Old inline `high_dose_*`, `low_dose_*` or nested tube blocks remain readable only for migration and should not be used in new configurations.
 
 Predefined values are transparent application working values, not a traceable calibration certificate. Explicit overrides are labelled as a customized profile.
 
 
 ### Scientific detector and calibration workflow (8.4.0)
 
-The Expert view places **Detector and calibration** directly below each connected device. Single-tube counters show one tube card; the GMC-500+ shows M4011 and SI-3BG separately with the active channel, per-channel CPM, calibration availability and dead time. The SI-3BG channel remains explicitly uncalibrated for dose conversion until a verified device-specific factor is stored.
+The Expert view places **Detector Profile** directly below each connected device. Single-tube counters show one tube card; the GMC-500+ shows M4011 and SI-3BG separately with the active channel, calibration availability and dead time. Current CPM and the conversion factor are not repeated in this card because they are already shown in the device summary. The SI-3BG channel remains explicitly uncalibrated for dose conversion until a verified device-specific factor is stored.
 
 For every accepted measurement, the app records raw CPM, corrected CPM, detector load, estimated dead-time loss, correction factor, active tube, calibration source/status, dose quality and a 0–100 measurement-quality index. The dashboard converts these fields into a five-star quality display, a green/yellow/red detector-load bar, a live dead-time monitor and targeted plausibility warnings.
 

@@ -21,14 +21,21 @@ devices:
     read_gyro: false
     read_device_time: false
     heartbeat_enabled: false
-    # The preset configures M4011 as the primary tube and SI-3BG as the
-    # uncalibrated second tube. Add only verified SI-3BG overrides here.
-    # high_dose_cpm_per_usvh: 5.15
-    # high_dose_dead_time_us: 30
-    # high_dose_reliable_max_cpm: 200000
-    # high_dose_dead_time_model: nonparalyzable
-    # high_dose_calibration_reference: Individual verified calibration
+    # The preset configures M4011 as the primary tube. Second-tube
+    # settings are kept once in the dedicated section below.
     gmcmap_counter_id: ""
+
+dual_tube_devices:
+  - name: GMC-500+
+    dual_tube_mode: separate
+    dual_tube_switch_cpm: 30000
+    high_dose_tube_model: SI-3BG
+    high_dose_dead_time_us: 30
+    high_dose_dead_time_model: nonparalyzable
+    # Add only verified SI-3BG calibration values:
+    # high_dose_cpm_per_usvh: 5.15
+    # high_dose_reliable_max_cpm: 200000
+    # high_dose_calibration_reference: Individual verified calibration
 
 gmcmap:
   enabled: false

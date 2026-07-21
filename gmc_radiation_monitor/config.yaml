@@ -1,7 +1,7 @@
 name: GMC Radiation Monitor
-description: Local GQ GMC monitoring with MQTT Discovery, configurable safety profiles, background anomaly detection, diagnostics,
-  reports, backups and streamed exports
-version: 8.4.0
+description: Local GQ GMC monitoring with MQTT Discovery, configurable safety profiles, background anomaly detection,
+  diagnostics, reports, backups and streamed exports
+version: 8.4.1
 slug: gmc_radiation_monitor
 url: https://github.com/brotzman/gmc-homeassistant/tree/main/gmc_radiation_monitor
 stage: stable
@@ -71,6 +71,14 @@ options:
     orientation_scale_y: 15951.5
     orientation_scale_z: 15879.235
     orientation_calibration_name: GMC-500+ six-position calibration
+  dual_tube_devices:
+  - name: GMC-500+
+    dual_tube_mode: separate
+    dual_tube_switch_cpm: 30000
+    high_dose_tube_model: SI-3BG
+    high_dose_dead_time_us: 30.0
+    high_dose_dead_time_model: nonparalyzable
+    high_dose_calibration_reference: No verified SI-3BG dose factor; CPM display only
   gmcmap:
     enabled: false
     privacy_confirmed: false
@@ -134,16 +142,6 @@ schema:
     calibration_uncertainty_percent: float(0.0,)?
     calibration_reference: str?
     tube_model: str?
-    dual_tube_mode: list(single|separate|curve)?
-    dual_tube_switch_cpm: int(1,)?
-    high_dose_tube_model: str?
-    high_dose_cpm_per_usvh: float(0.001,)?
-    high_dose_dead_time_us: float(0.001,)?
-    high_dose_reliable_max_cpm: int(1,)?
-    high_dose_dead_time_model: list(none|nonparalyzable)?
-    high_dose_conversion_factor_uncertainty_percent: float(0.0,)?
-    high_dose_calibration_uncertainty_percent: float(0.0,)?
-    high_dose_calibration_reference: str?
     gmcmap_counter_id: str?
     serial_debug: bool?
     serial_debug_max_bytes: int(16,1024)?
@@ -156,6 +154,18 @@ schema:
     orientation_scale_y: float?
     orientation_scale_z: float?
     orientation_calibration_name: str?
+  dual_tube_devices:
+  - name: str
+    dual_tube_mode: list(separate|curve)
+    dual_tube_switch_cpm: int(1,)?
+    high_dose_tube_model: str?
+    high_dose_cpm_per_usvh: float(0.001,)?
+    high_dose_dead_time_us: float(0.001,)?
+    high_dose_reliable_max_cpm: int(1,)?
+    high_dose_dead_time_model: list(none|nonparalyzable)?
+    high_dose_conversion_factor_uncertainty_percent: float(0.0,)?
+    high_dose_calibration_uncertainty_percent: float(0.0,)?
+    high_dose_calibration_reference: str?
   gmcmap:
     enabled: bool
     privacy_confirmed: bool
