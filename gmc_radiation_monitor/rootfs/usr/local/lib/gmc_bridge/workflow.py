@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from .config_validation import validate_candidate_options, validate_options
 from .history import HistoryRow, HistoryStore
 from .i18n import validate_catalogs
 from .migrations import SCHEMA_VERSION
@@ -290,14 +291,25 @@ def run_self_test(
     if options.exists():
         try:
             payload = json.loads(options.read_text(encoding="utf-8"))
-            config_problems = validate_candidate_options(payload)
+            validation = validate_options(payload)
+            config_problems = validation.messages()
             results.append(
                 CheckResult(
                     "configuration",
-                    "ok" if not config_problems else "warning",
+                    validation.status,
                     "App configuration",
-                    "Configuration is valid" if not config_problems else "Configuration warnings: {count}",
-                    {"count": len(config_problems), "problems": config_problems},
+                    "Configuration is valid"
+                    if validation.clean
+                    else "Configuration warnings: {count}"
+                    if validation.status == "warning"
+                    else "Configuration errors: {count}",
+                    {
+                        "count": len(config_problems),
+                        "problems": config_problems,
+                        "errors": [issue.message for issue in validation.errors],
+                        "warnings": [issue.message for issue in validation.warnings],
+                        "issues": [issue.as_dict() for issue in validation.issues],
+                    },
                 )
             )
         except (OSError, json.JSONDecodeError, ValueError) as exc:
@@ -314,127 +326,6 @@ def run_self_test(
     except OSError as exc:
         results.append(CheckResult("backups", "error", "Managed backups", "The managed backup directory is not writable: {error}", {"error": str(exc)}))
     return results
-
-
-def validate_candidate_options(payload: object) -> list[str]:
-    problems: list[str] = []
-    if not isinstance(payload, dict):
-        return ["Configuration must be a JSON object"]
-
-    known_groups = {"devices", "dual_tube_devices", "gmcmap", "history", "analysis", "safety", "interface", "system"}
-    unknown = sorted(set(payload) - known_groups)
-    if unknown:
-        problems.append("Unknown top-level groups: " + ", ".join(unknown))
-
-    devices_raw = payload.get("devices", [])
-    dual_devices_raw = payload.get("dual_tube_devices", [])
-    devices: list[object]
-    dual_devices: list[object]
-    if devices_raw in (None, []):
-        devices = []
-    elif isinstance(devices_raw, list):
-        devices = devices_raw
-    else:
-        devices = []
-        problems.append("devices must be a list")
-    if dual_devices_raw in (None, []):
-        dual_devices = []
-    elif isinstance(dual_devices_raw, list):
-        dual_devices = dual_devices_raw
-    else:
-        dual_devices = []
-        problems.append("dual_tube_devices must be a list")
-
-    if not devices and not dual_devices:
-        problems.append("At least one device configuration is required across devices and dual_tube_devices")
-
-    names: dict[str, str] = {}
-    device_ordinal = 0
-
-    def validate_common_device(group: str, index: int, item: object) -> dict[str, Any] | None:
-        nonlocal device_ordinal
-        if not isinstance(item, dict):
-            problems.append(f"{group}[{index}] must be an object")
-            return None
-        name = str(item.get("name") or "").strip()
-        folded = name.casefold()
-        if not name:
-            problems.append(f"{group}[{index}].name is required")
-        elif folded in names:
-            problems.append(
-                f"Duplicate device name across devices and dual_tube_devices: {name} "
-                f"(already used by {names[folded]})"
-            )
-        else:
-            names[folded] = f"{group}[{index}]"
-        try:
-            if int(item.get("scan_interval", 60)) < 5:
-                problems.append(f"{group}[{index}].scan_interval must be at least 5 seconds")
-        except (TypeError, ValueError):
-            problems.append(f"{group}[{index}].scan_interval must be numeric")
-        try:
-            default_delay = 0 if device_ordinal == 0 else 15
-            delay = float(item.get("serial_startup_delay", default_delay))
-            if device_ordinal > 0 and delay < 15:
-                problems.append(f"{group}[{index}].serial_startup_delay should be at least 15 seconds")
-        except (TypeError, ValueError):
-            problems.append(f"{group}[{index}].serial_startup_delay must be numeric")
-        device_ordinal += 1
-        return item
-
-    for index, item in enumerate(devices):
-        validate_common_device("devices", index, item)
-
-    for index, item in enumerate(dual_devices):
-        validated = validate_common_device("dual_tube_devices", index, item)
-        if validated is None:
-            continue
-        mode = str(validated.get("dual_tube_mode") or "separate").strip().lower()
-        if mode not in {"separate", "curve"}:
-            problems.append(f"dual_tube_devices[{index}].dual_tube_mode must be separate or curve")
-        try:
-            switch = validated.get("dual_tube_switch_cpm")
-            if switch not in (None, "") and int(switch) <= 0:
-                problems.append(f"dual_tube_devices[{index}].dual_tube_switch_cpm must be greater than zero")
-        except (TypeError, ValueError):
-            problems.append(f"dual_tube_devices[{index}].dual_tube_switch_cpm must be numeric")
-
-    history = payload.get("history", {})
-    if isinstance(history, dict):
-        try:
-            retention = int(history.get("retention_days", 90))
-            if not 7 <= retention <= 3650:
-                problems.append("history.retention_days must be between 7 and 3650")
-        except (TypeError, ValueError):
-            problems.append("history.retention_days must be numeric")
-        timezone_name = str(history.get("report_timezone", "UTC"))
-        try:
-            ZoneInfo(timezone_name)
-        except ZoneInfoNotFoundError:
-            problems.append(f"Unknown timezone: {timezone_name}")
-    analysis = payload.get("analysis", {})
-    if isinstance(analysis, dict):
-        try:
-            yellow = float(analysis.get("traffic_light_yellow_percent", 125.0))
-            red = float(analysis.get("traffic_light_red_percent", 175.0))
-            if yellow < 100 or red <= yellow:
-                problems.append("Analysis red threshold must be greater than the yellow threshold and yellow must be at least 100")
-        except (TypeError, ValueError):
-            problems.append("Analysis thresholds must be numeric")
-    safety = payload.get("safety", {})
-    if isinstance(safety, dict):
-        try:
-            warning_cpm = float(safety.get("warning_cpm", 51))
-            danger_cpm = float(safety.get("danger_cpm", 100))
-            if danger_cpm <= warning_cpm:
-                problems.append("safety.danger_cpm must be greater than safety.warning_cpm")
-            warning_dose = float(safety.get("warning_usvh", 0.326))
-            danger_dose = float(safety.get("danger_usvh", 0.651))
-            if danger_dose <= warning_dose:
-                problems.append("safety.danger_usvh must be greater than safety.warning_usvh")
-        except (TypeError, ValueError):
-            problems.append("Safety thresholds must be numeric")
-    return problems
 
 
 def onboarding_steps(*, devices: list[dict[str, Any]], sample_count: int, first_timestamp: int | None, baseline_days: int = 7) -> list[dict[str, Any]]:

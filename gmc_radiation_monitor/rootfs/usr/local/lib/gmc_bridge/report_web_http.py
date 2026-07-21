@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import html
 import json
 import logging
@@ -20,6 +19,7 @@ from .calibration_http import (
     calibration_profiles_payload,
     persist_calibration_profile,
 )
+from .config_validation import validate_candidate_options
 from .maintenance import diagnostics_json_bytes, full_history_zip_to_path
 from .report_web_support import (
     MAX_DOWNLOAD_BYTES,
@@ -41,14 +41,12 @@ from .workflow import (
     load_workflow_settings,
     local_range,
     save_workflow_settings,
-    validate_candidate_options,
 )
 
 if TYPE_CHECKING:
     from .report_web import ReportApplication
 
 LOG = logging.getLogger("gmc_reports")
-
 
 class ReportRequestHandler(BaseHTTPRequestHandler):
     server_version = REPORT_SERVER_VERSION
@@ -129,7 +127,10 @@ class ReportRequestHandler(BaseHTTPRequestHandler):
         t = self._request_translator(query)
         try:
             if path == "/health":
-                self._send_bytes(HTTPStatus.OK, "text/plain; charset=utf-8", b"ok\n")
+                health = self.app.api_health()
+                response_status = HTTPStatus.OK if bool(health.get("healthy")) else HTTPStatus.SERVICE_UNAVAILABLE
+                payload = json.dumps(health, separators=(",", ":"), sort_keys=True).encode("utf-8")
+                self._send_bytes(response_status, "application/json; charset=utf-8", payload)
                 return
             if path in {"/docs/user-manual.pdf", "/docs/benutzerhandbuch.pdf"}:
                 requested_language = (

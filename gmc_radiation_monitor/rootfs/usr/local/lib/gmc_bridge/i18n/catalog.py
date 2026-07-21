@@ -995,3 +995,18 @@ _release_847_display_translations = {
 }
 for _language, _catalogue in _release_847_display_translations.items():
     CATALOGS[_language].update(_catalogue)
+
+# Version 8.4.8: the always-visible expert detector block describes its content,
+# rather than duplicating the name of the app-wide Expert view.
+_release_848_measurement_detail_translations = {
+    "en": {"Measurement details": "Measurement details"},
+    "de": {"Measurement details": "Messdetails"},
+    "fr": {"Measurement details": "Détails de mesure"},
+    "es": {"Measurement details": "Detalles de medición"},
+    "it": {"Measurement details": "Dettagli della misura"},
+    "nl": {"Measurement details": "Meetdetails"},
+    "pl": {"Measurement details": "Szczegóły pomiaru"},
+    "hr": {"Measurement details": "Pojedinosti mjerenja"},
+}
+for _language, _catalogue in _release_848_measurement_detail_translations.items():
+    CATALOGS[_language].update(_catalogue)

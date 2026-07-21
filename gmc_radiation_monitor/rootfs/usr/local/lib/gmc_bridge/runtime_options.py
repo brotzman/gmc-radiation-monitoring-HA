@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from .options_migration import merge_single_and_dual_device_options
+from .config_validation import validate_options, runtime_device_options
 
 
 class OptionsError(ValueError):
@@ -20,39 +20,7 @@ def _mapping(value: object, name: str) -> dict[str, Any]:
 
 
 def _devices(options: dict[str, Any]) -> list[dict[str, Any]]:
-    normalized, _changed = merge_single_and_dual_device_options(options)
-    single_value = normalized.get("devices", [])
-    dual_value = normalized.get("dual_tube_devices", [])
-    if not isinstance(single_value, list):
-        raise OptionsError("devices must be a list")
-    if not isinstance(dual_value, list):
-        raise OptionsError("dual_tube_devices must be a list")
-
-    devices: list[dict[str, Any]] = []
-    for group_name, values in (("devices", single_value), ("dual_tube_devices", dual_value)):
-        for index, item in enumerate(values):
-            if not isinstance(item, dict):
-                raise OptionsError(f"{group_name}[{index}] must be an object")
-            device = dict(item)
-            name = str(device.get("name") or "").strip()
-            if group_name == "dual_tube_devices":
-                if not name:
-                    raise OptionsError(f"dual_tube_devices[{index}].name is required")
-                serial = str(device.pop("device_serial", "") or "").strip().lower()
-                if serial:
-                    device["expected_serial"] = serial
-                mode = str(device.get("dual_tube_mode") or "").strip().lower()
-                if mode not in {"separate", "curve"}:
-                    raise OptionsError(
-                        f"dual_tube_devices[{index}].dual_tube_mode must be separate or curve"
-                    )
-            devices.append(device)
-
-    names = [str(item.get("name") or "").strip().casefold() for item in devices]
-    named = [name for name in names if name]
-    if len(named) != len(set(named)):
-        raise OptionsError("Configured device names must be unique across single- and dual-tube devices")
-    return devices
+    return runtime_device_options(options)
 
 
 def load_options(path: str | Path = "/data/options.json") -> dict[str, Any]:
@@ -65,6 +33,9 @@ def load_options(path: str | Path = "/data/options.json") -> dict[str, Any]:
         raise OptionsError(f"Invalid JSON in Home Assistant options file: {exc}") from exc
     if not isinstance(payload, dict):
         raise OptionsError("Home Assistant options must be a JSON object")
+    validation = validate_options(payload)
+    if validation.errors:
+        raise OptionsError("; ".join(issue.message for issue in validation.errors))
     return payload
 
 

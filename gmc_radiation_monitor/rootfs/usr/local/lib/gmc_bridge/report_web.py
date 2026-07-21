@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import contextlib
 import html
 import logging
@@ -10,9 +9,9 @@ import statistics
 import threading
 import time
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from typing import Any
 from urllib.parse import quote_plus
-
 from .adaptive_background import build_adaptive_background, build_site_adaptive_background
 from .analysis_presentation import (
     AnalysisPresentationConfig,
@@ -107,7 +106,6 @@ from .workflow_web import (
     render_scheduled_reports,
     render_workflow_section,
 )
-
 LOG = logging.getLogger("gmc_reports")
 # Source-compatibility markers retained for downstream checks: class="device-card-title" class="assessment-icon device-card-icon">{html.escape(device_icon)}</div> class="device-card-title-copy"
 
@@ -139,8 +137,12 @@ class ReportApplication(WorkflowApplicationMixin):
         home_assistant_client: HomeAssistantConfigClient | None = None,
         pressure_client: HomeAssistantPressureClient | None = None,
         cosmic_hint_enabled: bool = True,
+        options_path: str | Path = "/data/options.json",
+        started_at_utc: int | None = None,
     ) -> None:
         self.store = store
+        self.options_path = Path(options_path)
+        self.started_at_utc = int(time.time()) if started_at_utc is None else int(started_at_utc)
         self.timezone_name = timezone_name
         self.timezone = load_timezone(timezone_name)
         self.scan_interval_seconds = scan_interval_seconds

@@ -1057,9 +1057,6 @@ DASHBOARD_CSS += r"""
 .measurement-hero .quality-stars { font-size:1rem; letter-spacing:.08em; align-self:center; }
 .measurement-context { grid-column:1/-1; display:flex; flex-wrap:wrap; gap:.45rem; margin-top:.35rem; }
 .measurement-context span { padding:.18rem .48rem; border-radius:999px; background:var(--panel); font-size:.78rem; }
-.expert-details { display:block; border:1px solid var(--border); border-radius:10px; margin-top:.7rem; }
-.expert-details > summary { padding:.7rem .8rem; min-height:auto; }
-.expert-details > .expert-statistics, .expert-details > .measurement-quality-explanation { margin:.7rem; }
 """
 
 
@@ -1120,8 +1117,7 @@ body[data-main-value-size="custom"] { --main-value-font-size:var(--custom-main-v
 """
 
 DASHBOARD_CSS += r"""
-/* 8.4.7 maintenance polish: explicit local override state, clearer self-test details
-   and a consistent top-right disclosure control for detector Expert diagnostics. */
+/* 8.4.7 maintenance polish and 8.4.8 always-visible expert measurement details. */
 .measurement-override-row {
   display:flex;
   align-items:center;
@@ -1139,46 +1135,45 @@ DASHBOARD_CSS += r"""
 .measurement-override-row button { min-height:2.2rem; padding:.35rem .65rem; white-space:nowrap; }
 .self-test-problems { margin:.45rem 0 0; padding-left:1.1rem; color:var(--muted); font-size:.78rem; line-height:1.4; }
 .self-test-problems li + li { margin-top:.25rem; }
-.expert-details {
+.measurement-details {
   display:block;
-  position:relative;
   overflow:hidden;
   margin-top:.7rem;
   border:1px solid var(--border);
   border-radius:10px;
   background:color-mix(in srgb,CanvasText 2%,transparent);
 }
-.expert-details > summary {
+.measurement-details-header {
   display:flex;
   align-items:center;
-  justify-content:space-between;
-  width:100%;
   min-height:3rem;
   padding:.75rem .85rem;
+  border-bottom:1px solid var(--border);
   background:color-mix(in srgb,CanvasText 3%,transparent);
   font-size:1rem;
   font-weight:760;
 }
-.expert-details > summary::after { margin-left:auto; align-self:flex-start; }
-.expert-details[open] > summary { border-bottom:1px solid var(--border); }
-.expert-details-body { padding:.8rem .9rem .9rem; }
-.expert-details-body > .expert-statistics { margin:0; gap:.38rem; }
-.expert-details-body > .expert-statistics > div {
+.measurement-details-body { padding:.8rem .9rem .9rem; }
+.measurement-details-body > .expert-statistics { margin:0; gap:.38rem; }
+.measurement-details-body > .expert-statistics > div {
   grid-template-columns:minmax(12rem,34%) minmax(0,1fr);
   padding:.2rem 0;
   border-bottom:1px solid color-mix(in srgb,var(--border) 58%,transparent);
 }
-.expert-details-body > .expert-statistics > div:last-child { border-bottom:0; }
-.expert-details-body .measurement-quality-row { align-items:center; }
-.expert-details-body .measurement-quality-explanation {
+.measurement-details-body > .expert-statistics > div:last-child { border-bottom:0; }
+.measurement-details-body .measurement-quality-row { align-items:center; }
+.measurement-details-body .measurement-quality-explanation {
+  display:block;
   margin:.65rem 0 0;
   padding-top:.65rem;
   border-top:1px solid var(--border);
   max-width:62rem;
+  color:var(--muted);
+  line-height:1.45;
 }
 @media(max-width:650px){
   .measurement-override-row { align-items:flex-start; flex-direction:column; }
   .measurement-override-row button { width:100%; white-space:normal; }
-  .expert-details-body > .expert-statistics > div { grid-template-columns:1fr; row-gap:.12rem; }
+  .measurement-details-body > .expert-statistics > div { grid-template-columns:1fr; row-gap:.12rem; }
 }
 """

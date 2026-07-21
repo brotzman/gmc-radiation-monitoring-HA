@@ -10,6 +10,7 @@ LIB_DIR = Path(__file__).resolve().parents[1] / "lib"
 if str(LIB_DIR) not in sys.path:
     sys.path.insert(0, str(LIB_DIR))
 
+from gmc_bridge.config_validation import validate_options  # noqa: E402
 from gmc_bridge.options_migration import merge_single_and_dual_device_options  # noqa: E402
 from gmc_bridge.supervisor_options import (  # noqa: E402
     SupervisorOptionsError,
@@ -30,6 +31,12 @@ def main() -> int:
         return 3
 
     migrated, changed = merge_single_and_dual_device_options(payload)
+    validation = validate_options(migrated)
+    if validation.errors:
+        for issue in validation.errors:
+            print(f"invalid migrated app options [{issue.code}]: {issue.message}", file=sys.stderr)
+        return 4
+
     Path(sys.argv[2]).write_text(
         json.dumps(migrated.get("devices", []), ensure_ascii=False, separators=(",", ":")),
         encoding="utf-8",
