@@ -1,14 +1,19 @@
 # Changelog
 
-## 8.4.1
+## 8.4.2
 
-- Renamed the connected-device scientific card to **Detector Profile**.
-- Removed repeated current-CPM and conversion-factor rows from the detector-profile card.
-- Added a responsive label/value grid so Expert statistics and dead-time values have clear spacing on desktop and mobile.
-- Removed dual-tube and second-tube controls from the common device schema used by the GMC-320.
-- Added one dedicated GMC-500+ dual-tube configuration group and merged it into the matching device by name at runtime.
-- Eliminated duplicate SI-3BG configuration fields while retaining legacy inline values for migration compatibility.
-- Reviewed and corrected all eight configuration translations for the new single-/dual-tube grouping.
+- Removed the duplicate dashboard measurement-quality tile and standalone device-comparison tile.
+- Reorganized detector details by Summary, Analysis and Expert view and corrected the German title to **Detektorprofil**.
+- Removed repeated current-CPM, conversion-factor, detector-load and single-tube active-detector rows.
+- Added a responsive label/value grid so Expert statistics and dead-time values no longer wrap letter by letter.
+- Clarified automatic device-profile recognition and calibration status semantics; application working values are not presented as certified factory calibration.
+- Kept the GMC-320 configuration free of dual-tube controls.
+- Replaced the split GMC-500+ configuration with one complete dual-tube entry containing common, M4011 and SI-3BG settings exactly once.
+- Added a lossless, idempotent startup migration for existing 8.4.0/8.4.1 split GMC-500+ options.
+- Added optional physical-serial verification for dual-tube settings and rejected ambiguous duplicate device names.
+- Removed installation-specific orientation serial numbers and calibration values from shipped defaults and runtime built-ins.
+- Reviewed and corrected all eight configuration and interface translations.
+- Updated all eight bundled manuals with an 8.4.2 addendum.
 
 ## 8.4.0
 

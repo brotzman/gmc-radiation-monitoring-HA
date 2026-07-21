@@ -1,7 +1,7 @@
 name: GMC Radiation Monitor
-description: Local GQ GMC monitoring with MQTT Discovery, configurable safety profiles, background anomaly detection,
-  diagnostics, reports, backups and streamed exports
-version: 8.4.1
+description: Local GQ GMC monitoring with MQTT Discovery, configurable safety profiles, background anomaly 
+  detection, diagnostics, reports, backups and streamed exports
+version: 8.4.2
 slug: gmc_radiation_monitor
 url: https://github.com/brotzman/gmc-homeassistant/tree/main/gmc_radiation_monitor
 stage: stable
@@ -17,6 +17,7 @@ tmpfs: true
 services:
 - mqtt:need
 homeassistant_api: true
+hassio_api: true
 ingress: true
 ingress_port: 8099
 panel_icon: mdi:radioactive
@@ -39,15 +40,8 @@ options:
     gmcmap_counter_id: ''
     serial_debug: false
     serial_debug_max_bytes: 64
-    orientation_calibration_enabled: true
-    orientation_calibration_serial: f488c59b0031f0
-    orientation_offset_x: 25.385
-    orientation_offset_y: 0.43
-    orientation_offset_z: 18.43
-    orientation_scale_x: 263.285
-    orientation_scale_y: 261.43
-    orientation_scale_z: 254.57
-    orientation_calibration_name: GMC-320 six-position calibration
+    orientation_calibration_enabled: false
+  dual_tube_devices:
   - name: GMC-500+
     scan_interval: 75
     command_timeout: 4.0
@@ -62,17 +56,7 @@ options:
     gmcmap_counter_id: ''
     serial_debug: false
     serial_debug_max_bytes: 64
-    orientation_calibration_enabled: true
-    orientation_calibration_serial: 080048303838a0
-    orientation_offset_x: 84.0
-    orientation_offset_y: -112.5
-    orientation_offset_z: -193.905
-    orientation_scale_x: 16380.0
-    orientation_scale_y: 15951.5
-    orientation_scale_z: 15879.235
-    orientation_calibration_name: GMC-500+ six-position calibration
-  dual_tube_devices:
-  - name: GMC-500+
+    orientation_calibration_enabled: false
     dual_tube_mode: separate
     dual_tube_switch_cpm: 30000
     high_dose_tube_model: SI-3BG
@@ -156,6 +140,37 @@ schema:
     orientation_calibration_name: str?
   dual_tube_devices:
   - name: str
+    device_serial: str?
+    scan_interval: int(5,)?
+    command_timeout: float(0.2,10.0)?
+    inter_command_delay_ms: int(50,2000)?
+    serial_startup_delay: float(0.0,300.0)?
+    auxiliary_read_interval: int(0,86400)?
+    read_gyro: bool?
+    read_device_time: bool?
+    device_clock_warning_seconds: int(10,86400)?
+    heartbeat_enabled: bool?
+    detector_profile: list(auto|gmc_300|gmc_320_plus_v4|gmc_500_plus|gmc_600_plus|custom_single|custom_dual)?
+    cpm_per_usvh: float(0.001,)?
+    dead_time_us: float(0.001,)?
+    reliable_max_cpm: int(1,)?
+    dead_time_model: list(none|nonparalyzable)?
+    conversion_factor_uncertainty_percent: float(0.0,)?
+    calibration_uncertainty_percent: float(0.0,)?
+    calibration_reference: str?
+    tube_model: str?
+    gmcmap_counter_id: str?
+    serial_debug: bool?
+    serial_debug_max_bytes: int(16,1024)?
+    orientation_calibration_enabled: bool?
+    orientation_calibration_serial: str?
+    orientation_offset_x: float?
+    orientation_offset_y: float?
+    orientation_offset_z: float?
+    orientation_scale_x: float?
+    orientation_scale_y: float?
+    orientation_scale_z: float?
+    orientation_calibration_name: str?
     dual_tube_mode: list(separate|curve)
     dual_tube_switch_cpm: int(1,)?
     high_dose_tube_model: str?

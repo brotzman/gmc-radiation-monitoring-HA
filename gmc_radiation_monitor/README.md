@@ -87,7 +87,7 @@ The workflow area provides configurable Home Assistant notifications, event anno
 
 The internal SQLite schema is migrated automatically to version 8. Existing measurement and device data remain compatible.
 
-Version 8.4.1 refines the scientific detector and calibration layer introduced in 8.4.0. Connected GMC-300, GMC-320, GMC-500+ and GMC-600/600+ counters are resolved to model-aware application profiles automatically. The dashboard shows the physical detector, active tube, calibration state, raw and corrected CPM, detector load, dead-time losses, correction factor and measurement quality. GMC-500+ channels remain separate, custom calibration changes are audited, and history and reports can display raw, corrected or comparison data. An optional scientific PDF adds a sixth metrology page. Predefined values are labelled as application profiles rather than traceable factory certificates.
+Version 8.4.2 refines the scientific detector and calibration layer introduced in 8.4.0. Connected GMC-300, GMC-320, GMC-500+ and GMC-600/600+ counters are resolved to model-aware application profiles; this is profile recognition, not physical verification of a replaced tube. The dashboard shows a compact profile status in Summary, detector load and dead-time details in Analysis, and tube-specific raw/corrected statistics in Expert view. GMC-500+ channels remain separate, custom calibration changes are audited, and history and reports can display raw, corrected or comparison data. An optional scientific PDF adds a sixth metrology page. Predefined values are labelled as application profiles rather than traceable factory certificates.
 
 ## Installation
 
@@ -110,11 +110,7 @@ GMCMap, history, analysis, safety, interface and system settings appear in their
 
 ### Devices
 
-New installations contain two editable profiles, one for a GMC-320 and one for a GMC-500+.
-Ports and baud rates are detected automatically at startup. Existing serial-number hints are used first,
-then model families, so device-specific calibration and measurement settings remain attached to the
-correct physical counter. Account-specific GMCMap IDs remain blank, and GMCMap stays disabled until
-privacy consent and valid IDs are entered.
+New installations contain one editable single-tube profile for a GMC-320 and one complete dual-tube profile for a GMC-500+. Ports and baud rates are detected automatically at startup. An optional physical serial check can bind a dual-tube profile to one counter, so calibration settings cannot silently follow the wrong unit after a port change. Account-specific GMCMap IDs remain blank, and GMCMap stays disabled until privacy consent and valid IDs are entered.
 
 ```yaml
 devices:
@@ -123,23 +119,23 @@ devices:
     scan_interval: 60
     command_timeout: 2.0
     inter_command_delay_ms: 150
-    serial_startup_delay: 0
-    auxiliary_read_interval: 300
     read_gyro: false
-    read_device_time: false
-    device_clock_warning_seconds: 120
-    heartbeat_enabled: false
     gmcmap_counter_id: "1136726941350"
 
+dual_tube_devices:
   - name: Wohnzimmer GMC-500+
+    # Optional stable binding to this physical counter:
+    # device_serial: "0800..."
     detector_profile: gmc_500_plus
     scan_interval: 30
     command_timeout: 2.0
     inter_command_delay_ms: 150
     read_gyro: false
-    read_device_time: true
-    device_clock_warning_seconds: 120
-    heartbeat_enabled: true
+    dual_tube_mode: separate
+    dual_tube_switch_cpm: 30000
+    high_dose_tube_model: SI-3BG
+    high_dose_dead_time_us: 30
+    high_dose_dead_time_model: nonparalyzable
     gmcmap_counter_id: ""
 ```
 
@@ -196,21 +192,20 @@ copying their values into the new grouped sections, remove the obsolete flat key
 All serial and measurement settings belong to the corresponding device entry:
 
 ```yaml
-devices:
+dual_tube_devices:
   - name: GMC-500+
     detector_profile: gmc_500_plus
     scan_interval: 30
-    command_timeout: 2.0
-    inter_command_delay_ms: 150
-    read_gyro: false
     read_device_time: true
-    device_clock_warning_seconds: 120
     heartbeat_enabled: true
-    # Only verified deviations for the only/primary tube belong here.
-    gmcmap_counter_id: ""
+    dual_tube_mode: separate
+    dual_tube_switch_cpm: 30000
+    high_dose_tube_model: SI-3BG
+    high_dose_dead_time_us: 30
+    high_dose_dead_time_model: nonparalyzable
 ```
 
-`detector_profile` selects the physical tube arrangement and its predefined application working values. The normal calibration fields are optional overrides for the only/primary tube. Advanced dual-tube and second-tube values are kept in the separate `dual_tube_devices` section so they are not shown inside the GMC-320 configuration. CPM remains the primary measurement; µSv/h is derived from the active tube profile and is not automatically a traceable calibrated dose-rate reading.
+`detector_profile` selects an automatically recognized device profile and its predefined application working values; it does not physically verify a replaced tube. The optional normal calibration fields override the only/primary tube. A complete dual-tube counter is configured once under `dual_tube_devices`, where the common device settings and the second-tube values are edited together. CPM remains the primary measurement; µSv/h is derived from the active tube profile and is not automatically a traceable calibrated dose-rate reading.
 
 The high-CPM plausibility gate is intentionally not exposed as an input field. Its conservative fixed limit is 10,000 CPM, its adaptive trigger is learned per device, and exactly three consecutive similar suspicious readings are required. This prevents an accidental configuration change from disabling the protection.
 
@@ -222,18 +217,16 @@ between regular stored samples. SQLite history continues to use the device's `sc
 
 ### Detector presets and GMC-500+ dual-tube calibration
 
-Use `detector_profile` to describe the physical detector layout. The preset resolves the working values at runtime, so they do not have to be repeated in every device entry. The dashboard shows the resolved values in **Detector Profile**.
+Use `detector_profile` to describe the physical detector layout. The preset resolves the working values at runtime, so they do not have to be repeated in every device entry. The dashboard shows the resolved values in **Detector profile**.
 
 ```yaml
 devices:
   - name: GMC-320 Plus V4
     detector_profile: gmc_320_plus_v4
 
-  - name: GMC-500+
-    detector_profile: gmc_500_plus
-
 dual_tube_devices:
   - name: GMC-500+
+    detector_profile: gmc_500_plus
     dual_tube_mode: separate
     dual_tube_switch_cpm: 30000
     high_dose_tube_model: SI-3BG
@@ -249,18 +242,20 @@ The `gmc_320_plus_v4` preset represents exactly one M4011 tube and supplies 154 
 
 The `gmc_500_plus` preset represents two physical tubes: M4011 as the primary/normal-range tube and SI-3BG as the second/high-dose tube. The M4011 profile uses 154 CPM/(µSv/h), 120 µs and a 30,000 CPM working limit. The SI-3BG conversion factor remains intentionally empty until a verified value is entered; CPM stays visible, but an unsupported derived dose is not produced.
 
-The normal calibration fields under `devices` are optional overrides for the only tube on a single-tube device or the primary tube on a dual-tube device. `dual_tube_devices` contains the advanced operating mode and exactly one set of `high_dose_*` values for the second tube. Its `name` must match a device entry. This keeps the GMC-320 form free of dual-tube controls and avoids duplicate SI-3BG fields. Old inline `high_dose_*`, `low_dose_*` or nested tube blocks remain readable only for migration and should not be used in new configurations.
+The normal calibration fields under `devices` override the only tube of a single-tube counter. A `dual_tube_devices` entry is a complete physical device configuration: it includes common serial/measurement settings, the primary profile, the operating mode and exactly one set of `high_dose_*` values for the second tube. An optional `device_serial` verifies the physical counter at connection time and prevents a profile from following the wrong device after port changes. Version 8.4.2 merges legacy split GMC-500+ entries losslessly at startup. This keeps the GMC-320 form free of dual-tube controls and removes duplicate SI-3BG fields.
+
+Device-specific orientation calibration is never shipped with public defaults. It must be enabled explicitly with the matching serial number and the six-position values measured for that individual counter.
 
 Predefined values are transparent application working values, not a traceable calibration certificate. Explicit overrides are labelled as a customized profile.
 
 
 ### Scientific detector and calibration workflow (8.4.0)
 
-The Expert view places **Detector Profile** directly below each connected device. Single-tube counters show one tube card; the GMC-500+ shows M4011 and SI-3BG separately with the active channel, calibration availability and dead time. Current CPM and the conversion factor are not repeated in this card because they are already shown in the device summary. The SI-3BG channel remains explicitly uncalibrated for dose conversion until a verified device-specific factor is stored.
+The Expert view places **Detector profile** directly below each connected device. Single-tube counters show one tube card; the GMC-500+ shows M4011 and SI-3BG separately with the active channel, calibration availability and dead time. Current CPM and the conversion factor are not repeated in this card because they are already shown in the device summary. The SI-3BG channel remains explicitly uncalibrated for dose conversion until a verified device-specific factor is stored.
 
 For every accepted measurement, the app records raw CPM, corrected CPM, detector load, estimated dead-time loss, correction factor, active tube, calibration source/status, dose quality and a 0–100 measurement-quality index. The dashboard converts these fields into a five-star quality display, a green/yellow/red detector-load bar, a live dead-time monitor and targeted plausibility warnings.
 
-The **Calibration management** workspace lists predefined and custom profiles, provides a four-step assistant, assigns a profile to a physical serial number and records every change with timestamp, source, changed values and comment. Predefined profiles are transparent application working values. Only a documented calibration should be presented as factory calibrated.
+The **Calibration management** workspace lists predefined and custom profiles, provides a four-step assistant, assigns a profile to a physical serial number and records every change with timestamp, source, changed values and comment. Predefined profiles are transparent application working values. Application profiles remain working values. Documented calibration requires a reference and stated calibration uncertainty; factory-calibrated wording is reserved for an explicit factory/manufacturer certificate source.
 
 History and reports support **Raw data**, **Dead-time corrected** and **Raw and corrected comparison** modes. The optional scientific PDF adds a sixth technical page containing detector identity, dead-time model, correction factor, estimated losses, measurement quality and the raw/corrected trace. Version 8.4 additions are applied idempotently to existing schema-8 databases, preserving backup compatibility.
 
@@ -494,7 +489,7 @@ The scheduler is enabled by default under **System**. The default shared gap is 
 
 ### Per-device orientation calibration
 
-Each device entry can optionally define a six-position accelerometer calibration. Enable it with `orientation_calibration_enabled`, enter the device serial, the X/Y/Z offsets and the X/Y/Z scales. The supplied GMC-320 and GMC-500+ default profiles already contain the measured values. Set the option to `false` to disable orientation calculations for that serial, or replace the values with a calibration from another physical counter.
+Each device entry can optionally define a six-position accelerometer calibration. Enable it with `orientation_calibration_enabled`, enter the device serial, the X/Y/Z offsets and the X/Y/Z scales. The shipped defaults do not contain installation-specific serial numbers or measured orientation values. Existing Home Assistant options are preserved during upgrades; new installations must enter their own six-position calibration before enabling orientation calculations.
 
 ## Robust comparison and measurement-site baseline (6.1.1)
 

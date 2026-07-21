@@ -394,6 +394,7 @@ def _apply_runtime_calibration_assignment(
         return config
     updates: dict[str, Any] = {
         "detector_profile": str(assignment.get("profile_id") or "custom_single"),
+        "detector_profile_source": "custom_assignment",
         "calibration_overrides": True,
         "tube_model": tube.tube_model,
         "cpm_per_usvh": float(tube.cpm_per_usvh or config.cpm_per_usvh),
@@ -459,6 +460,18 @@ def _run_device(
             with serial_scheduler.window(device_index, "INIT", STOP_EVENT):
                 device.open()
                 version, serial = read_identity(device)
+                if (
+                    device_config.expected_serial
+                    and device_config.expected_serial.casefold() != serial.casefold()
+                ):
+                    LOG.error(
+                        "[%s] Serial identity mismatch: dual-tube settings expect %s, connected counter is %s; device disabled",
+                        port,
+                        device_config.expected_serial,
+                        serial,
+                    )
+                    device.close()
+                    return
                 device_config = apply_detected_detector_profile(device_config, version)
                 device_config = _apply_runtime_calibration_assignment(device_config, history_store, serial)
                 profile = resolve_device_profile(version)

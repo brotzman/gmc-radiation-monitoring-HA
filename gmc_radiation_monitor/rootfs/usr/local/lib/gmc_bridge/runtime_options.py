@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .options_migration import merge_single_and_dual_device_options
+
 
 class OptionsError(ValueError):
     pass
@@ -17,69 +19,39 @@ def _mapping(value: object, name: str) -> dict[str, Any]:
     return value
 
 
-_DUAL_TUBE_FIELDS = {
-    "dual_tube_mode",
-    "dual_tube_switch_cpm",
-    "high_dose_tube_model",
-    "high_dose_cpm_per_usvh",
-    "high_dose_dead_time_us",
-    "high_dose_reliable_max_cpm",
-    "high_dose_dead_time_model",
-    "high_dose_conversion_factor_uncertainty_percent",
-    "high_dose_calibration_uncertainty_percent",
-    "high_dose_calibration_reference",
-}
-
-
-def _dual_tube_overrides(options: dict[str, Any]) -> list[dict[str, Any]]:
-    value = options.get("dual_tube_devices", [])
-    if value in (None, ""):
-        return []
-    if not isinstance(value, list):
-        raise OptionsError("dual_tube_devices must be a list")
-    overrides: list[dict[str, Any]] = []
-    for index, item in enumerate(value):
-        if not isinstance(item, dict):
-            raise OptionsError(f"dual_tube_devices[{index}] must be an object")
-        name = str(item.get("name") or "").strip()
-        if not name:
-            raise OptionsError(f"dual_tube_devices[{index}].name is required")
-        unknown = sorted(set(item) - ({"name"} | _DUAL_TUBE_FIELDS))
-        if unknown:
-            raise OptionsError(
-                f"dual_tube_devices[{index}] contains unknown fields: {', '.join(unknown)}"
-            )
-        overrides.append(dict(item))
-    return overrides
-
-
 def _devices(options: dict[str, Any]) -> list[dict[str, Any]]:
-    value = options.get("devices", [])
-    if not isinstance(value, list):
+    normalized, _changed = merge_single_and_dual_device_options(options)
+    single_value = normalized.get("devices", [])
+    dual_value = normalized.get("dual_tube_devices", [])
+    if not isinstance(single_value, list):
         raise OptionsError("devices must be a list")
-    devices: list[dict[str, Any]] = []
-    by_name: dict[str, dict[str, Any]] = {}
-    for index, item in enumerate(value):
-        if not isinstance(item, dict):
-            raise OptionsError(f"devices[{index}] must be an object")
-        device = dict(item)
-        devices.append(device)
-        name = str(device.get("name") or "").strip().casefold()
-        if name:
-            by_name[name] = device
+    if not isinstance(dual_value, list):
+        raise OptionsError("dual_tube_devices must be a list")
 
-    # 8.4.1 keeps dual-tube controls in one dedicated Supervisor section.
-    # Merge them into the matching device before the existing DeviceConfig
-    # parser runs. Legacy inline fields remain readable for upgrades, while
-    # values from the dedicated section take precedence.
-    for index, override in enumerate(_dual_tube_overrides(options)):
-        name = str(override["name"]).strip()
-        target = by_name.get(name.casefold())
-        if target is None:
-            raise OptionsError(
-                f"dual_tube_devices[{index}] references unknown device name: {name}"
-            )
-        target.update({key: value for key, value in override.items() if key != "name"})
+    devices: list[dict[str, Any]] = []
+    for group_name, values in (("devices", single_value), ("dual_tube_devices", dual_value)):
+        for index, item in enumerate(values):
+            if not isinstance(item, dict):
+                raise OptionsError(f"{group_name}[{index}] must be an object")
+            device = dict(item)
+            name = str(device.get("name") or "").strip()
+            if group_name == "dual_tube_devices":
+                if not name:
+                    raise OptionsError(f"dual_tube_devices[{index}].name is required")
+                serial = str(device.pop("device_serial", "") or "").strip().lower()
+                if serial:
+                    device["expected_serial"] = serial
+                mode = str(device.get("dual_tube_mode") or "").strip().lower()
+                if mode not in {"separate", "curve"}:
+                    raise OptionsError(
+                        f"dual_tube_devices[{index}].dual_tube_mode must be separate or curve"
+                    )
+            devices.append(device)
+
+    names = [str(item.get("name") or "").strip().casefold() for item in devices]
+    named = [name for name in names if name]
+    if len(named) != len(set(named)):
+        raise OptionsError("Configured device names must be unique across single- and dual-tube devices")
     return devices
 
 

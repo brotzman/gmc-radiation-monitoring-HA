@@ -17,7 +17,8 @@ RUN chmod 0755 \
     /etc/services.d/gmc-reports/run \
     /usr/local/bin/gmc_bridge.py \
     /usr/local/bin/gmc_report_server.py \
-    /usr/local/bin/gmc_runtime_env.py
+    /usr/local/bin/gmc_runtime_env.py \
+    /usr/local/bin/gmc_options_migrate.py
 
 LABEL \
     io.hass.version="${BUILD_VERSION}" \

@@ -195,7 +195,7 @@ _calibration_panel_overrides = {
         "Unknown tube": "Unbekanntes Zählrohr",
         "Active tube profile": "Aktives Röhrenprofil",
         "Not available: selected tube is not calibrated": "Nicht verfügbar: Das ausgewählte Zählrohr ist nicht kalibriert",
-        "Detector profile": "Detektor Profil",
+        "Detector profile": "Detektorprofil",
         "Low-dose tube profile": "Niedrigdosis-Röhrenprofil",
         "High-dose tube profile": "Hochdosis-Röhrenprofil",
         "Detector and calibration": "Detektor und Kalibrierung",
@@ -553,7 +553,7 @@ for _language, _catalogue in _calibration_profile_835_overrides.items():
     CATALOGS[_language].update(_catalogue)
 
 # Version 8.4.0 scientific detector, calibration and raw/corrected workflow.
-# Version 8.4.1 reuses these keys with corrected layout and configuration grouping.
+# Version 8.4.2 reuses these keys with corrected layout and configuration grouping.
 _release_840_overrides = {
     "en": {
         "Detector and calibration": "Detector and calibration",
@@ -879,4 +879,75 @@ _release_840_final_translations = {
     "hr": {"Profile saved": "Profil spremljen", "Unsupported data mode": "Nepodržani način podataka"},
 }
 for _language, _catalogue in _release_840_final_translations.items():
+    CATALOGS[_language].update(_catalogue)
+
+
+# Version 8.4.2: precise profile/calibration terminology and measurement-quality explanation.
+_release_842_overrides = {
+    "en": {
+        "Detector profile": "Detector profile",
+        "Automatically recognized device profile": "Automatically recognized device profile",
+        "Application profile working values": "Application profile working values",
+        "Application working values": "Application working values",
+        "Documented calibration": "Documented calibration",
+        "Measurement quality explanation": "The quality score evaluates data completeness, counting statistics, dead-time load and calibration status. It is not a certified accuracy statement.",
+    },
+    "de": {
+        "Detector profile": "Detektorprofil",
+        "Automatically recognized device profile": "Automatisch erkanntes Geräteprofil",
+        "Application profile working values": "Arbeitswerte des Anwendungsprofils",
+        "Application working values": "Anwendungs-Arbeitswerte",
+        "Documented calibration": "Dokumentierte Kalibrierung",
+        "Measurement quality explanation": "Die Messqualität bewertet Datenvollständigkeit, Zählstatistik, Totzeitauslastung und Kalibrierstatus. Sie ist keine zertifizierte Genauigkeitsangabe.",
+    },
+    "fr": {
+        "Detector profile": "Profil du détecteur",
+        "Automatically recognized device profile": "Profil d’appareil reconnu automatiquement",
+        "Application profile working values": "Valeurs de travail du profil d’application",
+        "Application working values": "Valeurs de travail de l’application",
+        "Documented calibration": "Étalonnage documenté",
+        "Measurement quality explanation": "L’indice de qualité évalue l’intégrité des données, la statistique de comptage, la charge de temps mort et l’état d’étalonnage. Il ne constitue pas une précision certifiée.",
+    },
+    "es": {
+        "Detector profile": "Perfil del detector",
+        "Automatically recognized device profile": "Perfil de dispositivo reconocido automáticamente",
+        "Application profile working values": "Valores de trabajo del perfil de aplicación",
+        "Application working values": "Valores de trabajo de la aplicación",
+        "Documented calibration": "Calibración documentada",
+        "Measurement quality explanation": "El índice de calidad evalúa la integridad de los datos, la estadística de conteo, la carga por tiempo muerto y el estado de calibración. No es una declaración de exactitud certificada.",
+    },
+    "it": {
+        "Detector profile": "Profilo del rivelatore",
+        "Automatically recognized device profile": "Profilo dispositivo riconosciuto automaticamente",
+        "Application profile working values": "Valori operativi del profilo applicativo",
+        "Application working values": "Valori operativi dell’applicazione",
+        "Documented calibration": "Calibrazione documentata",
+        "Measurement quality explanation": "L’indice di qualità valuta completezza dei dati, statistica di conteggio, carico del tempo morto e stato della calibrazione. Non è una dichiarazione di accuratezza certificata.",
+    },
+    "nl": {
+        "Detector profile": "Detectorprofiel",
+        "Automatically recognized device profile": "Automatisch herkend apparaatprofiel",
+        "Application profile working values": "Werkwaarden van het toepassingsprofiel",
+        "Application working values": "Werkwaarden van de toepassing",
+        "Documented calibration": "Gedocumenteerde kalibratie",
+        "Measurement quality explanation": "De kwaliteitsscore beoordeelt gegevensvolledigheid, telstatistiek, dode-tijdbelasting en kalibratiestatus. Het is geen gecertificeerde nauwkeurigheidsverklaring.",
+    },
+    "pl": {
+        "Detector profile": "Profil detektora",
+        "Automatically recognized device profile": "Automatycznie rozpoznany profil urządzenia",
+        "Application profile working values": "Wartości robocze profilu aplikacji",
+        "Application working values": "Wartości robocze aplikacji",
+        "Documented calibration": "Udokumentowana kalibracja",
+        "Measurement quality explanation": "Wskaźnik jakości ocenia kompletność danych, statystykę zliczeń, obciążenie czasem martwym i stan kalibracji. Nie jest certyfikowaną deklaracją dokładności.",
+    },
+    "hr": {
+        "Detector profile": "Profil detektora",
+        "Automatically recognized device profile": "Automatski prepoznat profil uređaja",
+        "Application profile working values": "Radne vrijednosti profila aplikacije",
+        "Application working values": "Radne vrijednosti aplikacije",
+        "Documented calibration": "Dokumentirana kalibracija",
+        "Measurement quality explanation": "Indeks kvalitete procjenjuje potpunost podataka, statistiku brojanja, opterećenje mrtvim vremenom i status kalibracije. Nije certificirana izjava o točnosti.",
+    },
+}
+for _language, _catalogue in _release_842_overrides.items():
     CATALOGS[_language].update(_catalogue)

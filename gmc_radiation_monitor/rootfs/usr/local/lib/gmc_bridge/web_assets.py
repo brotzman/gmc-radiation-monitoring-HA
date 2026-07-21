@@ -72,7 +72,7 @@ p { line-height: 1.5; }
 .external-map-copy strong { font-size:.84rem; }
 .external-map-copy small { color:var(--muted); font-weight:400; }
 .external-link-mark { margin-left:auto; color:var(--muted); font-size:1rem; }
-.device-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:.8rem; }
+.device-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,430px),1fr)); gap:.9rem; }
 .device-card { padding:1rem; border:1px solid var(--border); border-radius:12px; background:var(--panel); min-width:0; }
 .device-card.selected { border-color:var(--blue); box-shadow:0 0 0 1px color-mix(in srgb,var(--blue) 45%,transparent); }
 .device-card-header { display:flex; justify-content:space-between; gap:.75rem; align-items:flex-start; margin-bottom:.8rem; }
@@ -903,16 +903,19 @@ DASHBOARD_CSS += r"""
 .calibration-status { display:inline-flex; align-items:center; border-radius:999px; padding:.28rem .55rem; font-size:.75rem; font-weight:760; white-space:nowrap; }
 .calibration-status::before { content:""; width:.48rem; height:.48rem; border-radius:50%; margin-right:.35rem; background:currentColor; }
 .calibration-documented .calibration-status { color:var(--green); background:color-mix(in srgb,var(--green) 12%,transparent); }
-.calibration-working_values .calibration-status { color:var(--blue); background:color-mix(in srgb,var(--blue) 12%,transparent); }
-.calibration-predefined .calibration-status { color:var(--green); background:color-mix(in srgb,var(--green) 12%,transparent); }
+.calibration-working_values .calibration-status { color:#9a6700; background:color-mix(in srgb,var(--yellow) 16%,transparent); }
+.calibration-predefined .calibration-status { color:#9a6700; background:color-mix(in srgb,var(--yellow) 16%,transparent); }
 .calibration-customized .calibration-status { color:var(--blue); background:color-mix(in srgb,var(--blue) 12%,transparent); }
-.calibration-incomplete .calibration-status { color:var(--yellow); background:color-mix(in srgb,var(--yellow) 14%,transparent); }
+.calibration-incomplete .calibration-status { color:var(--red); background:color-mix(in srgb,var(--red) 12%,transparent); }
+.calibration-unknown .calibration-status { color:var(--gray); background:color-mix(in srgb,var(--gray) 12%,transparent); }
 .calibration-summary { display:flex; flex-wrap:wrap; gap:.4rem .75rem; margin-top:.55rem; color:var(--muted); font-size:.82rem; }
 .calibration-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.48rem; margin-top:.65rem; }
+.calibration-grid > :only-child { grid-column:1 / -1; }
 .calibration-grid > div { padding:.52rem; border-radius:8px; background:color-mix(in srgb,CanvasText 3%,transparent); min-width:0; }
 .calibration-grid strong,.tube-profile-card dt { display:block; font-size:.7rem; text-transform:uppercase; letter-spacing:.035em; opacity:.72; margin-bottom:.16rem; }
 .calibration-grid span { display:block; overflow-wrap:anywhere; }
 .tube-profile-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.55rem; margin-top:.65rem; }
+.tube-profile-grid > :only-child { grid-column:1 / -1; }
 .tube-profile-card { padding:.62rem; border:1px solid var(--border); border-radius:9px; background:var(--panel); min-width:0; }
 .tube-profile-card.single-profile { grid-column:1 / -1; }
 .tube-profile-card.uncalibrated,.tube-profile-card.unconfigured { border-color:color-mix(in srgb,var(--yellow) 45%,var(--border)); }
@@ -943,10 +946,9 @@ DASHBOARD_CSS += r"""
 .detector-tube-card dl { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.4rem; margin:.45rem 0 0; }
 .detector-tube-card dt { font-size:.66rem; text-transform:uppercase; opacity:.7; }
 .detector-tube-card dd { margin:.1rem 0 0; overflow-wrap:anywhere; font-size:.82rem; }
-.measurement-quality-card { display:flex; align-items:center; justify-content:space-between; gap:.8rem; padding:.72rem; margin-top:.65rem; border-radius:10px; background:color-mix(in srgb,var(--blue) 7%,var(--panel)); }
-.measurement-quality-card > div { display:grid; gap:.12rem; }
-.quality-stars { font-size:1.25rem; letter-spacing:.06em; line-height:1.1; }
-.quality-score { font-weight:800; font-size:1rem; white-space:nowrap; }
+.quality-stars { display:inline-flex; align-items:baseline; gap:.35rem; font-size:1.15rem; letter-spacing:.04em; line-height:1.1; white-space:nowrap; }
+.quality-stars small { font-size:.75rem; letter-spacing:0; color:var(--muted); }
+.measurement-quality-explanation { display:block; margin-top:.45rem; line-height:1.4; color:var(--muted); }
 .detector-load-card { padding:.65rem .72rem; margin-top:.55rem; border:1px solid var(--border); border-radius:10px; }
 .load-track { height:.65rem; margin-top:.45rem; border-radius:999px; overflow:hidden; background:color-mix(in srgb,CanvasText 8%,transparent); }
 .load-fill { display:block; height:100%; min-width:0; border-radius:inherit; background:var(--green); transition:width .25s ease; }
@@ -954,10 +956,6 @@ DASHBOARD_CSS += r"""
 .load-fill.red { background:var(--red); }
 .calibration-warnings { margin:.65rem 0 0; padding:.55rem .75rem .55rem 1.8rem; border-radius:9px; background:color-mix(in srgb,var(--yellow) 10%,transparent); }
 .calibration-warnings li { margin:.18rem 0; }
-.device-comparison-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:.65rem; }
-.device-comparison-card { padding:.72rem; border:1px solid var(--border); border-radius:10px; background:var(--panel); }
-.device-comparison-card strong,.device-comparison-card span { display:block; }
-.device-comparison-card .comparison-value { font-size:1.35rem; font-weight:800; margin:.3rem 0; }
 .calibration-manager-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:.65rem; }
 .calibration-profile-card { padding:.7rem; border:1px solid var(--border); border-radius:10px; }
 .calibration-profile-card dl { margin:.45rem 0 0; display:grid; gap:.3rem; }
@@ -967,28 +965,28 @@ DASHBOARD_CSS += r"""
 .data-mode-switch { display:flex; flex-wrap:wrap; gap:.35rem; }
 .data-mode-switch a { padding:.35rem .55rem; border:1px solid var(--border); border-radius:999px; font-size:.78rem; }
 .data-mode-switch a.active { background:var(--blue); color:white; border-color:var(--blue); }
-@media(max-width:700px){.detector-tube-grid,.detector-tube-card dl{grid-template-columns:1fr}.measurement-quality-card{align-items:flex-start}.calibration-wizard{grid-template-columns:1fr}.calibration-wizard .arrow{display:none}}
+@media(max-width:700px){.detector-tube-grid,.detector-tube-card dl{grid-template-columns:1fr}.calibration-wizard{grid-template-columns:1fr}.calibration-wizard .arrow{display:none}}
 
-/* 8.4.1: keep expert labels and values visually separated on all widths. */
+/* 8.4.2: keep expert labels and values visually separated on all widths. */
 .expert-statistics,.dead-time-monitor { display:grid; gap:.28rem; }
-.expert-statistics > div,.dead-time-monitor > div { display:grid; grid-template-columns:minmax(9.5rem,max-content) minmax(0,1fr); column-gap:.75rem; align-items:baseline; min-width:0; }
+.expert-statistics > div,.dead-time-monitor > div { display:grid; grid-template-columns:minmax(10.5rem,36%) minmax(0,1fr); column-gap:1rem; align-items:start; min-width:0; }
 .expert-statistics > div > strong,.dead-time-monitor > div > strong { margin-right:.15rem; }
-.expert-statistics > div > span,.dead-time-monitor > div > span { min-width:0; overflow-wrap:anywhere; }
-@media(max-width:560px){.expert-statistics > div,.dead-time-monitor > div{grid-template-columns:1fr;row-gap:.08rem}}
+.expert-statistics > div > span,.dead-time-monitor > div > span { min-width:0; overflow-wrap:break-word; word-break:normal; line-height:1.35; }
+@media(max-width:650px){.expert-statistics > div,.dead-time-monitor > div{grid-template-columns:1fr;row-gap:.12rem}.quality-stars{white-space:normal}}
+body[data-analysis-level="expert"] .device-grid { grid-template-columns:1fr; }
+body[data-analysis-level="expert"] .device-card { width:100%; }
 
 """
 
 DASHBOARD_CSS += r"""
 .history-corrected-line{fill:none;stroke:#7c3aed;stroke-width:1.25;stroke-dasharray:2.5 1.5}
 .history-key.corrected{background:#7c3aed}
-.device-comparison-section,.calibration-management{margin-top:1.1rem}
-.device-comparison-card,.calibration-manager-card,.report-data-mode-card{background:var(--card-bg,#fff);border:1px solid var(--border,#d9e2ec);border-radius:14px;padding:1rem;box-shadow:0 6px 20px rgba(15,23,42,.04)}
-.device-comparison-row,.device-comparison-summary,.calibration-profile-row,.calibration-history-row{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.65rem 0;border-bottom:1px solid var(--border,#e5e7eb)}
-.device-comparison-row:last-child,.calibration-profile-row:last-child,.calibration-history-row:last-child{border-bottom:0}
-.device-comparison-row div,.calibration-profile-row div,.calibration-history-row div{display:flex;flex-direction:column;min-width:0}
-.device-comparison-row small,.calibration-profile-row small,.calibration-history-row small{color:var(--muted,#64748b)}
-.device-comparison-summary{font-size:1.05rem;border-top:2px solid var(--border,#d9e2ec);border-bottom:0;margin-top:.25rem}
-.comparison-status{border-radius:999px;padding:.35rem .7rem;font-weight:700}.comparison-status.ok{background:#dcfce7;color:#166534}.comparison-status.warning{background:#fef3c7;color:#92400e}
+.calibration-management{margin-top:1.1rem}
+.calibration-manager-card,.report-data-mode-card{background:var(--card-bg,#fff);border:1px solid var(--border,#d9e2ec);border-radius:14px;padding:1rem;box-shadow:0 6px 20px rgba(15,23,42,.04)}
+.calibration-profile-row,.calibration-history-row{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.65rem 0;border-bottom:1px solid var(--border,#e5e7eb)}
+.calibration-profile-row:last-child,.calibration-history-row:last-child{border-bottom:0}
+.calibration-profile-row div,.calibration-history-row div{display:flex;flex-direction:column;min-width:0}
+.calibration-profile-row small,.calibration-history-row small{color:var(--muted,#64748b)}
 .calibration-manager-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem;margin:1rem 0}
 .calibration-manager-card h3{margin-top:0}.profile-state{font-weight:800;color:#15803d}.calibration-profile-row.custom .profile-state{color:#ca8a04}
 .calibration-wizard-steps{display:flex;align-items:center;justify-content:space-between;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem}.calibration-wizard-steps span{display:flex;align-items:center;gap:.4rem}.calibration-wizard-steps b{display:grid;place-items:center;width:1.7rem;height:1.7rem;border-radius:50%;background:#e0f2fe;color:#075985}.calibration-wizard-steps i{font-style:normal;color:#94a3b8}
@@ -996,5 +994,5 @@ DASHBOARD_CSS += r"""
 .calibration-history-list{display:flex;flex-direction:column}
 .report-data-mode-card{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin:1rem 0}.report-data-mode-card>div:first-child{display:flex;flex-direction:column}.data-mode-switch{display:flex;gap:.45rem;flex-wrap:wrap}
 @media(max-width:820px){.calibration-manager-grid{grid-template-columns:1fr}.calibration-profile-form{grid-template-columns:1fr 1fr}.report-data-mode-card{align-items:flex-start;flex-direction:column}}
-@media(max-width:560px){.calibration-profile-form{grid-template-columns:1fr}.device-comparison-row,.device-comparison-summary,.calibration-profile-row,.calibration-history-row{align-items:flex-start;flex-direction:column;gap:.25rem}.calibration-wizard-steps i{display:none}.calibration-wizard-steps{align-items:flex-start;flex-direction:column}}
+@media(max-width:560px){.calibration-profile-form{grid-template-columns:1fr}.calibration-profile-row,.calibration-history-row{align-items:flex-start;flex-direction:column;gap:.25rem}.calibration-wizard-steps i{display:none}.calibration-wizard-steps{align-items:flex-start;flex-direction:column}}
 """

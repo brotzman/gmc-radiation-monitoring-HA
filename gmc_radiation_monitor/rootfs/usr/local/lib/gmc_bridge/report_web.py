@@ -99,7 +99,7 @@ from .report_web_support import (
 )
 from .reports import build_live_analysis, load_timezone
 from .revision_cache import RevisionCache
-from .scientific_web import render_calibration_management, render_device_comparison
+from .scientific_web import render_calibration_management
 from .security_logging import configure_secure_logging
 from .translations import SUPPORTED_UI_LANGUAGES, Translator, resolve_language
 from .utils import slugify
@@ -532,7 +532,6 @@ class ReportApplication(WorkflowApplicationMixin):
 <nav class="dashboard-controls" id="dashboard-controls" aria-label="{html.escape(t("Dashboard navigation"), quote=True)}">
 <div class="jump-links">
 <a href="#devices">{html.escape(t("Devices"))}</a>
-<a href="#device-comparison">{html.escape(t("Device comparison"))}</a>
 <a href="#radiation-intelligence">{html.escape(t("Intelligence"))}</a>
 <a href="#analysis">{html.escape(t("Analysis"))}</a>
 <a href="#history">{html.escape(t("History"))}</a>
@@ -664,7 +663,6 @@ class ReportApplication(WorkflowApplicationMixin):
             language=language,
             t=t,
         )
-        device_comparison_html = render_device_comparison(devices=card_devices, t=t)
         calibration_management_html = render_calibration_management(
             store=self.store,
             timezone=self.timezone,
@@ -942,7 +940,6 @@ class ReportApplication(WorkflowApplicationMixin):
 {dashboard_controls_html}
 <div id="primary-dashboard" class="primary-dashboard">
 {multi_device_html}
-{device_comparison_html}
 {radiation_intelligence_html}
 {adaptive_background_html}
 {cosmic_influence_html}

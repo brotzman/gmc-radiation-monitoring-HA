@@ -147,6 +147,7 @@ class DeviceConfig:
     device_clock_warning_seconds: int = 120
     heartbeat_enabled: bool = False
     detector_profile: str = "custom_single"
+    detector_profile_source: str = "configured"
     calibration_overrides: bool = False
     cpm_per_usvh: float = 154.0
     dead_time_us: float | None = None
@@ -177,6 +178,7 @@ class DeviceConfig:
     orientation_scale_y: float = 1.0
     orientation_scale_z: float = 1.0
     orientation_calibration_name: str = "Custom six-position calibration"
+    expected_serial: str = ""
 
     def legacy_tube_profile(self) -> TubeCalibrationConfig:
         return TubeCalibrationConfig(
@@ -197,26 +199,35 @@ class DeviceConfig:
 
     def calibration_status(self) -> str:
         if self.dual_tube_mode == "single":
+            documented = (
+                bool(self.calibration_reference.strip())
+                and self.calibration_uncertainty_percent is not None
+            )
             if self.calibration_overrides:
-                return "customized"
+                return "documented" if documented else "customized"
             if self.detector_profile in PRESETS:
                 return "predefined"
-            return "documented" if self.calibration_reference.strip() else "working_values"
+            return "documented" if documented else "working_values"
         low = self.effective_low_dose_tube()
         high = self.high_dose_tube
         if not low.dose_calibrated or high is None or not high.dose_calibrated:
             return "incomplete"
+        documented = (
+            bool(low.calibration_reference.strip())
+            and bool(high.calibration_reference.strip())
+            and low.calibration_uncertainty_percent is not None
+            and high.calibration_uncertainty_percent is not None
+        )
         if self.calibration_overrides:
-            return "customized"
+            return "documented" if documented else "customized"
         if self.detector_profile in PRESETS:
             return "predefined"
-        if low.calibration_reference.strip() and high.calibration_reference.strip():
-            return "documented"
-        return "working_values"
+        return "documented" if documented else "working_values"
 
     def calibration_registry_values(self) -> dict[str, object]:
         return {
             "detector_profile": self.detector_profile,
+            "detector_profile_source": self.detector_profile_source,
             "calibration_overrides": self.calibration_overrides,
             "dual_tube_mode": self.dual_tube_mode,
             "dual_tube_switch_cpm": self.dual_tube_switch_cpm,
@@ -228,7 +239,7 @@ class DeviceConfig:
             "calibration_source": (
                 "user" if self.calibration_overrides else
                 (PRESETS[self.detector_profile].calibration_source if self.detector_profile in PRESETS else
-                 ("documented" if self.calibration_reference.strip() else "unknown"))
+                 ("documented" if self.calibration_status() == "documented" else "working_values"))
             ),
             "warning_load_percent": (PRESETS[self.detector_profile].warning_load_percent if self.detector_profile in PRESETS else 5.0),
             "critical_load_percent": (PRESETS[self.detector_profile].critical_load_percent if self.detector_profile in PRESETS else 10.0),
@@ -343,6 +354,7 @@ def apply_detected_detector_profile(config: DeviceConfig, model_or_version: str)
     return replace(
         config,
         detector_profile=detected_id,
+        detector_profile_source="detected_identity",
         calibration_overrides=False,
         cpm_per_usvh=preset.cpm_per_usvh,
         dead_time_us=preset.dead_time_us,
@@ -494,7 +506,7 @@ class Settings:
             "port", "name", "baudrate", "scan_interval", "command_timeout",
             "inter_command_delay_ms", "serial_startup_delay", "auxiliary_read_interval",
             "read_gyro", "read_device_time", "device_clock_warning_seconds",
-            "heartbeat_enabled", "detector_profile", "cpm_per_usvh", "dead_time_us", "reliable_max_cpm",
+            "heartbeat_enabled", "detector_profile", "expected_serial", "cpm_per_usvh", "dead_time_us", "reliable_max_cpm",
             "dead_time_model", "conversion_factor_uncertainty_percent",
             "calibration_uncertainty_percent", "calibration_reference", "tube_model",
             "dual_tube_mode", "dual_tube_switch_cpm", "low_dose_tube", "high_dose_tube",
@@ -530,8 +542,10 @@ class Settings:
             configured_name = str(item.get("name", "")).strip()
             configured_tube_model = str(item.get("tube_model", "")).strip()
             configured_dual_mode = str(item.get("dual_tube_mode", "single")).strip().lower()
+            requested_profile_id = str(item.get("detector_profile", "auto")).strip().lower() or "auto"
+            profile_source = "automatic_configuration" if requested_profile_id == "auto" else "configured_profile"
             resolved_profile_id, preset = resolve_preset(
-                str(item.get("detector_profile", "auto")),
+                requested_profile_id,
                 name=configured_name,
                 tube_model=configured_tube_model,
                 dual_tube_mode=configured_dual_mode,
@@ -745,6 +759,7 @@ class Settings:
                     defaults.heartbeat_enabled,
                 ),
                 detector_profile=resolved_profile_id,
+                detector_profile_source=profile_source,
                 calibration_overrides=calibration_overrides,
                 cpm_per_usvh=effective_cpm_per_usvh,
                 dead_time_us=effective_dead_time_us,
@@ -782,6 +797,7 @@ class Settings:
                 orientation_calibration_name=str(
                     item.get("orientation_calibration_name", "Custom six-position calibration")
                 ).strip() or "Custom six-position calibration",
+                expected_serial=str(item.get("expected_serial", "")).strip().lower(),
             )
             device.validate()
             devices.append(device)

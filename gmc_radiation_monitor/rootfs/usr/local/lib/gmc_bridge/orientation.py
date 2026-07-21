@@ -29,28 +29,9 @@ class Orientation:
     position_key: str
 
 
-BUILTIN_CALIBRATIONS: dict[str, AccelerometerCalibration] = {
-    # GMC-320, serial f488c59b0031f0; six-position calibration from 2026-07-14.
-    "f488c59b0031f0": AccelerometerCalibration(
-        offset_x=25.385,
-        offset_y=0.430,
-        offset_z=18.430,
-        scale_x=263.285,
-        scale_y=261.430,
-        scale_z=254.570,
-        profile_name="GMC-320 six-position calibration",
-    ),
-    # GMC-500+, serial 080048303838a0; six-position calibration from 2026-07-14.
-    "080048303838a0": AccelerometerCalibration(
-        offset_x=84.000,
-        offset_y=-112.500,
-        offset_z=-193.905,
-        scale_x=16380.000,
-        scale_y=15951.500,
-        scale_z=15879.235,
-        profile_name="GMC-500+ six-position calibration",
-    ),
-}
+# Device-specific orientation calibration is user configuration only.
+# No installation serial numbers or personal six-position values are shipped.
+BUILTIN_CALIBRATIONS: dict[str, AccelerometerCalibration] = {}
 
 _REFERENCE_POSITIONS: tuple[tuple[str, tuple[float, float, float]], ...] = (
     ("Display up", (0.0, 0.0, -1.0)),
