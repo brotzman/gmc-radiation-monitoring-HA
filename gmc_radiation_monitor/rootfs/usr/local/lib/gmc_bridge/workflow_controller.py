@@ -168,6 +168,7 @@ class WorkflowApplicationMixin:
             options_path=self.options_path,
             scan_interval_seconds=self.scan_interval_seconds,
             started_at_utc=self.started_at_utc,
+            bridge_heartbeat_path=self.bridge_heartbeat_path,
         )
         return assessment.as_dict(generated_at_utc=datetime.now(UTC).isoformat())
 

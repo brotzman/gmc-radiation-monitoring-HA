@@ -108,8 +108,6 @@ from .workflow_web import (
 )
 LOG = logging.getLogger("gmc_reports")
 # Source-compatibility markers retained for downstream checks: class="device-card-title" class="assessment-icon device-card-icon">{html.escape(device_icon)}</div> class="device-card-title-copy"
-
-
 class ReportApplication(WorkflowApplicationMixin):
     def __init__(
         self,
@@ -138,10 +136,12 @@ class ReportApplication(WorkflowApplicationMixin):
         pressure_client: HomeAssistantPressureClient | None = None,
         cosmic_hint_enabled: bool = True,
         options_path: str | Path = "/data/options.json",
+        bridge_heartbeat_path: str | Path | None = None,
         started_at_utc: int | None = None,
     ) -> None:
         self.store = store
         self.options_path = Path(options_path)
+        self.bridge_heartbeat_path = Path(bridge_heartbeat_path) if bridge_heartbeat_path is not None else None
         self.started_at_utc = int(time.time()) if started_at_utc is None else int(started_at_utc)
         self.timezone_name = timezone_name
         self.timezone = load_timezone(timezone_name)
@@ -205,7 +205,6 @@ class ReportApplication(WorkflowApplicationMixin):
         # A minute bucket lets cached environmental context refresh even when no
         # new radiation sample has arrived.
         return count, last, int(time.time() // 60)
-
     def _live_analysis_cached(
         self, *, device_serial: str, scan_interval_seconds: int, cpm_per_usvh: float
     ) -> dict[str, Any]:
@@ -217,7 +216,6 @@ class ReportApplication(WorkflowApplicationMixin):
             self.traffic_light_yellow_percent,
             self.traffic_light_red_percent,
         )
-
         def build() -> dict[str, Any]:
             result = build_live_analysis(
                 self.store,
@@ -229,7 +227,6 @@ class ReportApplication(WorkflowApplicationMixin):
             result["_scan_interval_seconds"] = scan_interval_seconds
             result["_cpm_per_usvh"] = cpm_per_usvh
             return result
-
         return self.analysis_cache.get_or_build(key, build)
 
     def _fleet_context_cached(self, *, selected_serial: str, devices: list[dict[str, Any]]) -> dict[str, Any]:
@@ -1686,6 +1683,7 @@ def run_report_server() -> None:
     main_value_size = os.environ.get("MAIN_VALUE_SIZE", "large").strip().lower()
     custom_value_font_size_px = int(os.environ.get("CUSTOM_VALUE_FONT_SIZE_PX", "36"))
     cosmic_hint_enabled = os.environ.get("COSMIC_HINT_ENABLED", "false").strip().lower() == "true"
+    bridge_heartbeat_path = os.environ.get("BRIDGE_HEARTBEAT_PATH", "/data/gmc_bridge_heartbeat.json").strip()
     pressure_weather_entity_primary = os.environ.get(
         "PRESSURE_WEATHER_ENTITY_PRIMARY", ""
     ).strip()
@@ -1758,6 +1756,7 @@ def run_report_server() -> None:
         home_assistant_client=home_assistant_client,
         pressure_client=pressure_client,
         cosmic_hint_enabled=cosmic_hint_enabled,
+        bridge_heartbeat_path=bridge_heartbeat_path,
     )
     automation_service = WorkflowAutomationService(
         store=store,

@@ -12,6 +12,11 @@ LIB_DIR = Path(__file__).resolve().parents[1] / "lib"
 if str(LIB_DIR) not in sys.path:
     sys.path.insert(0, str(LIB_DIR))
 
+from gmc_bridge.bridge_heartbeat import (  # noqa: E402
+    BridgeHeartbeatReporter,
+    DEFAULT_BRIDGE_HEARTBEAT_PATH,
+)
+from gmc_bridge.health_settings import DEFAULT_BRIDGE_HEARTBEAT_INTERVAL_SECONDS  # noqa: E402
 from gmc_bridge.security_logging import configure_secure_logging  # noqa: E402
 from gmc_bridge.serial_autoconfig import AutomaticSerialBridge  # noqa: E402
 
@@ -28,7 +33,21 @@ def main() -> int:
         raise ValueError("DEVICES_JSON must be valid JSON") from exc
     if not isinstance(raw, list):
         raise ValueError("DEVICES_JSON must contain a list")
-    return AutomaticSerialBridge(raw).run()
+    heartbeat_path = os.environ.get(
+        "BRIDGE_HEARTBEAT_PATH", str(DEFAULT_BRIDGE_HEARTBEAT_PATH)
+    )
+    heartbeat_interval = float(
+        os.environ.get(
+            "BRIDGE_HEARTBEAT_INTERVAL_SECONDS",
+            str(DEFAULT_BRIDGE_HEARTBEAT_INTERVAL_SECONDS),
+        )
+    )
+    heartbeat = BridgeHeartbeatReporter(
+        heartbeat_path,
+        interval_seconds=heartbeat_interval,
+        configured_devices=len(raw),
+    )
+    return AutomaticSerialBridge(raw, heartbeat_reporter=heartbeat).run()
 
 
 if __name__ == "__main__":

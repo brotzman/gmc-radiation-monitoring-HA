@@ -7,13 +7,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Mapping
 
+from .bridge_heartbeat import read_bridge_heartbeat
 from .config_validation import validate_options
+from .health_settings import HealthThresholds, health_thresholds_from_options
 from .history import HistoryStore
 from .migrations import SCHEMA_VERSION
 
-HEALTH_STARTUP_GRACE_SECONDS = 15 * 60
-HEALTH_MIN_STALE_SECONDS = 10 * 60
-HEALTH_MIN_ERROR_STALE_SECONDS = 20 * 60
 HEALTH_STORAGE_WARNING_BYTES = 100 * 1024 * 1024
 HEALTH_STORAGE_ERROR_BYTES = 10 * 1024 * 1024
 
@@ -64,6 +63,96 @@ def _status_for_elapsed(*, elapsed: int, grace: int) -> str:
     return "warning" if elapsed < grace else "error"
 
 
+def _bridge_heartbeat_check(
+    *,
+    path: Path,
+    now: int,
+    elapsed: int,
+    thresholds: HealthThresholds,
+) -> HealthCheck:
+    common_values: dict[str, Any] = {
+        "path": str(path),
+        "warning_after_seconds": thresholds.bridge_warning_seconds,
+        "error_after_seconds": thresholds.bridge_error_seconds,
+    }
+    try:
+        payload = read_bridge_heartbeat(path)
+    except FileNotFoundError:
+        status = _status_for_elapsed(
+            elapsed=elapsed,
+            grace=thresholds.startup_grace_seconds,
+        )
+        return HealthCheck(
+            "bridge_heartbeat",
+            status,
+            "Bridge heartbeat is not available yet",
+            {**common_values, "age_seconds": None},
+        )
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        status = _status_for_elapsed(
+            elapsed=elapsed,
+            grace=thresholds.startup_grace_seconds,
+        )
+        return HealthCheck(
+            "bridge_heartbeat",
+            status,
+            f"Bridge heartbeat cannot be read: {exc}",
+            {**common_values, "age_seconds": None},
+        )
+
+    updated = int(payload["updated_at_utc"])
+    age = max(0, now - updated)
+    state = str(payload.get("state") or "unknown")
+    child_running = bool(payload.get("child_running"))
+    values = {
+        **common_values,
+        "age_seconds": age,
+        "updated_at_utc": updated,
+        "state": state,
+        "child_running": child_running,
+        "supervisor_pid": payload.get("supervisor_pid"),
+        "child_pid": payload.get("child_pid"),
+        "configured_devices": payload.get("configured_devices"),
+        "assigned_devices": payload.get("assigned_devices"),
+        "last_child_exit_code": payload.get("last_child_exit_code"),
+    }
+
+    if age > thresholds.bridge_error_seconds:
+        return HealthCheck(
+            "bridge_heartbeat",
+            "error",
+            f"Bridge heartbeat is stale ({age} seconds)",
+            values,
+        )
+    if age > thresholds.bridge_warning_seconds:
+        return HealthCheck(
+            "bridge_heartbeat",
+            "warning",
+            f"Bridge heartbeat is delayed ({age} seconds)",
+            values,
+        )
+    if state in {"stopped", "failed"}:
+        return HealthCheck(
+            "bridge_heartbeat",
+            "error",
+            f"Bridge supervisor reports state {state}",
+            values,
+        )
+    if state == "running" and child_running:
+        return HealthCheck(
+            "bridge_heartbeat",
+            "ok",
+            f"Bridge heartbeat is current ({age} seconds)",
+            values,
+        )
+    return HealthCheck(
+        "bridge_heartbeat",
+        "warning",
+        f"Bridge supervisor is alive in state {state}",
+        values,
+    )
+
+
 def assess_health(
     *,
     store: HistoryStore,
@@ -72,28 +161,51 @@ def assess_health(
     scan_interval_seconds: int,
     started_at_utc: int,
     now_utc: int | None = None,
+    bridge_heartbeat_path: str | Path | None = None,
 ) -> HealthAssessment:
-    """Run the lightweight watchdog checks used by ``/health``.
+    """Run the watchdog checks used by ``/health``.
 
-    Transient startup and reconnect states remain warnings. Database/schema,
-    invalid configuration, critically low storage and prolonged absence of
-    device data are errors and therefore produce HTTP 503 at the watchdog URL.
+    The bridge heartbeat proves that the acquisition supervisor itself is
+    alive. Device connectivity and measurement freshness remain separate checks
+    so a disconnected counter is not confused with a crashed bridge process.
     """
 
     now = int(time.time()) if now_utc is None else int(now_utc)
     elapsed = max(0, now - int(started_at_utc))
     scan = max(5, int(scan_interval_seconds))
-    startup_grace = max(HEALTH_STARTUP_GRACE_SECONDS, scan * 5)
-    stale_warning = max(HEALTH_MIN_STALE_SECONDS, scan * 10)
-    stale_error = max(HEALTH_MIN_ERROR_STALE_SECONDS, scan * 20)
-    checks: list[HealthCheck] = [
-        HealthCheck(
-            "measurement_service",
-            "ok",
-            "Report and measurement status service is responding",
-            {"uptime_seconds": elapsed},
+    checks: list[HealthCheck] = []
+
+    options = Path(options_path)
+    options_payload: object = {}
+    options_error: Exception | None = None
+    if options.exists():
+        try:
+            options_payload = json.loads(options.read_text(encoding="utf-8"))
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            options_error = exc
+    thresholds = health_thresholds_from_options(
+        options_payload,
+        scan_interval_seconds=scan,
+    )
+
+    if bridge_heartbeat_path is None:
+        checks.append(
+            HealthCheck(
+                "measurement_service",
+                "ok",
+                "Report status service is responding; bridge heartbeat is not configured in this environment",
+                {"uptime_seconds": elapsed},
+            )
         )
-    ]
+    else:
+        checks.append(
+            _bridge_heartbeat_check(
+                path=Path(bridge_heartbeat_path),
+                now=now,
+                elapsed=elapsed,
+                thresholds=thresholds,
+            )
+        )
 
     try:
         integrity = store.cached_quick_check(max_age_seconds=60)
@@ -121,39 +233,48 @@ def assess_health(
     except Exception as exc:  # pragma: no cover - defensive watchdog boundary
         checks.append(HealthCheck("schema", "error", f"Schema check failed: {exc}"))
 
-    options = Path(options_path)
     if not options.exists():
         checks.append(
             HealthCheck(
                 "configuration",
                 "warning",
                 "Options file is unavailable in this environment",
-                {"path": str(options)},
+                {
+                    "path": str(options),
+                    "health_thresholds": thresholds.as_dict(),
+                },
+            )
+        )
+    elif options_error is not None:
+        checks.append(
+            HealthCheck(
+                "configuration",
+                "error",
+                f"Configuration cannot be read: {options_error}",
+                {"health_thresholds": thresholds.as_dict()},
             )
         )
     else:
-        try:
-            payload = json.loads(options.read_text(encoding="utf-8"))
-            validation = validate_options(payload)
-            checks.append(
-                HealthCheck(
-                    "configuration",
-                    validation.status,
-                    "Configuration is valid"
-                    if validation.clean
-                    else "Configuration contains warnings"
-                    if validation.status == "warning"
-                    else "Configuration contains errors",
-                    {
-                        "errors": [issue.message for issue in validation.errors],
-                        "warnings": [issue.message for issue in validation.warnings],
-                        "issues": [issue.as_dict() for issue in validation.issues],
-                    },
-                )
+        validation = validate_options(options_payload)
+        checks.append(
+            HealthCheck(
+                "configuration",
+                validation.status,
+                "Configuration is valid"
+                if validation.clean
+                else "Configuration contains warnings"
+                if validation.status == "warning"
+                else "Configuration contains errors",
+                {
+                    "errors": [issue.message for issue in validation.errors],
+                    "warnings": [issue.message for issue in validation.warnings],
+                    "issues": [issue.as_dict() for issue in validation.issues],
+                    "health_thresholds": thresholds.as_dict(),
+                },
             )
-        except (OSError, ValueError, json.JSONDecodeError) as exc:
-            checks.append(HealthCheck("configuration", "error", f"Configuration cannot be read: {exc}"))
+        )
 
+    startup_grace = thresholds.startup_grace_seconds
     connected = [
         item
         for item in devices
@@ -199,6 +320,8 @@ def assess_health(
             )
         )
 
+    stale_warning = thresholds.measurement_warning_seconds
+    stale_error = thresholds.measurement_error_seconds
     latest = max(
         (int(item.get("timestamp_utc") or item.get("last_timestamp_utc") or 0) for item in devices),
         default=0,

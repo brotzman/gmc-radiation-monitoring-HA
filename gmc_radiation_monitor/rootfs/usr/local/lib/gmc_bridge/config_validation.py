@@ -5,6 +5,14 @@ from pathlib import Path
 from typing import Any, Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from .health_settings import (
+    DEFAULT_BRIDGE_HEARTBEAT_INTERVAL_SECONDS,
+    DEFAULT_HEALTH_BRIDGE_ERROR_SECONDS,
+    DEFAULT_HEALTH_BRIDGE_WARNING_SECONDS,
+    DEFAULT_HEALTH_MEASUREMENT_ERROR_SECONDS,
+    DEFAULT_HEALTH_MEASUREMENT_WARNING_SECONDS,
+    DEFAULT_HEALTH_STARTUP_GRACE_SECONDS,
+)
 from .options_migration import merge_single_and_dual_device_options
 
 Severity = Literal["warning", "error"]
@@ -332,6 +340,91 @@ def validate_options(payload: object) -> ValidationResult:
                 "error",
                 "Safety thresholds must be numeric",
                 "safety",
+            )
+
+    system = payload.get("system", {})
+    if isinstance(system, dict):
+        defaults = {
+            "bridge_heartbeat_interval_seconds": DEFAULT_BRIDGE_HEARTBEAT_INTERVAL_SECONDS,
+            "health_startup_grace_seconds": DEFAULT_HEALTH_STARTUP_GRACE_SECONDS,
+            "health_bridge_warning_seconds": DEFAULT_HEALTH_BRIDGE_WARNING_SECONDS,
+            "health_bridge_error_seconds": DEFAULT_HEALTH_BRIDGE_ERROR_SECONDS,
+            "health_measurement_warning_seconds": DEFAULT_HEALTH_MEASUREMENT_WARNING_SECONDS,
+            "health_measurement_error_seconds": DEFAULT_HEALTH_MEASUREMENT_ERROR_SECONDS,
+        }
+        ranges = {
+            "bridge_heartbeat_interval_seconds": (5, 60),
+            "health_startup_grace_seconds": (30, 3600),
+            "health_bridge_warning_seconds": (10, 600),
+            "health_bridge_error_seconds": (20, 1800),
+            "health_measurement_warning_seconds": (30, 86400),
+            "health_measurement_error_seconds": (60, 172800),
+        }
+        parsed: dict[str, int] = {}
+        for key, default in defaults.items():
+            try:
+                parsed[key] = int(system.get(key, default))
+            except (TypeError, ValueError):
+                _issue(
+                    issues,
+                    "health_limit_not_numeric",
+                    "error",
+                    f"system.{key} must be an integer",
+                    f"system.{key}",
+                )
+                parsed[key] = default
+                continue
+            minimum, maximum = ranges[key]
+            if not minimum <= parsed[key] <= maximum:
+                _issue(
+                    issues,
+                    "health_limit_out_of_range",
+                    "error",
+                    f"system.{key} must be between {minimum} and {maximum} seconds",
+                    f"system.{key}",
+                )
+
+        if parsed["health_bridge_error_seconds"] <= parsed["health_bridge_warning_seconds"]:
+            _issue(
+                issues,
+                "bridge_health_threshold_order",
+                "error",
+                "system.health_bridge_error_seconds must be greater than system.health_bridge_warning_seconds",
+                "system",
+            )
+        if parsed["health_measurement_error_seconds"] <= parsed["health_measurement_warning_seconds"]:
+            _issue(
+                issues,
+                "measurement_health_threshold_order",
+                "error",
+                "system.health_measurement_error_seconds must be greater than system.health_measurement_warning_seconds",
+                "system",
+            )
+        if parsed["health_bridge_warning_seconds"] < parsed["bridge_heartbeat_interval_seconds"] * 2:
+            _issue(
+                issues,
+                "bridge_health_warning_too_short",
+                "warning",
+                "system.health_bridge_warning_seconds should be at least twice the bridge heartbeat interval",
+                "system.health_bridge_warning_seconds",
+            )
+
+        configured_scan_intervals: list[int] = []
+        for item in [*devices, *dual_devices]:
+            if not isinstance(item, dict):
+                continue
+            try:
+                configured_scan_intervals.append(int(item.get("scan_interval", 60)))
+            except (TypeError, ValueError):
+                continue
+        longest_scan = max(configured_scan_intervals, default=60)
+        if parsed["health_measurement_warning_seconds"] < longest_scan * 2:
+            _issue(
+                issues,
+                "measurement_health_warning_too_short",
+                "warning",
+                "system.health_measurement_warning_seconds should be at least twice the longest device scan interval",
+                "system.health_measurement_warning_seconds",
             )
 
     return ValidationResult(tuple(issues))

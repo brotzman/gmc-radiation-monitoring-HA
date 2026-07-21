@@ -90,6 +90,7 @@ def runtime_environment(options: dict[str, Any], service: str) -> dict[str, str]
         "PRESSURE_WEATHER_MAX_DIFFERENCE_HPA": _value(
             analysis, "pressure_weather_max_difference_hpa", 5.0
         ),
+        "BRIDGE_HEARTBEAT_PATH": "/data/gmc_bridge_heartbeat.json",
     }
 
     if service_name == "reports":
@@ -160,5 +161,8 @@ def runtime_environment(options: dict[str, Any], service: str) -> dict[str, str]
         "SERIAL_SCHEDULER_ENABLED": _value(system, "serial_scheduler_enabled", True),
         "SERIAL_SCHEDULER_GAP_SECONDS": _value(
             system, "serial_scheduler_gap_seconds", 2.0
+        ),
+        "BRIDGE_HEARTBEAT_INTERVAL_SECONDS": _value(
+            system, "bridge_heartbeat_interval_seconds", 15
         ),
     }

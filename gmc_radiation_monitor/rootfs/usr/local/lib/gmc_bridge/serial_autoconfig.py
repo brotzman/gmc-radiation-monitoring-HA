@@ -14,6 +14,7 @@ from collections.abc import Callable, Iterable, Sequence
 from copy import deepcopy
 from typing import Any
 
+from .bridge_heartbeat import BridgeHeartbeatReporter
 from .serial_discovery import SerialDiscoveryService, SerialPortInfo
 
 LOG = logging.getLogger("gmc_serial_autoconfig")
@@ -222,6 +223,7 @@ class AutomaticSerialBridge:
         child_command: Sequence[str] | None = None,
         discovery_factory: Callable[[], SerialDiscoveryService] | None = None,
         rescan_seconds: float = AUTO_RESCAN_SECONDS,
+        heartbeat_reporter: BridgeHeartbeatReporter | None = None,
     ) -> None:
         self.configured_devices = [deepcopy(item) for item in configured_devices if isinstance(item, dict)]
         self.child_command = list(child_command or [sys.executable, "/usr/local/bin/gmc_bridge.py"])
@@ -232,6 +234,7 @@ class AutomaticSerialBridge:
         self.rescan_seconds = max(MINIMUM_SERIAL_STARTUP_STAGGER_SECONDS, float(rescan_seconds))
         self.stop_event = threading.Event()
         self.child: subprocess.Popen[bytes] | None = None
+        self.heartbeat_reporter = heartbeat_reporter
 
     def request_stop(self, *_args: object) -> None:
         self.stop_event.set()
@@ -267,73 +270,112 @@ class AutomaticSerialBridge:
     def run(self) -> int:
         signal.signal(signal.SIGTERM, self.request_stop)
         signal.signal(signal.SIGINT, self.request_stop)
+        heartbeat = self.heartbeat_reporter
+        if heartbeat is not None:
+            heartbeat.start()
 
-        while not self.stop_event.is_set():
-            detected = self._scan_all()
-            resolved = resolve_automatic_devices(self.configured_devices, detected)
-            if not resolved:
-                LOG.warning(
-                    "No compatible GMC counter detected. Retrying automatically in %.0f seconds",
-                    self.rescan_seconds,
-                )
-                self.stop_event.wait(self.rescan_seconds)
-                continue
-
-            self._log_resolved_devices(resolved)
-            child_env = os.environ.copy()
-            child_env["DEVICES_JSON"] = json.dumps(resolved, separators=(",", ":"))
-            child_env["PORT"] = str(resolved[0]["port"])
-            child_env["BAUDRATE"] = str(resolved[0]["baudrate"])
-            self.child = subprocess.Popen(self.child_command, env=child_env)
-            known_targets = {
-                os.path.realpath(str(device.get("port") or ""))
-                for device in resolved
-                if device.get("port")
-            }
-            all_missing_since: float | None = None
-            restart_for_topology = False
-
-            while not self.stop_event.is_set() and self.child.poll() is None:
-                if self.stop_event.wait(self.rescan_seconds):
-                    break
-                newly_detected = self._scan_new(resolved)
-                new_targets = [
-                    port
-                    for port in newly_detected
-                    if os.path.realpath(port.path) not in known_targets
-                ]
-                if new_targets:
-                    LOG.info(
-                        "Detected %d additional GMC counter(s); refreshing automatic assignments",
-                        len(new_targets),
+        try:
+            while not self.stop_event.is_set():
+                if heartbeat is not None:
+                    heartbeat.update(
+                        state="discovering",
+                        child_running=False,
+                        child_pid=None,
+                        assigned_devices=0,
                     )
-                    restart_for_topology = True
-                    break
+                detected = self._scan_all()
+                resolved = resolve_automatic_devices(self.configured_devices, detected)
+                if not resolved:
+                    if heartbeat is not None:
+                        heartbeat.update(state="waiting_for_device")
+                    LOG.warning(
+                        "No compatible GMC counter detected. Retrying automatically in %.0f seconds",
+                        self.rescan_seconds,
+                    )
+                    self.stop_event.wait(self.rescan_seconds)
+                    continue
 
-                any_assigned_path_exists = any(
-                    os.path.exists(str(device.get("port") or ""))
-                    or os.path.exists(os.path.realpath(str(device.get("port") or "")))
+                self._log_resolved_devices(resolved)
+                child_env = os.environ.copy()
+                child_env["DEVICES_JSON"] = json.dumps(resolved, separators=(",", ":"))
+                child_env["PORT"] = str(resolved[0]["port"])
+                child_env["BAUDRATE"] = str(resolved[0]["baudrate"])
+                self.child = subprocess.Popen(self.child_command, env=child_env)
+                if heartbeat is not None:
+                    heartbeat.update(
+                        state="running",
+                        child_running=True,
+                        child_pid=self.child.pid,
+                        assigned_devices=len(resolved),
+                        last_child_exit_code=None,
+                    )
+                known_targets = {
+                    os.path.realpath(str(device.get("port") or ""))
                     for device in resolved
-                )
-                if any_assigned_path_exists:
-                    all_missing_since = None
-                elif all_missing_since is None:
-                    all_missing_since = time.monotonic()
-                elif time.monotonic() - all_missing_since >= ALL_DEVICES_MISSING_RESCAN_SECONDS:
-                    LOG.warning("All automatically assigned GMC ports disappeared; rescanning")
-                    restart_for_topology = True
-                    break
+                    if device.get("port")
+                }
+                all_missing_since: float | None = None
+                restart_for_topology = False
 
-            return_code = self.child.poll()
-            self._stop_child()
-            self.child = None
-            if self.stop_event.is_set():
-                return 0
-            if not restart_for_topology:
-                LOG.warning(
-                    "GMC bridge child exited with status %s; rediscovering devices",
-                    return_code,
-                )
-                self.stop_event.wait(2.0)
+                while not self.stop_event.is_set() and self.child.poll() is None:
+                    if self.stop_event.wait(self.rescan_seconds):
+                        break
+                    if heartbeat is not None:
+                        heartbeat.update(
+                            state="running",
+                            child_running=True,
+                            child_pid=self.child.pid,
+                            assigned_devices=len(resolved),
+                        )
+                    newly_detected = self._scan_new(resolved)
+                    new_targets = [
+                        port
+                        for port in newly_detected
+                        if os.path.realpath(port.path) not in known_targets
+                    ]
+                    if new_targets:
+                        LOG.info(
+                            "Detected %d additional GMC counter(s); refreshing automatic assignments",
+                            len(new_targets),
+                        )
+                        restart_for_topology = True
+                        break
 
-        return 0
+                    any_assigned_path_exists = any(
+                        os.path.exists(str(device.get("port") or ""))
+                        or os.path.exists(os.path.realpath(str(device.get("port") or "")))
+                        for device in resolved
+                    )
+                    if any_assigned_path_exists:
+                        all_missing_since = None
+                    elif all_missing_since is None:
+                        all_missing_since = time.monotonic()
+                    elif time.monotonic() - all_missing_since >= ALL_DEVICES_MISSING_RESCAN_SECONDS:
+                        LOG.warning("All automatically assigned GMC ports disappeared; rescanning")
+                        restart_for_topology = True
+                        break
+
+                return_code = self.child.poll()
+                self._stop_child()
+                self.child = None
+                if heartbeat is not None:
+                    heartbeat.update(
+                        state="reconfiguring" if restart_for_topology else "restarting",
+                        child_running=False,
+                        child_pid=None,
+                        assigned_devices=0,
+                        last_child_exit_code=return_code,
+                    )
+                if self.stop_event.is_set():
+                    return 0
+                if not restart_for_topology:
+                    LOG.warning(
+                        "GMC bridge child exited with status %s; rediscovering devices",
+                        return_code,
+                    )
+                    self.stop_event.wait(2.0)
+
+            return 0
+        finally:
+            if heartbeat is not None:
+                heartbeat.stop(state="stopped")
