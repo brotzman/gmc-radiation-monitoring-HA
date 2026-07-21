@@ -268,8 +268,8 @@ def test_scientific_pdf_adds_sixth_page_and_comparison_mode(tmp_path: Path) -> N
 
 def test_release_metadata_and_supervisor_schema_are_840() -> None:
     config = yaml.safe_load(Path("config.yaml").read_text(encoding="utf-8"))
-    assert APP_VERSION == "8.4.2"
-    assert config["version"] == "8.4.2"
+    assert APP_VERSION == "8.4.3"
+    assert config["version"] == "8.4.3"
     profile_schema = config["schema"]["devices"][0]["detector_profile"]
     for profile in ("gmc_300", "gmc_320_plus_v4", "gmc_500_plus", "gmc_600_plus"):
         assert profile in profile_schema

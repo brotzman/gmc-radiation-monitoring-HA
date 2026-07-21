@@ -38,6 +38,7 @@ def test_start_script_preserves_devices_as_json_array():
     assert "/data/options.json" in script
     assert "gmc_runtime_env.py bridge" in script
     assert "jq " not in script
+    assert "bashio::addon.option" not in script
 
 
 def test_one_device_remains_a_list_and_parses():

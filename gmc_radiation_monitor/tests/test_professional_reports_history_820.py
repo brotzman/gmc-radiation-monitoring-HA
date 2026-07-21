@@ -47,9 +47,9 @@ def test_history_explorer_contains_explicit_axes_quick_ranges_and_responsive_cha
     assert "overflow-x:auto" in css.replace(" ", "")
 
 
-def test_release_notes_describe_combined_beta_gamma_scope_and_report_structure() -> None:
-    notes = Path("RELEASE_NOTES_8.4.2.md").read_text()
-    assert "five-page" in notes
-    assert "Count rate [CPM]" in notes
-    assert "combined beta/gamma response" in notes
-    assert "history_management_enabled" in notes
+def test_release_notes_describe_structured_supervisor_migration_fix() -> None:
+    notes = Path("RELEASE_NOTES_8.4.3.md").read_text()
+    assert "structured JSON request" in notes
+    assert "jq: syntax error" in notes
+    assert "µSv/h" in notes
+    assert "No database schema or measurement algorithm changed" in notes

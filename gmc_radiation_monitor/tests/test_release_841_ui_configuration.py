@@ -28,8 +28,8 @@ DUAL_KEYS = {
 
 def test_release_metadata_is_841() -> None:
     config = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
-    assert APP_VERSION == "8.4.2"
-    assert config["version"] == "8.4.2"
+    assert APP_VERSION == "8.4.3"
+    assert config["version"] == "8.4.3"
 
 
 def test_supervisor_configuration_has_one_entry_per_physical_device() -> None:
@@ -155,6 +155,15 @@ def test_startup_persists_legacy_split_options_with_supervisor_api() -> None:
     config = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
     assert config["hassio_api"] is True
     run_script = (ROOT / "rootfs/etc/services.d/gmc/run").read_text(encoding="utf-8")
+    migration_script = (ROOT / "rootfs/usr/local/bin/gmc_options_migrate.py").read_text(
+        encoding="utf-8"
+    )
+    supervisor_module = (
+        ROOT / "rootfs/usr/local/lib/gmc_bridge/supervisor_options.py"
+    ).read_text(encoding="utf-8")
     assert "gmc_options_migrate.py" in run_script
-    assert 'bashio::addon.option "devices"' in run_script
-    assert 'bashio::addon.option "dual_tube_devices"' in run_script
+    assert "bashio::addon.option" not in run_script
+    assert "jq " not in run_script
+    assert "persist_self_options" in migration_script
+    assert "http://supervisor/addons/self/options" in supervisor_module
+    assert '{"options": options}' in supervisor_module
