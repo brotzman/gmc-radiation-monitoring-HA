@@ -10,20 +10,16 @@ if [[ ! -r "${CONFIG_PATH}" ]]; then
   exit 1
 fi
 
-# 8.4.2 migrates the old split GMC-500+ configuration into one complete
-# dual-tube entry. The Supervisor API update is supported by Home Assistant for
-# app option migrations and makes the cleaned structure visible in the UI.
+# 8.4.3 migrates the old split GMC-500+ configuration into one complete
+# dual-tube entry. The Python helper sends one structured JSON document to the
+# Supervisor API; arrays and quoted calibration text are never embedded in jq.
 migration_status=0
 python3 /usr/local/bin/gmc_options_migrate.py \
   "${CONFIG_PATH}" /tmp/gmc-single-devices.json /tmp/gmc-dual-devices.json || migration_status=$?
 if [[ "${migration_status}" -eq 10 ]]; then
-  bashio::log.info "Migrating GMC-500+ options to one complete dual-tube device entry"
-  if ! bashio::addon.option "devices" "$(cat /tmp/gmc-single-devices.json)"; then
-    bashio::log.warning "Could not persist the cleaned single-tube device list; runtime compatibility remains active"
-  fi
-  if ! bashio::addon.option "dual_tube_devices" "$(cat /tmp/gmc-dual-devices.json)"; then
-    bashio::log.warning "Could not persist the combined dual-tube device list; runtime compatibility remains active"
-  fi
+  bashio::log.info "Migrated GMC-500+ options to one complete dual-tube device entry"
+elif [[ "${migration_status}" -eq 11 ]]; then
+  bashio::log.warning "Could not persist the cleaned device options; runtime compatibility remains active"
 elif [[ "${migration_status}" -ne 0 ]]; then
   bashio::log.warning "Device option migration could not be evaluated; using compatibility parsing"
 fi

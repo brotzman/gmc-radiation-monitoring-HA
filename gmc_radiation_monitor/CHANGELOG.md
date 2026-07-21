@@ -1,5 +1,13 @@
 # Changelog
 
+## 8.4.3
+
+- Fixed startup option migration for existing GMC-320/GMC-500+ installations.
+- Replaced `bashio::addon.option` array writes, which embedded JSON inside a jq string and failed on quoted calibration text, with one structured Supervisor API request.
+- Preserved the complete options document, Unicode units and user calibration references without shell interpolation.
+- Added explicit fallback logging when the Supervisor API cannot persist migrated options; runtime compatibility remains active.
+- Added regression coverage for arrays, quotes, `µSv/h`, plus signs and complete dual-tube profiles.
+
 ## 8.4.2
 
 - Removed the duplicate dashboard measurement-quality tile and standalone device-comparison tile.
