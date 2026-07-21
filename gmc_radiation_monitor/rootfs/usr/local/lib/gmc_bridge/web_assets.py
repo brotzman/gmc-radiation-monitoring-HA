@@ -905,6 +905,7 @@ DASHBOARD_CSS += r"""
 .calibration-documented .calibration-status { color:var(--green); background:color-mix(in srgb,var(--green) 12%,transparent); }
 .calibration-working_values .calibration-status { color:#9a6700; background:color-mix(in srgb,var(--yellow) 16%,transparent); }
 .calibration-predefined .calibration-status { color:#9a6700; background:color-mix(in srgb,var(--yellow) 16%,transparent); }
+.calibration-partial .calibration-status { color:#9a6700; background:color-mix(in srgb,var(--yellow) 16%,transparent); }
 .calibration-customized .calibration-status { color:var(--blue); background:color-mix(in srgb,var(--blue) 12%,transparent); }
 .calibration-incomplete .calibration-status { color:var(--red); background:color-mix(in srgb,var(--red) 12%,transparent); }
 .calibration-unknown .calibration-status { color:var(--gray); background:color-mix(in srgb,var(--gray) 12%,transparent); }

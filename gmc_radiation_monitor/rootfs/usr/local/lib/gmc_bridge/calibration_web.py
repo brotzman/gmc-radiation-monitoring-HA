@@ -92,6 +92,7 @@ def _status(status: str, source: str, t: Translate) -> tuple[str, str]:
         "predefined": "Application working values",
         "customized": "User profile",
         "working_values": "Application working values",
+        "partial": "Partially calibrated",
         "incomplete": "Not calibrated",
         "unknown": "Unknown",
     }
@@ -102,6 +103,7 @@ def _status(status: str, source: str, t: Translate) -> tuple[str, str]:
         "predefined": "🟡",
         "customized": "🟡",
         "working_values": "🟡",
+        "partial": "🟡",
         "incomplete": "🔴",
         "unknown": "⚪",
     }
@@ -132,6 +134,7 @@ def _tube_card(
         f'<div class="tube-title"><strong>{html.escape(profile.tube_model or heading)}</strong>{active_label}</div>'
         f'<div class="tube-state"><span>{state_icon}</span>{html.escape(state_label)}</div>'
         '<dl>'
+        f'<div><dt>{html.escape(t("Conversion factor"))}</dt><dd>{html.escape(_value(profile.cpm_per_usvh, " CPM/(µSv/h)")) if profile.cpm_per_usvh is not None else html.escape(t("Not configured"))}</dd></div>'
         f'<div><dt>{html.escape(t("Dead time"))}</dt><dd>{html.escape(_value(profile.dead_time_us, " µs"))}</dd></div>'
         f'<div><dt>{html.escape(t("Model"))}</dt><dd>{html.escape(t("Non-Paralyzable") if profile.dead_time_model == "nonparalyzable" else t("None"))}</dd></div>'
         '</dl></div>'
@@ -196,6 +199,15 @@ def render_calibration_panel(*, item: dict[str, Any], latest_cpm: object, t: Tra
         )
     calibration_status = str(item.get("calibration_status") or "unknown")
     calibration_source = str(item.get("calibration_source") or "unknown")
+    presentation_status = calibration_status
+    if (
+        config.mode != "single"
+        and low is not None
+        and high is not None
+        and low.dose_calibrated
+        and not high.dose_calibrated
+    ):
+        presentation_status = "partial"
 
     dual_result: dict[str, Any] | None = None
     active_key = str(item.get("active_tube") or "")
@@ -244,7 +256,7 @@ def render_calibration_panel(*, item: dict[str, Any], latest_cpm: object, t: Tra
     traffic = "green" if load is None or load < 5 else "yellow" if load < 10 else "red"
     traffic_icon = "🟢" if traffic == "green" else "🟡" if traffic == "yellow" else "🔴"
     correction_active = bool(live.get("correction_applied") or item.get("dead_time_correction_active"))
-    _, status_label = _status(calibration_status, calibration_source, t)
+    _, status_label = _status(presentation_status, calibration_source, t)
     dose = _number(live.get("derived_dose_usvh"))
     accuracy_key = str(live.get("dose_quality") or "low")
     accuracy_label = t({"high": "High", "medium": "Medium", "low": "Low"}.get(accuracy_key, "Low"))
@@ -300,7 +312,7 @@ def render_calibration_panel(*, item: dict[str, Any], latest_cpm: object, t: Tra
         if calibration_status == "incomplete" else ""
     )
     return (
-        f'<section class="calibration-panel calibration-{html.escape(calibration_status)}" data-quality-index="{quality_index}">'
+        f'<section class="calibration-panel calibration-{html.escape(presentation_status)}" data-quality-index="{quality_index}">'
         '<span class="legacy-calibration-label" hidden>Detektorprofil</span>'
         f'{legacy_status_html}'
         '<div class="calibration-panel-header"><div>'

@@ -1,5 +1,12 @@
 # Changelog
 
+## 8.4.4
+
+- Moved the CPM-to-dose conversion factor from general device data into each physical tube card.
+- Added explicit unconfigured-factor output for uncalibrated tubes.
+- Added a partially calibrated status for mixed dual-tube profiles.
+- Updated all supported UI languages for the new status.
+
 ## 8.4.3
 
 - Fixed startup option migration for existing GMC-320/GMC-500+ installations.

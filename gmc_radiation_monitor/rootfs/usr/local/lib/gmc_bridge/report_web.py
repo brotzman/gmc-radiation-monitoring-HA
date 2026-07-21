@@ -1487,7 +1487,6 @@ class ReportApplication(WorkflowApplicationMixin):
                 f'<div class="device-field"><strong>{html.escape(t("Serial port"))}</strong><span class="technical-value">{html.escape(str(item.get("port", "—")))}</span></div>'
                 f'<div class="device-field"><strong>{html.escape(t("Baud rate"))}</strong><span>{html.escape(str(item.get("baudrate", "—")))}</span></div>'
                 f'<div class="device-field"><strong>{html.escape(t("Measurement interval"))}</strong><span>{html.escape(str(item.get("scan_interval_seconds", "—")))} s</span></div>'
-                f'<div class="device-field"><strong>{html.escape(t("CPM per µSv/h"))}</strong><span>{html.escape(str(item.get("cpm_per_usvh", "—")))}</span></div>'
                 f'<div class="device-field"><strong>{html.escape(t("Profile"))}</strong><span>{html.escape(profile)}</span></div>'
                 f'<div class="device-field"><strong>{html.escape(t("Device capabilities"))}</strong><span>{html.escape(capabilities_value)}</span></div>'
                 f'<div class="device-field"><strong>{html.escape(t("Stored samples for this device"))}</strong><span>{int(item.get("stored_samples") or 0):,}</span></div>'

@@ -396,6 +396,21 @@ def _fields(text: str) -> set[str]:
     return result
 
 
+
+# Version 8.4.4: dual-tube detector profile calibration status.
+_partial_calibration_overrides = {
+    "en": {"Partially calibrated": "Partially calibrated"},
+    "de": {"Partially calibrated": "Teilweise kalibriert"},
+    "fr": {"Partially calibrated": "Partiellement étalonné"},
+    "es": {"Partially calibrated": "Parcialmente calibrado"},
+    "it": {"Partially calibrated": "Parzialmente calibrato"},
+    "nl": {"Partially calibrated": "Gedeeltelijk gekalibreerd"},
+    "pl": {"Partially calibrated": "Częściowo skalibrowany"},
+    "hr": {"Partially calibrated": "Djelomično kalibrirano"},
+}
+for _language, _catalogue in _partial_calibration_overrides.items():
+    CATALOGS[_language].update(_catalogue)
+
 def validate_catalogs() -> list[str]:
     """Return human-readable catalogue problems; an empty list means valid."""
     problems: list[str] = []
