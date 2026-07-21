@@ -87,7 +87,7 @@ The workflow area provides configurable Home Assistant notifications, event anno
 
 The internal SQLite schema is migrated automatically to version 8. Existing measurement and device data remain compatible.
 
-Version 8.3.3 shows detector and calibration data directly in every device card and adds independent low-dose and high-dose tube profiles for dual-tube counters such as the GMC-500+. The app can use measured tube channels separately or a configurable piecewise dual-tube curve, and it suppresses derived dose values when the selected tube lacks a conversion factor. Existing single-tube settings are migrated to the low-dose profile automatically. Serial measurement, MQTT Discovery, SQLite history and existing download formats remain compatible. The dashboard opens the 8.3.3 manual that matches the selected UI language: German, English, Spanish, French, Italian, Dutch, Polish or Croatian.
+Version 8.3.5 introduces explicit detector presets. The GMC-320 Plus V4 preset represents one M4011 tube and supplies the application working values automatically. The GMC-500+ preset represents M4011 + SI-3BG as two physical tubes and keeps the SI-3BG dose conversion unavailable until a verified factor is supplied. The duplicated low-dose option block has been removed: the normal calibration fields now describe the only/primary tube, while high-dose fields apply only to a second tube. Matching 8.3.4 values are migrated automatically, the dashboard avoids repeated single-tube information, and configuration terminology is corrected in all eight supported languages.
 
 ## Installation
 
@@ -118,7 +118,8 @@ privacy consent and valid IDs are entered.
 
 ```yaml
 devices:
-  - name: Keller GMC-320Re
+  - name: Keller GMC-320
+    detector_profile: gmc_320_plus_v4
     scan_interval: 60
     command_timeout: 2.0
     inter_command_delay_ms: 150
@@ -128,10 +129,10 @@ devices:
     read_device_time: false
     device_clock_warning_seconds: 120
     heartbeat_enabled: false
-    cpm_per_usvh: 154.0
     gmcmap_counter_id: "1136726941350"
 
   - name: Wohnzimmer GMC-500+
+    detector_profile: gmc_500_plus
     scan_interval: 30
     command_timeout: 2.0
     inter_command_delay_ms: 150
@@ -139,7 +140,6 @@ devices:
     read_device_time: true
     device_clock_warning_seconds: 120
     heartbeat_enabled: true
-    cpm_per_usvh: 154.0
     gmcmap_counter_id: ""
 ```
 
@@ -198,6 +198,7 @@ All serial and measurement settings belong to the corresponding device entry:
 ```yaml
 devices:
   - name: GMC-500+
+    detector_profile: gmc_500_plus
     scan_interval: 30
     command_timeout: 2.0
     inter_command_delay_ms: 150
@@ -205,12 +206,12 @@ devices:
     read_device_time: true
     device_clock_warning_seconds: 120
     heartbeat_enabled: true
-    cpm_per_usvh: 154.0
+    # Only verified deviations from the preset belong here, for example:
+    # high_dose_cpm_per_usvh: 5.15
     gmcmap_counter_id: ""
 ```
 
-`cpm_per_usvh` is device- and tube-specific. CPM remains the primary measurement; µSv/h is derived from
-that configured factor and is not automatically a calibrated dose-rate reading.
+`detector_profile` selects the physical tube arrangement and its predefined application working values. The normal calibration fields are optional overrides for the only/primary tube. `high_dose_*` fields apply only to a second tube on a dual-tube device. CPM remains the primary measurement; µSv/h is derived from the active tube profile and is not automatically a traceable calibrated dose-rate reading.
 
 The high-CPM plausibility gate is intentionally not exposed as an input field. Its conservative fixed limit is 10,000 CPM, its adaptive trigger is learned per device, and exactly three consecutive similar suspicious readings are required. This prevents an accidental configuration change from disabling the protection.
 
@@ -220,38 +221,32 @@ with `history.report_timezone`; `device_clock_warning_seconds` controls the warn
 `heartbeat_enabled` is disabled by default. When supported, the add-on publishes live CPS once per second
 between regular stored samples. SQLite history continues to use the device's `scan_interval`.
 
-### Detector calibration and GMC-500+ dual-tube profiles
+### Detector presets and GMC-500+ dual-tube calibration
 
-The dashboard shows these values in the **Detector and calibration** panel. `single` keeps the legacy one-profile behaviour. `separate` selects between the device's low- and high-dose tube channels without adding both counts together. `curve` applies the two profiles as a piecewise calibration to the primary CPM channel at `dual_tube_switch_cpm`.
+Use `detector_profile` to describe the physical detector layout. The preset resolves the working values at runtime, so they do not have to be repeated in every device entry. The dashboard shows the resolved values in **Detector and calibration**.
 
 ```yaml
 devices:
+  - name: GMC-320 Plus V4
+    detector_profile: gmc_320_plus_v4
+
   - name: GMC-500+
-    cpm_per_usvh: 154.0              # legacy/low-dose compatibility value
-    dead_time_us: 120
-    reliable_max_cpm: 30000
-    dead_time_model: nonparalyzable
-    tube_model: M4011 + SI-3BG (Dual)
-    dual_tube_mode: separate          # single | separate | curve
-    dual_tube_switch_cpm: 30000
-    low_dose_tube:
-      tube_model: M4011
-      cpm_per_usvh: 154.0
-      dead_time_us: 120
-      reliable_max_cpm: 30000
-      dead_time_model: nonparalyzable
-      conversion_factor_uncertainty_percent: 20
-      calibration_reference: M4011 working values
-    high_dose_tube:
-      tube_model: SI-3BG
-      cpm_per_usvh: null              # enter only a documented or measured value
-      dead_time_us: null
-      reliable_max_cpm: null
-      dead_time_model: none
-      calibration_reference: ""
+    detector_profile: gmc_500_plus
+    # Enter these only when a verified, device-specific SI-3BG calibration exists:
+    # high_dose_cpm_per_usvh: 5.15
+    # high_dose_dead_time_us: 30
+    # high_dose_reliable_max_cpm: 100000
+    # high_dose_dead_time_model: nonparalyzable
+    # high_dose_calibration_reference: "Certificate or measurement reference"
 ```
 
-When the selected profile has no conversion factor, CPM remains visible but the derived dose rate is deliberately marked unavailable. Existing installations that only contain the legacy fields automatically use them as the low-dose profile.
+The `gmc_320_plus_v4` preset represents exactly one M4011 tube and supplies 154 CPM/(µSv/h), 120 µs detector dead time, the non-paralyzable model, a 50,000 CPM working limit and 20% conversion-factor uncertainty. Any stale second-tube fields are ignored for this profile.
+
+The `gmc_500_plus` preset represents two physical tubes: M4011 as the primary/normal-range tube and SI-3BG as the second/high-dose tube. The M4011 profile uses 154 CPM/(µSv/h), 120 µs and a 30,000 CPM working limit. The SI-3BG conversion factor remains intentionally empty until a verified value is entered; CPM stays visible, but an unsupported derived dose is not produced.
+
+The normal calibration fields in the Home Assistant form are optional overrides for the only tube on a single-tube device or the primary tube on a dual-tube device. `high_dose_*` fields apply exclusively to the second tube of a dual-tube device. `dual_tube_mode` and `dual_tube_switch_cpm` are advanced overrides and are normally supplied by the preset. Old `low_dose_*` or nested tube blocks remain readable only for migration and should not be used in new configurations.
+
+Predefined values are transparent application working values, not a traceable calibration certificate. Explicit overrides are labelled as a customized profile.
 
 ### Optional public GMCMap uploads
 

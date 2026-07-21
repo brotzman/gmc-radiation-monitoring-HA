@@ -1,6 +1,17 @@
 # Changelog
 
-## 8.3.3
+## 8.3.5
+
+- Added predefined detector profiles for GMC-320 Plus V4 and GMC-500+.
+- Made the GMC-320 profile explicitly single-tube and ignored stale dual-tube fields for that model.
+- Applied the GMC-320 M4011 working values automatically instead of requiring repeated manual entries.
+- Removed the duplicated low-dose option block from the Home Assistant Supervisor form; primary fields now serve the single/low-dose tube.
+- Kept second/high-dose fields only for dual-tube overrides and clarified their purpose in all eight option translations.
+- Migrated matching 8.3.4 values to the new presets while retaining runtime compatibility with legacy low-dose profile data.
+- Simplified the dashboard calibration panel so single-tube data are not repeated and dual-tube channels remain clearly separated.
+- Preserved safe GMC-500+ behavior: SI-3BG dose conversion stays unavailable until a verified factor is supplied.
+
+## 8.3.4
 
 - Added a responsive detector-and-calibration panel to every main dashboard device card.
 - Added summary, analysis and expert detail tiers for tube model, conversion factor, dead time, reliable CPM limit, uncertainties and calibration references.

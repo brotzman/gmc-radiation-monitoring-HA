@@ -1,5 +1,6 @@
 devices:
   - name: GMC-320
+    detector_profile: gmc_320_plus_v4
     scan_interval: 60
     command_timeout: 3.0
     inter_command_delay_ms: 250
@@ -8,31 +9,10 @@ devices:
     read_gyro: false
     read_device_time: false
     heartbeat_enabled: false
-    cpm_per_usvh: 154.0
-    dead_time_us: 120
-    reliable_max_cpm: 50000
-    dead_time_model: nonparalyzable
-    conversion_factor_uncertainty_percent: 20
-    tube_model: M4011
-    dual_tube_mode: single
-    low_dose_tube:
-      tube_model: M4011
-      cpm_per_usvh: 154.0
-      dead_time_us: 120
-      reliable_max_cpm: 50000
-      dead_time_model: nonparalyzable
-      conversion_factor_uncertainty_percent: 20
-      calibration_reference: M4011 working values
-    high_dose_tube:
-      tube_model: ""
-      cpm_per_usvh: null
-      dead_time_us: null
-      reliable_max_cpm: null
-      dead_time_model: none
-      calibration_reference: ""
     gmcmap_counter_id: ""
 
   - name: GMC-500+
+    detector_profile: gmc_500_plus
     scan_interval: 75
     command_timeout: 4.0
     inter_command_delay_ms: 600
@@ -41,29 +21,13 @@ devices:
     read_gyro: false
     read_device_time: false
     heartbeat_enabled: false
-    cpm_per_usvh: 154.0
-    dead_time_us: 120
-    reliable_max_cpm: 30000
-    dead_time_model: nonparalyzable
-    conversion_factor_uncertainty_percent: 20
-    tube_model: M4011 + SI-3BG (Dual)
-    dual_tube_mode: separate
-    dual_tube_switch_cpm: 30000
-    low_dose_tube:
-      tube_model: M4011
-      cpm_per_usvh: 154.0
-      dead_time_us: 120
-      reliable_max_cpm: 30000
-      dead_time_model: nonparalyzable
-      conversion_factor_uncertainty_percent: 20
-      calibration_reference: M4011 normal-range working values
-    high_dose_tube:
-      tube_model: SI-3BG
-      cpm_per_usvh: null
-      dead_time_us: null
-      reliable_max_cpm: null
-      dead_time_model: none
-      calibration_reference: ""
+    # The preset configures M4011 as the primary tube and SI-3BG as the
+    # uncalibrated second tube. Add only verified SI-3BG overrides here.
+    # high_dose_cpm_per_usvh: 5.15
+    # high_dose_dead_time_us: 30
+    # high_dose_reliable_max_cpm: 200000
+    # high_dose_dead_time_model: nonparalyzable
+    # high_dose_calibration_reference: Individual verified calibration
     gmcmap_counter_id: ""
 
 gmcmap:

@@ -904,6 +904,8 @@ DASHBOARD_CSS += r"""
 .calibration-status::before { content:""; width:.48rem; height:.48rem; border-radius:50%; margin-right:.35rem; background:currentColor; }
 .calibration-documented .calibration-status { color:var(--green); background:color-mix(in srgb,var(--green) 12%,transparent); }
 .calibration-working_values .calibration-status { color:var(--blue); background:color-mix(in srgb,var(--blue) 12%,transparent); }
+.calibration-predefined .calibration-status { color:var(--green); background:color-mix(in srgb,var(--green) 12%,transparent); }
+.calibration-customized .calibration-status { color:var(--blue); background:color-mix(in srgb,var(--blue) 12%,transparent); }
 .calibration-incomplete .calibration-status { color:var(--yellow); background:color-mix(in srgb,var(--yellow) 14%,transparent); }
 .calibration-summary { display:flex; flex-wrap:wrap; gap:.4rem .75rem; margin-top:.55rem; color:var(--muted); font-size:.82rem; }
 .calibration-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.48rem; margin-top:.65rem; }

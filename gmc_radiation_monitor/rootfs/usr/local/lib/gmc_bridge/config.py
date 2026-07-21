@@ -5,6 +5,7 @@ import os
 from dataclasses import asdict, dataclass
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from .calibration_presets import SUPPORTED_PROFILE_IDS, resolve_preset
 from .gmcmap import parse_device_id_mappings, validate_identifier
 
 SUPPORTED_BAUDRATES = {1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200}
@@ -90,6 +91,17 @@ def _optional_int(value: object) -> int | None:
     return None if value in (None, "") else int(value)
 
 
+def _parse_flat_tube_calibration(
+    name: str, item: dict[str, object], prefix: str
+) -> TubeCalibrationConfig | None:
+    """Build one tube profile from Supervisor-compatible optional scalar fields."""
+
+    values = {field: item.get(f"{prefix}_{field}") for field in _TUBE_PROFILE_FIELDS}
+    if all(value in (None, "") for value in values.values()):
+        return None
+    return _parse_tube_calibration(name, values)
+
+
 def _parse_tube_calibration(name: str, value: object) -> TubeCalibrationConfig | None:
     if value in (None, ""):
         return None
@@ -134,6 +146,8 @@ class DeviceConfig:
     read_device_time: bool = True
     device_clock_warning_seconds: int = 120
     heartbeat_enabled: bool = False
+    detector_profile: str = "custom_single"
+    calibration_overrides: bool = False
     cpm_per_usvh: float = 154.0
     dead_time_us: float | None = None
     reliable_max_cpm: int | None = None
@@ -183,17 +197,27 @@ class DeviceConfig:
 
     def calibration_status(self) -> str:
         if self.dual_tube_mode == "single":
+            if self.calibration_overrides:
+                return "customized"
+            if self.detector_profile in {"gmc_320_plus_v4", "gmc_500_plus"}:
+                return "predefined"
             return "documented" if self.calibration_reference.strip() else "working_values"
         low = self.effective_low_dose_tube()
         high = self.high_dose_tube
         if not low.dose_calibrated or high is None or not high.dose_calibrated:
             return "incomplete"
+        if self.calibration_overrides:
+            return "customized"
+        if self.detector_profile in {"gmc_320_plus_v4", "gmc_500_plus"}:
+            return "predefined"
         if low.calibration_reference.strip() and high.calibration_reference.strip():
             return "documented"
         return "working_values"
 
     def calibration_registry_values(self) -> dict[str, object]:
         return {
+            "detector_profile": self.detector_profile,
+            "calibration_overrides": self.calibration_overrides,
             "dual_tube_mode": self.dual_tube_mode,
             "dual_tube_switch_cpm": self.dual_tube_switch_cpm,
             "low_dose_tube_profile": self.effective_low_dose_tube().as_dict(),
@@ -256,6 +280,12 @@ class DeviceConfig:
         if self.dual_tube_mode not in {"single", "separate", "curve"}:
             raise ValueError(
                 f"dual_tube_mode for {self.port} must be single, separate or curve"
+            )
+        if self.detector_profile not in SUPPORTED_PROFILE_IDS - {"auto"}:
+            raise ValueError(f"Unsupported detector_profile for {self.port}: {self.detector_profile}")
+        if self.detector_profile == "gmc_320_plus_v4" and self.dual_tube_mode != "single":
+            raise ValueError(
+                f"GMC-320 Plus V4 profile for {self.port} must use single-tube mode"
             )
         if self.dual_tube_switch_cpm is not None and self.dual_tube_switch_cpm <= 0:
             raise ValueError(f"dual_tube_switch_cpm for {self.port} must be greater than zero")
@@ -413,10 +443,18 @@ class Settings:
             "port", "name", "baudrate", "scan_interval", "command_timeout",
             "inter_command_delay_ms", "serial_startup_delay", "auxiliary_read_interval",
             "read_gyro", "read_device_time", "device_clock_warning_seconds",
-            "heartbeat_enabled", "cpm_per_usvh", "dead_time_us", "reliable_max_cpm",
+            "heartbeat_enabled", "detector_profile", "cpm_per_usvh", "dead_time_us", "reliable_max_cpm",
             "dead_time_model", "conversion_factor_uncertainty_percent",
             "calibration_uncertainty_percent", "calibration_reference", "tube_model",
             "dual_tube_mode", "dual_tube_switch_cpm", "low_dose_tube", "high_dose_tube",
+            "low_dose_tube_model", "low_dose_cpm_per_usvh", "low_dose_dead_time_us",
+            "low_dose_reliable_max_cpm", "low_dose_dead_time_model",
+            "low_dose_conversion_factor_uncertainty_percent",
+            "low_dose_calibration_uncertainty_percent", "low_dose_calibration_reference",
+            "high_dose_tube_model", "high_dose_cpm_per_usvh", "high_dose_dead_time_us",
+            "high_dose_reliable_max_cpm", "high_dose_dead_time_model",
+            "high_dose_conversion_factor_uncertainty_percent",
+            "high_dose_calibration_uncertainty_percent", "high_dose_calibration_reference",
             "gmcmap_counter_id",
             "gmcmap_upload_interval", "gmcmap_timeout", "serial_debug", "serial_debug_max_bytes",
             "orientation_calibration_enabled", "orientation_calibration_serial",
@@ -438,9 +476,194 @@ class Settings:
             port = str(item.get("port", "")).strip()
             if not port:
                 raise ValueError(f"devices[{index}].port is required")
+            configured_name = str(item.get("name", "")).strip()
+            configured_tube_model = str(item.get("tube_model", "")).strip()
+            configured_dual_mode = str(item.get("dual_tube_mode", "single")).strip().lower()
+            resolved_profile_id, preset = resolve_preset(
+                str(item.get("detector_profile", "auto")),
+                name=configured_name,
+                tube_model=configured_tube_model,
+                dual_tube_mode=configured_dual_mode,
+            )
+
+            # The primary fields represent the only tube on single-tube models
+            # and the low-dose tube on dual-tube models. 8.3.4 low_dose_* values
+            # are accepted as a migration source but are no longer duplicated in
+            # the Supervisor form.
+            migrated_low = (
+                _parse_tube_calibration(
+                    f"devices[{index}].low_dose_tube", item.get("low_dose_tube")
+                )
+                or _parse_flat_tube_calibration(
+                    f"devices[{index}].low_dose", item, "low_dose"
+                )
+            )
+
+            def primary_value(
+                key: str,
+                preset_value: object,
+                fallback: object,
+                *,
+                source: dict[str, object] = item,
+                migrated_profile: TubeCalibrationConfig | None = migrated_low,
+                use_preset: bool = preset is not None,
+            ) -> object:
+                if key in source and source.get(key) not in (None, ""):
+                    return source[key]
+                if migrated_profile is not None:
+                    migrated = getattr(migrated_profile, key, None)
+                    if migrated not in (None, ""):
+                        return migrated
+                return preset_value if use_preset else fallback
+
+            preset_tube_model = preset.tube_model if preset is not None else ""
+            if (
+                preset is not None
+                and not item.get("detector_profile")
+                and resolved_profile_id == "gmc_500_plus"
+                and "SI-3BG" in configured_tube_model.upper()
+            ):
+                # Migrate the old combined label into two physical tube profiles.
+                configured_tube_model = ""
+
+            effective_tube_model = str(
+                configured_tube_model
+                or (migrated_low.tube_model if migrated_low is not None else "")
+                or preset_tube_model
+            ).strip()
+            effective_cpm_per_usvh = float(
+                primary_value(
+                    "cpm_per_usvh",
+                    preset.cpm_per_usvh if preset is not None else None,
+                    defaults.cpm_per_usvh,
+                )
+            )
+            effective_dead_time_us = _optional_float(
+                primary_value(
+                    "dead_time_us",
+                    preset.dead_time_us if preset is not None else None,
+                    None,
+                )
+            )
+            effective_reliable_max_cpm = _optional_int(
+                primary_value(
+                    "reliable_max_cpm",
+                    preset.reliable_max_cpm if preset is not None else None,
+                    None,
+                )
+            )
+            effective_dead_time_model = str(
+                primary_value(
+                    "dead_time_model",
+                    preset.dead_time_model if preset is not None else "none",
+                    "none",
+                )
+            ).strip().lower()
+            effective_factor_uncertainty = _optional_float(
+                primary_value(
+                    "conversion_factor_uncertainty_percent",
+                    (
+                        preset.conversion_factor_uncertainty_percent
+                        if preset is not None
+                        else None
+                    ),
+                    None,
+                )
+            )
+            effective_calibration_uncertainty = _optional_float(
+                primary_value("calibration_uncertainty_percent", None, None)
+            )
+            effective_reference = str(
+                primary_value(
+                    "calibration_reference",
+                    preset.calibration_reference if preset is not None else "",
+                    "",
+                )
+            ).strip()
+            effective_dual_mode = str(
+                item.get(
+                    "dual_tube_mode",
+                    preset.dual_tube_mode if preset is not None else "single",
+                )
+            ).strip().lower()
+            effective_switch_cpm = _optional_int(
+                item.get(
+                    "dual_tube_switch_cpm",
+                    preset.dual_tube_switch_cpm if preset is not None else None,
+                )
+            )
+
+            explicit_high = (
+                _parse_tube_calibration(
+                    f"devices[{index}].high_dose_tube", item.get("high_dose_tube")
+                )
+                or _parse_flat_tube_calibration(
+                    f"devices[{index}].high_dose", item, "high_dose"
+                )
+            )
+            effective_high = explicit_high
+            if effective_high is None and preset is not None and preset.high_dose_tube_model:
+                effective_high = TubeCalibrationConfig(
+                    tube_model=preset.high_dose_tube_model
+                )
+
+            if resolved_profile_id == "gmc_320_plus_v4":
+                # A GMC-320 has one M4011 tube. Stale dual-tube fields from the
+                # 8.3.4 form are deliberately ignored instead of becoming a
+                # second detector profile.
+                effective_dual_mode = "single"
+                effective_switch_cpm = None
+                effective_high = None
+
+            calibration_overrides = False
+            if preset is not None:
+                comparable = {
+                    "tube_model": effective_tube_model,
+                    "cpm_per_usvh": effective_cpm_per_usvh,
+                    "dead_time_us": effective_dead_time_us,
+                    "reliable_max_cpm": effective_reliable_max_cpm,
+                    "dead_time_model": effective_dead_time_model,
+                    "conversion_factor_uncertainty_percent": effective_factor_uncertainty,
+                    "dual_tube_mode": effective_dual_mode,
+                    "dual_tube_switch_cpm": effective_switch_cpm,
+                }
+                expected = {
+                    "tube_model": preset.tube_model,
+                    "cpm_per_usvh": preset.cpm_per_usvh,
+                    "dead_time_us": preset.dead_time_us,
+                    "reliable_max_cpm": preset.reliable_max_cpm,
+                    "dead_time_model": preset.dead_time_model,
+                    "conversion_factor_uncertainty_percent": preset.conversion_factor_uncertainty_percent,
+                    "dual_tube_mode": preset.dual_tube_mode,
+                    "dual_tube_switch_cpm": preset.dual_tube_switch_cpm,
+                }
+                calibration_overrides = comparable != expected
+                if explicit_high is not None:
+                    calibration_overrides = True
+                if not calibration_overrides and not item.get("detector_profile"):
+                    # Clean migration of old matching working values to the new
+                    # predefined profile, including its unambiguous reference.
+                    effective_reference = preset.calibration_reference
+                    effective_calibration_uncertainty = None
+            else:
+                calibration_overrides = any(
+                    key in item
+                    for key in (
+                        "cpm_per_usvh",
+                        "dead_time_us",
+                        "reliable_max_cpm",
+                        "dead_time_model",
+                        "conversion_factor_uncertainty_percent",
+                        "calibration_uncertainty_percent",
+                        "calibration_reference",
+                        "tube_model",
+                        "dual_tube_mode",
+                        "dual_tube_switch_cpm",
+                    )
+                ) or migrated_low is not None or explicit_high is not None
             device = DeviceConfig(
                 port=port,
-                name=str(item.get("name", "")).strip(),
+                name=configured_name,
                 baudrate=int(item.get("baudrate", defaults.baudrate)),
                 scan_interval=int(item.get("scan_interval", defaults.scan_interval)),
                 command_timeout=float(item.get("command_timeout", defaults.command_timeout)),
@@ -470,22 +693,20 @@ class Settings:
                     item.get("heartbeat_enabled"),
                     defaults.heartbeat_enabled,
                 ),
-                cpm_per_usvh=float(item.get("cpm_per_usvh", defaults.cpm_per_usvh)),
-                dead_time_us=None if item.get("dead_time_us") in (None, "") else float(item["dead_time_us"]),
-                reliable_max_cpm=None if item.get("reliable_max_cpm") in (None, "") else int(item["reliable_max_cpm"]),
-                dead_time_model=str(item.get("dead_time_model", "none")).strip().lower(),
-                conversion_factor_uncertainty_percent=None if item.get("conversion_factor_uncertainty_percent") in (None, "") else float(item["conversion_factor_uncertainty_percent"]),
-                calibration_uncertainty_percent=None if item.get("calibration_uncertainty_percent") in (None, "") else float(item["calibration_uncertainty_percent"]),
-                calibration_reference=str(item.get("calibration_reference", "")).strip(),
-                tube_model=str(item.get("tube_model", "")).strip(),
-                dual_tube_mode=str(item.get("dual_tube_mode", "single")).strip().lower(),
-                dual_tube_switch_cpm=_optional_int(item.get("dual_tube_switch_cpm")),
-                low_dose_tube=_parse_tube_calibration(
-                    f"devices[{index}].low_dose_tube", item.get("low_dose_tube")
-                ),
-                high_dose_tube=_parse_tube_calibration(
-                    f"devices[{index}].high_dose_tube", item.get("high_dose_tube")
-                ),
+                detector_profile=resolved_profile_id,
+                calibration_overrides=calibration_overrides,
+                cpm_per_usvh=effective_cpm_per_usvh,
+                dead_time_us=effective_dead_time_us,
+                reliable_max_cpm=effective_reliable_max_cpm,
+                dead_time_model=effective_dead_time_model,
+                conversion_factor_uncertainty_percent=effective_factor_uncertainty,
+                calibration_uncertainty_percent=effective_calibration_uncertainty,
+                calibration_reference=effective_reference,
+                tube_model=effective_tube_model,
+                dual_tube_mode=effective_dual_mode,
+                dual_tube_switch_cpm=effective_switch_cpm,
+                low_dose_tube=None,
+                high_dose_tube=effective_high,
                 gmcmap_counter_id=str(item.get("gmcmap_counter_id", "")).strip(),
                 gmcmap_upload_interval=int(
                     item.get("gmcmap_upload_interval", defaults.gmcmap_upload_interval)
