@@ -3,15 +3,14 @@ Another report or maintenance job is running: Un autre travail de rapport ou de 
 Complete history deletion failed: La suppression complète de l'historique a échoué
 Danger zone: Zone dangereuse
 Delete all GMC history: Supprimer tout l'historique GMC
-Deletion confirmation text must be exactly DELETE ALL GMC HISTORY: Le texte de confirmation de suppression doit
-  être exactement DELETE ALL GMC HISTORY
+Deletion confirmation text must be exactly DELETE ALL GMC HISTORY: Le texte de confirmation de suppression doit être exactement DELETE ALL GMC
+  HISTORY
 History deleted: Historique supprimé
 Invalid deletion confirmation: Confirmation de suppression invalide
-? Permanently delete all GMC history from this app and Home Assistant Recorder. This includes CPM, temperature,
-  voltage, gyro and tube measurements for every known GMC and all time periods.
-: Supprimez définitivement tout l'historique GMC de cette application et de l'enregistreur Home Assistant. Cela
-  inclut les mesures du CPM, de la température, de la tension, du gyroscope et du tube pour chaque GMC connu et
-  toutes les périodes.
+? Permanently delete all GMC history from this app and Home Assistant Recorder. This includes CPM, temperature, voltage, gyro and tube measurements
+  for every known GMC and all time periods.
+: Supprimez définitivement tout l'historique GMC de cette application et de l'enregistreur Home Assistant. Cela inclut les mesures du CPM, de
+  la température, de la tension, du gyroscope et du tube pour chaque GMC connu et toutes les périodes.
 This cannot be undone. Delete all GMC history?: Cela ne peut pas être annulé. Supprimer tout l'historique GMC ?
 Type DELETE ALL GMC HISTORY to confirm: Saisissez DELETE ALL GMC HISTORY pour confirmer
 configuration:
@@ -22,19 +21,18 @@ configuration:
         description: Nombre de jours d’historique utilisés pour le niveau de fond local.
         name: Période d’apprentissage de la référence
       external_temperature_entity:
-        description: Capteur Home Assistant utilisé pour la corrélation CPM-température lorsque le GMC ne possède
-          pas de capteur de température interne. L’identifiant de l’entité reste modifiable.
+        description: Capteur Home Assistant utilisé pour la corrélation CPM-température lorsque le GMC ne possède pas de capteur de température
+          interne. L’identifiant de l’entité reste modifiable.
         name: Entité de température extérieure
       external_temperature_max_age_seconds:
         description: Les anciens états de température Home Assistant ne sont pas utilisés pour la corrélation.
         name: Âge maximal de la température extérieure
       external_temperature_name:
-        description: Nom convivial de secours utilisé pour localiser le capteur de température lorsque l’identifiant
-          d’entité configuré diffère ou a été renommé.
+        description: Nom convivial de secours utilisé pour localiser le capteur de température lorsque l’identifiant d’entité configuré diffère
+          ou a été renommé.
         name: Nom de recherche de la température extérieure
       cosmic_hint_enabled:
-        description: Apprend une signature de fond prudente liée à la pression. Indication statistique uniquement,
-          sans suppression des alertes.
+        description: Apprend une signature de fond prudente liée à la pression. Indication statistique uniquement, sans suppression des alertes.
         name: Indication statistique d’influence cosmique
       pressure_weather_entity_primary:
         description: Entité météo Home Assistant principale pour la pression actuelle.
@@ -67,17 +65,15 @@ configuration:
         description: Seuil rouge d’écart; doit être supérieur au jaune. Ce n’est pas une limite de sécurité.
         name: 'Voyant relatif : rouge'
       traffic_light_yellow_percent:
-        description: Écart en pourcentage de la moyenne sur une heure par rapport à la référence apprise. Ce n’est
-          pas une limite de sécurité.
+        description: Écart en pourcentage de la moyenne sur une heure par rapport à la référence apprise. Ce n’est pas une limite de sécurité.
         name: 'Voyant relatif : jaune'
     name: Analyse du bruit de fond
   devices:
     description: Configurez chaque compteur GMC connecté séparément. Ajoutez une entrée par appareil physique.
     fields:
       auxiliary_read_interval:
-        description: Secondes entre les lectures de température, tension, double tube, horloge de l’appareil et
-          gyroscope. Le CPM continue d’utiliser l’intervalle de mesure ; 0 lit les valeurs auxiliaires à chaque
-          cycle.
+        description: Secondes entre les lectures de température, tension, double tube, horloge de l’appareil et gyroscope. Le CPM continue d’utiliser
+          l’intervalle de mesure ; 0 lit les valeurs auxiliaires à chaque cycle.
         name: Intervalle de lecture auxiliaire
       command_timeout:
         description: Attente maximale d’une réponse en secondes.
@@ -110,15 +106,14 @@ configuration:
         description: Secondes entre les mesures enregistrées.
         name: Intervalle de mesure
       serial_debug:
-        description: Consigner des aperçus hexadécimaux et ASCII limités des trames TX/RX pour cet appareil. À activer
-          uniquement pour le diagnostic.
+        description: Consigner des aperçus hexadécimaux et ASCII limités des trames TX/RX pour cet appareil. À activer uniquement pour le diagnostic.
         name: Débogage des trames série
       serial_debug_max_bytes:
         description: Nombre maximal d’octets affichés pour chaque trame TX/RX.
         name: Limite d’octets des trames de débogage
       serial_startup_delay:
-        description: Décalage de démarrage en secondes avant l’initialisation de cet appareil. Les valeurs configurées
-          plus grandes sont conservées et au moins 15 secondes séparent toujours deux appareils consécutifs.
+        description: Décalage de démarrage en secondes avant l’initialisation de cet appareil. Les valeurs configurées plus grandes sont conservées
+          et au moins 15 secondes séparent toujours deux appareils consécutifs.
         name: Délai de démarrage série
       orientation_calibration_enabled:
         name: Étalonnage de l’orientation
@@ -147,37 +142,54 @@ configuration:
       orientation_calibration_name:
         name: Nom du profil d’étalonnage
         description: Nom affiché avec les valeurs d’orientation calculées.
+      dead_time_us:
+        description: Temps mort propre au détecteur en microsecondes. Laisser vide sans données fiables sur l’appareil.
+        name: Temps mort du détecteur
+      reliable_max_cpm:
+        description: Taux maximal considéré fiable pour cet appareil. Au-delà, une saturation ou des pertes de comptage sont signalées.
+        name: CPM fiables maximaux
+      dead_time_model:
+        description: Modèle de correction documenté pour cet appareil. La correction exige un temps mort configuré.
+        name: Modèle de temps mort
+      conversion_factor_uncertainty_percent:
+        description: Incertitude-type relative du facteur CPM vers µSv/h, en pourcentage.
+        name: Incertitude du facteur de conversion
+      calibration_uncertainty_percent:
+        description: Incertitude-type relative d’étalonnage, en pourcentage. Laisser vide si elle est inconnue.
+        name: Incertitude d’étalonnage
+      calibration_reference:
+        description: Certificat, laboratoire ou autre référence documentant l’étalonnage.
+        name: Référence d’étalonnage
+      tube_model:
+        description: Modèle de tube Geiger-Müller utilisé par cet appareil.
+        name: Modèle de tube
     name: Appareils
   gmcmap:
-    description: Compte et paramètres réseau communs pour les envois publics. L’identifiant du compteur reste propre
-      à chaque appareil.
+    description: Compte et paramètres réseau communs pour les envois publics. L’identifiant du compteur reste propre à chaque appareil.
     fields:
       account_id:
-        description: Identifiant utilisateur du compte GMCMap enregistré. Il n’est ni journalisé ni stocké dans
-          les exports de diagnostic.
+        description: Identifiant utilisateur du compte GMCMap enregistré. Il n’est ni journalisé ni stocké dans les exports de diagnostic.
         name: Identifiant utilisateur (AID)
       enabled:
         description: Envoie facultativement les mesures vers la carte mondiale publique GMCMap. Désactivé par défaut.
         name: Activer les envois publics
       privacy_confirmed:
-        description: Doit être activé avant tout envoi. L’emplacement et les informations de station sont gérés
-          dans le compte GMCMap et peuvent être publics.
+        description: Doit être activé avant tout envoi. L’emplacement et les informations de station sont gérés dans le compte GMCMap et peuvent
+          être publics.
         name: Confirmer le transfert public des données
       timeout:
-        description: Attente maximale par requête GMCMap en secondes. Les échecs sont réessayés en arrière-plan
-          avec temporisation progressive.
+        description: Attente maximale par requête GMCMap en secondes. Les échecs sont réessayés en arrière-plan avec temporisation progressive.
         name: Délai d’attente réseau
       upload_interval:
-        description: Secondes entre les envois publics pour chaque appareil. Un intervalle d’au moins 120 à 300
-          secondes est recommandé.
+        description: Secondes entre les envois publics pour chaque appareil. Un intervalle d’au moins 120 à 300 secondes est recommandé.
         name: Intervalle d’envoi
     name: GMCMap (partagé)
   history:
     description: Conservation locale, fuseau horaire des rapports et gestion protégée de l'historique.
     fields:
       history_management_enabled:
-        description: Active les outils protégés de restauration et de suppression complète. Laissez cette option
-          désactivée en fonctionnement normal.
+        description: Active les outils protégés de restauration et de suppression complète. Laissez cette option désactivée en fonctionnement
+          normal.
         name: Gestion de l'historique
       report_timezone:
         description: Fuseau IANA pour les limites journalières et les horodatages, par exemple Europe/Paris.
@@ -209,9 +221,8 @@ configuration:
         description: Début de la zone rouge pour le débit dérivé.
         name: Danger µSv/h personnalisé
       profile:
-        description: GQ utilise les bandes du fabricant. Les références BfS et ICRP convertissent mathématiquement
-          1 et 20 mSv/an en débit continu; ce ne sont pas des seuils instantanés officiels. Personnalisé utilise
-          les champs ci-dessous.
+        description: GQ utilise les bandes du fabricant. Les références BfS et ICRP convertissent mathématiquement 1 et 20 mSv/an en débit continu;
+          ce ne sont pas des seuils instantanés officiels. Personnalisé utilise les champs ci-dessous.
         name: Profil de seuils
       threshold_basis:
         description: Utilise les CPM, le débit dérivé ou le résultat le plus strict. Actif uniquement avec Personnalisé.
@@ -236,11 +247,10 @@ configuration:
         description: Temps de silence en secondes entre les fenêtres de commande de compteurs différents.
         name: Intervalle silencieux du planificateur
     name: Système
-'{count} measurements and {events} events were removed.': Les mesures {count} et les événements {events} ont été
-  supprimés.
-? All downloads below automatically use the GMC device currently shown in Analysis. Select another connected device
-  above to change the report source.
-: Tous les téléchargements ci-dessous utilisent automatiquement l’appareil GMC actuellement affiché dans l’analyse.
-  Sélectionnez un autre appareil connecté ci-dessus pour modifier la source du rapport.
+'{count} measurements and {events} events were removed.': Les mesures {count} et les événements {events} ont été supprimés.
+? All downloads below automatically use the GMC device currently shown in Analysis. Select another connected device above to change the report
+  source.
+: Tous les téléchargements ci-dessous utilisent automatiquement l’appareil GMC actuellement affiché dans l’analyse. Sélectionnez un autre appareil
+  connecté ci-dessus pour modifier la source du rapport.
 No connected GMC device: Aucun appareil GMC connecté
 Reports for the displayed analysis: Rapports pour l'analyse affichée

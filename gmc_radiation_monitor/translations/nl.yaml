@@ -3,14 +3,13 @@ Another report or maintenance job is running: Er wordt nog een rapport of onderh
 Complete history deletion failed: Het volledig verwijderen van de geschiedenis is mislukt
 Danger zone: Gevarenzone
 Delete all GMC history: Verwijder de hele GMC geschiedenis
-Deletion confirmation text must be exactly DELETE ALL GMC HISTORY: De bevestigingstekst voor verwijderen moet exact
-  DELETE ALL GMC HISTORY zijn
+Deletion confirmation text must be exactly DELETE ALL GMC HISTORY: De bevestigingstekst voor verwijderen moet exact DELETE ALL GMC HISTORY zijn
 History deleted: Geschiedenis verwijderd
 Invalid deletion confirmation: Ongeldige verwijderingsbevestiging
-? Permanently delete all GMC history from this app and Home Assistant Recorder. This includes CPM, temperature,
-  voltage, gyro and tube measurements for every known GMC and all time periods.
-: Verwijder permanent alle GMC-geschiedenis van deze app en Home Assistant Recorder. Dit omvat CPM, temperatuur-,
-  spannings-, gyro- en buismetingen voor elke bekende GMC en alle tijdsperioden.
+? Permanently delete all GMC history from this app and Home Assistant Recorder. This includes CPM, temperature, voltage, gyro and tube measurements
+  for every known GMC and all time periods.
+: Verwijder permanent alle GMC-geschiedenis van deze app en Home Assistant Recorder. Dit omvat CPM, temperatuur-, spannings-, gyro- en buismetingen
+  voor elke bekende GMC en alle tijdsperioden.
 This cannot be undone. Delete all GMC history?: Dit kan niet ongedaan worden gemaakt. De hele GMC geschiedenis verwijderen?
 Type DELETE ALL GMC HISTORY to confirm: Typ DELETE ALL GMC HISTORY om te bevestigen
 configuration:
@@ -21,19 +20,19 @@ configuration:
         description: Aantal historische dagen voor de lokale achtergrondbasis.
         name: Leerperiode basislijn
       external_temperature_entity:
-        description: Home Assistant-sensor voor de correlatie tussen CPM en temperatuur wanneer de GMC geen interne
-          temperatuursensor heeft. De entiteits-ID blijft bewerkbaar.
+        description: Home Assistant-sensor voor de correlatie tussen CPM en temperatuur wanneer de GMC geen interne temperatuursensor heeft. De
+          entiteits-ID blijft bewerkbaar.
         name: Entiteit voor buitentemperatuur
       external_temperature_max_age_seconds:
         description: Oudere temperatuurstatussen van Home Assistant worden niet voor correlatie gebruikt.
         name: Maximale leeftijd van de buitentemperatuur
       external_temperature_name:
-        description: Terugval op een gebruiksvriendelijke naam om de temperatuursensor te vinden wanneer de ingestelde
-          entiteits-ID afwijkt of is hernoemd.
+        description: Terugval op een gebruiksvriendelijke naam om de temperatuursensor te vinden wanneer de ingestelde entiteits-ID afwijkt of
+          is hernoemd.
         name: Zoeknaam voor buitentemperatuur
       cosmic_hint_enabled:
-        description: Leert een voorzichtige luchtdrukgerelateerde achtergrondsignatuur. Alleen een statistische
-          aanwijzing; waarschuwingen blijven actief.
+        description: Leert een voorzichtige luchtdrukgerelateerde achtergrondsignatuur. Alleen een statistische aanwijzing; waarschuwingen blijven
+          actief.
         name: Statistische aanwijzing voor kosmische invloed
       pressure_weather_entity_primary:
         description: Primaire Home Assistant-weerentiteit voor de actuele luchtdruk.
@@ -73,8 +72,8 @@ configuration:
     description: Configureer elke aangesloten GMC-teller afzonderlijk. Voeg één item per fysiek apparaat toe.
     fields:
       auxiliary_read_interval:
-        description: Seconden tussen metingen van temperatuur, spanning, dubbele buis, apparaattijd en gyroscoop.
-          CPM blijft het meetinterval gebruiken; 0 leest de hulpwaarden bij elke cyclus.
+        description: Seconden tussen metingen van temperatuur, spanning, dubbele buis, apparaattijd en gyroscoop. CPM blijft het meetinterval
+          gebruiken; 0 leest de hulpwaarden bij elke cyclus.
         name: Interval voor hulpmetingen
       command_timeout:
         description: Maximale wachttijd in seconden.
@@ -107,15 +106,14 @@ configuration:
         description: Seconden tussen opgeslagen metingen.
         name: Meetinterval
       serial_debug:
-        description: Log begrensde hexadecimale en ASCII-voorbeelden van TX/RX-frames voor dit apparaat. Alleen
-          inschakelen tijdens diagnose.
+        description: Log begrensde hexadecimale en ASCII-voorbeelden van TX/RX-frames voor dit apparaat. Alleen inschakelen tijdens diagnose.
         name: Foutopsporing van seriële frames
       serial_debug_max_bytes:
         description: Maximaal aantal bytes dat voor elk TX/RX-frame wordt weergegeven.
         name: Bytegrens voor debugframe
       serial_startup_delay:
-        description: Startverschuiving in seconden voordat dit apparaat wordt geïnitialiseerd. Grotere ingestelde
-          waarden blijven behouden en opeenvolgende apparaten worden altijd met minimaal 15 seconden gestart.
+        description: Startverschuiving in seconden voordat dit apparaat wordt geïnitialiseerd. Grotere ingestelde waarden blijven behouden en
+          opeenvolgende apparaten worden altijd met minimaal 15 seconden gestart.
         name: Opstartvertraging seriële verbinding
       orientation_calibration_enabled:
         name: Oriëntatiekalibratie
@@ -144,24 +142,44 @@ configuration:
       orientation_calibration_name:
         name: Naam van kalibratieprofiel
         description: Naam die bij de berekende oriëntatiewaarden wordt weergegeven.
+      dead_time_us:
+        description: Apparaatspecifieke dode tijd in microseconden. Leeg laten zonder betrouwbare apparaatgegevens.
+        name: Dode tijd van detector
+      reliable_max_cpm:
+        description: Hoogste telsnelheid die voor dit apparaat betrouwbaar is. Hogere waarden worden als mogelijke verzadiging of telverliezen
+          gemarkeerd.
+        name: Maximaal betrouwbare CPM
+      dead_time_model:
+        description: Gedocumenteerd correctiemodel voor dit apparaat. Correctie wordt alleen toegepast wanneer dode tijd is ingesteld.
+        name: Dode-tijdmodel
+      conversion_factor_uncertainty_percent:
+        description: Relatieve standaardonzekerheid van de CPM-naar-µSv/h-factor in procent.
+        name: Onzekerheid conversiefactor
+      calibration_uncertainty_percent:
+        description: Relatieve standaardkalibratieonzekerheid in procent. Leeg laten indien onbekend.
+        name: Kalibratieonzekerheid
+      calibration_reference:
+        description: Certificaat, laboratorium of andere referentie die de kalibratie documenteert.
+        name: Kalibratiereferentie
+      tube_model:
+        description: Model Geiger-Müllerbuis dat in dit apparaat wordt gebruikt.
+        name: Buismodel
     name: Apparaten
   gmcmap:
     description: Gedeelde account- en netwerkinstellingen voor openbare uploads. De teller-ID blijft apparaatspecifiek.
     fields:
       account_id:
-        description: GMCMap-gebruikers-ID van het geregistreerde account. Deze wordt niet gelogd of in diagnose-exporten
-          opgeslagen.
+        description: GMCMap-gebruikers-ID van het geregistreerde account. Deze wordt niet gelogd of in diagnose-exporten opgeslagen.
         name: Gebruikers-ID (AID)
       enabled:
         description: Stuur metingen optioneel naar de openbare GMCMap-wereldkaart. Standaard uitgeschakeld.
         name: Openbare uploads inschakelen
       privacy_confirmed:
-        description: Moet zijn ingeschakeld voordat gegevens worden verzonden. Locatie- en stationsgegevens worden
-          in het GMCMap-account beheerd en kunnen openbaar zichtbaar zijn.
+        description: Moet zijn ingeschakeld voordat gegevens worden verzonden. Locatie- en stationsgegevens worden in het GMCMap-account beheerd
+          en kunnen openbaar zichtbaar zijn.
         name: Openbare gegevensoverdracht bevestigen
       timeout:
-        description: Maximale wachttijd per GMCMap-verzoek in seconden. Fouten worden op de achtergrond met oplopende
-          wachttijd opnieuw geprobeerd.
+        description: Maximale wachttijd per GMCMap-verzoek in seconden. Fouten worden op de achtergrond met oplopende wachttijd opnieuw geprobeerd.
         name: Netwerktime-out
       upload_interval:
         description: Seconden tussen openbare uploads per apparaat. Minimaal 120 tot 300 seconden wordt aanbevolen.
@@ -171,8 +189,7 @@ configuration:
     description: Lokale bewaartermijn, rapporttijdzone en beveiligd historiebeheer.
     fields:
       history_management_enabled:
-        description: Schakelt de beveiligde functies voor herstel en volledige verwijdering in. Laat dit tijdens
-          normaal gebruik uitgeschakeld.
+        description: Schakelt de beveiligde functies voor herstel en volledige verwijdering in. Laat dit tijdens normaal gebruik uitgeschakeld.
         name: Historiebeheer
       report_timezone:
         description: IANA-tijdzone voor daggrenzen en tijdstempels, bijvoorbeeld Europe/Amsterdam.
@@ -204,9 +221,8 @@ configuration:
         description: Begin van rood voor het afgeleide dosistempo.
         name: Aangepast gevaar µSv/h
       profile:
-        description: GQ gebruikt fabrikantbanden. BfS- en ICRP-referenties rekenen 1 en 20 mSv/jaar wiskundig om
-          naar een continu dosistempo; dit zijn geen officiële directe alarmgrenzen. Aangepast gebruikt de velden
-          hieronder.
+        description: GQ gebruikt fabrikantbanden. BfS- en ICRP-referenties rekenen 1 en 20 mSv/jaar wiskundig om naar een continu dosistempo;
+          dit zijn geen officiële directe alarmgrenzen. Aangepast gebruikt de velden hieronder.
         name: Drempelprofiel
       threshold_basis:
         description: Gebruikt CPM, afgeleid dosistempo of het strengste resultaat. Alleen actief bij Aangepast.
@@ -232,9 +248,9 @@ configuration:
         name: Rustpauze van planner
     name: Systeem
 '{count} measurements and {events} events were removed.': '{count} metingen en {events} gebeurtenissen zijn verwijderd.'
-? All downloads below automatically use the GMC device currently shown in Analysis. Select another connected device
-  above to change the report source.
-: Alle onderstaande downloads gebruiken automatisch het GMC-apparaat dat momenteel in de analyse wordt weergegeven.
-  Selecteer hierboven een ander verbonden apparaat om de rapportbron te wijzigen.
+? All downloads below automatically use the GMC device currently shown in Analysis. Select another connected device above to change the report
+  source.
+: Alle onderstaande downloads gebruiken automatisch het GMC-apparaat dat momenteel in de analyse wordt weergegeven. Selecteer hierboven een ander
+  verbonden apparaat om de rapportbron te wijzigen.
 No connected GMC device: Geen verbonden GMC-apparaat
 Reports for the displayed analysis: Rapporten voor de weergegeven analyse

@@ -1,7 +1,7 @@
 name: GMC Radiation Monitor
 description: Local GQ GMC monitoring with MQTT Discovery, configurable safety profiles,
   background anomaly detection, diagnostics, reports, backups and streamed exports
-version: 8.2.2
+version: 8.3.0
 slug: gmc_radiation_monitor
 url: https://github.com/brotzman/gmc-homeassistant/tree/main/gmc_radiation_monitor
 stage: stable
@@ -36,6 +36,13 @@ options:
     device_clock_warning_seconds: 120
     heartbeat_enabled: false
     cpm_per_usvh: 154.0
+    dead_time_us: null
+    reliable_max_cpm: null
+    dead_time_model: none
+    conversion_factor_uncertainty_percent: null
+    calibration_uncertainty_percent: null
+    calibration_reference: ''
+    tube_model: ''
     gmcmap_counter_id: ''
     serial_debug: false
     serial_debug_max_bytes: 64
@@ -59,6 +66,13 @@ options:
     device_clock_warning_seconds: 120
     heartbeat_enabled: false
     cpm_per_usvh: 154.0
+    dead_time_us: null
+    reliable_max_cpm: null
+    dead_time_model: none
+    conversion_factor_uncertainty_percent: null
+    calibration_uncertainty_percent: null
+    calibration_reference: ''
+    tube_model: ''
     gmcmap_counter_id: ''
     serial_debug: false
     serial_debug_max_bytes: 64
@@ -126,6 +140,13 @@ schema:
     device_clock_warning_seconds: int(10,86400)?
     heartbeat_enabled: bool?
     cpm_per_usvh: float(0.001,)?
+    dead_time_us: float(0.001,)?
+    reliable_max_cpm: int(1,)?
+    dead_time_model: list(none|nonparalyzable)?
+    conversion_factor_uncertainty_percent: float(0.0,)?
+    calibration_uncertainty_percent: float(0.0,)?
+    calibration_reference: str?
+    tube_model: str?
     gmcmap_counter_id: str?
     serial_debug: bool?
     serial_debug_max_bytes: int(16,1024)?

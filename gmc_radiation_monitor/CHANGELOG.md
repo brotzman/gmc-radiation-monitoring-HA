@@ -1,5 +1,12 @@
 # Changelog
 
+## 8.3.0
+
+- Added device-specific dead-time and reliable-range configuration.
+- Added saturation/count-loss assessment and suppression of misleading dose conversion outside the reliable range.
+- Added separated uncertainty budgets and cautiously qualified derived dose estimates.
+- Added reproducible scientific export manifests with SHA-256 checksums.
+
 ## 8.2.2
 
 - Added a directly accessible language switcher to the dashboard header for Auto, German, English, Spanish, French, Croatian, Italian, Dutch and Polish.
