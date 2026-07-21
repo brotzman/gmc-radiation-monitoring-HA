@@ -1,6 +1,6 @@
 # Changelog
 
-## 8.4.4
+## 8.4.5
 
 - Moved the CPM-to-dose conversion factor from general device data into each physical tube card.
 - Added explicit unconfigured-factor output for uncalibrated tubes.

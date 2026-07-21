@@ -28,8 +28,8 @@ DUAL_KEYS = {
 
 def test_release_metadata_is_841() -> None:
     config = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
-    assert APP_VERSION == "8.4.4"
-    assert config["version"] == "8.4.4"
+    assert APP_VERSION == "8.4.5"
+    assert config["version"] == "8.4.5"
 
 
 def test_supervisor_configuration_has_one_entry_per_physical_device() -> None:
