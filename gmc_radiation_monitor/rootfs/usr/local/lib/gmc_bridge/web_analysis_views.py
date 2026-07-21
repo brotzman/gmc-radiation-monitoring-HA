@@ -358,7 +358,7 @@ def _render_stability_entity(entity: AnalysisEntity, t: TranslatorLike) -> str:
                 f' <span class="gap-status {gap_class}">{html.escape(t(gap_label))}</span>'
             )
         meta_parts.append(
-            f'<span class="stability-meta-line">{html.escape(t(metric.label_key))}: '
+            f'<span class="stability-meta-line">{html.escape(t(metric.label_key, **translated_template_values(dict(metric.label_values), t)))}: '
             f'{html.escape(value)}{gap_status_html}</span>'
         )
     meta = "".join(meta_parts)
@@ -568,7 +568,7 @@ def render_device_analysis(
             note = t(metric.interpretation_key, **translated_template_values(dict(metric.interpretation_values), t))
         color = "blue" if metric.key in {"status-mean-1h", "status-mean-7d"} else _STATUS_COLOR[metric.status]
         return (
-            f'<div class="status-item {color}"><strong>{html.escape(t(metric.label_key))}</strong>'
+            f'<div class="status-item {color}"><strong>{html.escape(t(metric.label_key, **translated_template_values(dict(metric.label_values), t)))}</strong>'
             f'<div class="status-value">{html.escape(shown_value)}</div><small>{html.escape(note)}</small></div>'
         )
 

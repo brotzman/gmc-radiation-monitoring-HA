@@ -62,10 +62,12 @@ def _metric(
     priority: bool = False,
     value_key: str = "",
     value_values: Mapping[str, Any] | None = None,
+    label_values: Mapping[str, Any] | None = None,
 ) -> AnalysisMetric:
     return AnalysisMetric(
         key=key or slugify(label),
         label_key=label,
+        label_values=dict(label_values or {}),
         value=value,
         value_key=value_key,
         value_values=dict(value_values or {}),
@@ -1325,12 +1327,15 @@ def build_fleet_intelligence_result(snapshot: dict[str, Any]) -> AnalysisResult:
                 metrics=(
                     _metric("Status", item.status, value_key=item.status, key=f"{item.serial}-status", status=_stability_status(item.status)),
                     _metric("Availability", f"{item.availability_percent:.1f}%", key=f"{item.serial}-availability"),
-                    _metric("Longest gap", f"{item.longest_gap_seconds} s", key=f"{item.serial}-gap", note_key="Warning from {warning:g} s; critical from {critical:g} s", note_values={"warning": item.scan_interval_seconds * 1.5, "critical": item.scan_interval_seconds * 2.5}, status=(AnalysisStatus.WARNING if item.gap_status == "Critical" else AnalysisStatus.NOTICE if item.gap_status == "Warning" else AnalysisStatus.NEUTRAL)),
+                    _metric("Largest measurement interval", f"{item.longest_gap_seconds} s", key=f"{item.serial}-gap", note_key="Warning from {warning:g} s; critical from {critical:g} s", note_values={"warning": item.scan_interval_seconds * 1.5, "critical": item.scan_interval_seconds * 2.5}, status=(AnalysisStatus.WARNING if item.gap_status == "Critical" else AnalysisStatus.NOTICE if item.gap_status == "Warning" else AnalysisStatus.NEUTRAL)),
+                    _metric("Expected measurement interval", f"{item.scan_interval_seconds} s", key=f"{item.serial}-expected-interval"),
+                    _metric("Maximum interval deviation", "—" if item.interval_deviation_seconds is None else f"{item.interval_deviation_seconds:+d} s", key=f"{item.serial}-interval-deviation"),
                     _metric("Reconnects", str(item.reconnects), key=f"{item.serial}-reconnects"),
                     _metric("Last sample age", age, key=f"{item.serial}-age"),
-                    _metric("Valid measurements", str(item.valid_samples), key=f"{item.serial}-valid", level=AnalysisLevel.EXPERT),
+                    _metric("Valid measurements ({hours:g} h)", f"{item.valid_samples} / {item.expected_samples}", key=f"{item.serial}-valid", label_values={"hours": item.analysis_window_seconds / 3600.0}, level=AnalysisLevel.EXPERT),
+                    _metric("Total stored measurements", str(item.total_stored_samples), key=f"{item.serial}-stored", level=AnalysisLevel.EXPERT),
                     _metric("Excluded measurements", str(item.excluded_samples), key=f"{item.serial}-excluded", level=AnalysisLevel.EXPERT),
-                    _metric("Quality weight", f"{item.quality_weight:.2f}", key=f"{item.serial}-weight", level=AnalysisLevel.EXPERT),
+                    _metric("Quality weight", f"{item.quality_weight:.0%}", key=f"{item.serial}-weight", level=AnalysisLevel.EXPERT),
                 ),
             )
         )

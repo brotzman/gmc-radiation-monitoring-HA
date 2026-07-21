@@ -35,6 +35,9 @@ class DeviceStability:
     quality_weight: float = 0.0
     scan_interval_seconds: int = 60
     gap_status: str | None = None
+    total_stored_samples: int = 0
+    analysis_window_seconds: int = 86400
+    interval_deviation_seconds: int | None = None
 
 
 def measurement_gap_status(longest_gap_seconds: int, scan_interval_seconds: int) -> str | None:
@@ -84,7 +87,12 @@ def _comparison_confidence(valid_pairs: int, excluded_pairs: int, weights: list[
 
 def build_fleet_snapshot(store: HistoryStore, *, window_seconds: int = 86400) -> dict[str, Any]:
     now = int(time.time())
-    start = now - window_seconds
+    # Use an exact half-open interval [start, end).  With integer timestamps,
+    # end=now+1 includes a sample stored in the current second while excluding
+    # the sample exactly one full window earlier.  This prevents a regular
+    # 120-second series from alternating between 720 and 721 samples.
+    end = now + 1
+    start = end - window_seconds
     devices = [item for item in store.list_devices() if bool(item.get("runtime_online"))]
     stability: list[DeviceStability] = []
     rows_by_serial: dict[str, list[HistoryRow]] = {}
@@ -94,7 +102,7 @@ def build_fleet_snapshot(store: HistoryStore, *, window_seconds: int = 86400) ->
 
     for device in devices:
         serial = str(device.get("serial") or "")
-        rows = store.query_range(start, now + 1, device_serial=serial)
+        rows = store.query_range(start, end, device_serial=serial)
         rows_by_serial[serial] = rows
         orientation_times = _orientation_timestamps(store, serial)
         filtered = filter_history_rows(
@@ -120,6 +128,7 @@ def build_fleet_snapshot(store: HistoryStore, *, window_seconds: int = 86400) ->
         errors = int(device.get("serial_error_count") or 0)
         reconnects = int(device.get("serial_reconnect_count") or 0)
         gap = _longest_gap(clean_rows)
+        interval_deviation = None if len(clean_rows) < 2 else gap - interval
         age = None if not clean_rows else max(0, now - clean_rows[-1].timestamp_utc)
         score = 100.0
         score -= min(35.0, (100.0 - availability) * 0.6)
@@ -152,6 +161,9 @@ def build_fleet_snapshot(store: HistoryStore, *, window_seconds: int = 86400) ->
             quality_weight=quality_weight,
             scan_interval_seconds=interval,
             gap_status=measurement_gap_status(gap, interval),
+            total_stored_samples=int(device.get("stored_samples") or 0),
+            analysis_window_seconds=window_seconds,
+            interval_deviation_seconds=interval_deviation,
         ))
 
     comparison: dict[str, Any] | None = None

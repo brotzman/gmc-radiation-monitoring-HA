@@ -1,6 +1,16 @@
 # Changelog
 
+## 8.3.1
+
+- Promoted the validated Stable R2 device-stability display corrections to a patch release.
+- Updated add-on metadata, runtime version reporting, release notes and all eight bundled manuals to 8.3.1.
+- Kept the database schema, analysis schema and metrology algorithm version unchanged for full 8.3.0 compatibility.
+
 ## 8.3.0
+
+- Clarified the shared device-stability card for every connected counter: the 24-hour valid/expected sample count, total stored samples, configured interval, largest observed interval and maximum deviation are now shown separately.
+- Corrected the rolling 24-hour query to an exact half-open window, preventing a regular 120-second series from briefly showing 721 instead of 720 samples.
+- Displayed the per-device quality weight as a percentage.
 
 - Added device-specific dead-time and reliable-range configuration.
 - Added saturation/count-loss assessment and suppression of misleading dose conversion outside the reliable range.

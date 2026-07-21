@@ -36,6 +36,70 @@ _release_overrides = json.loads(
 for _language, _catalogue in _release_overrides.items():
     CATALOGS[_language].update(_catalogue)
 
+# Version 8.3 stability-card clarification.  These labels are shared by the
+# common fleet component, so every connected device uses the same wording and
+# its own configured interval and history count.
+_stability_card_overrides = {
+    "en": {
+        "Valid measurements ({hours:g} h)": "Valid measurements ({hours:g} h)",
+        "Total stored measurements": "Total stored measurements",
+        "Largest measurement interval": "Largest measurement interval",
+        "Expected measurement interval": "Expected measurement interval",
+        "Maximum interval deviation": "Maximum interval deviation",
+    },
+    "de": {
+        "Valid measurements ({hours:g} h)": "Gültige Messwerte ({hours:g} h)",
+        "Total stored measurements": "Gesamt gespeicherte Messwerte",
+        "Largest measurement interval": "Größter Messabstand",
+        "Expected measurement interval": "Erwartetes Messintervall",
+        "Maximum interval deviation": "Maximale Intervallabweichung",
+    },
+    "fr": {
+        "Valid measurements ({hours:g} h)": "Mesures valides ({hours:g} h)",
+        "Total stored measurements": "Total des mesures enregistrées",
+        "Largest measurement interval": "Plus grand intervalle de mesure",
+        "Expected measurement interval": "Intervalle de mesure attendu",
+        "Maximum interval deviation": "Écart maximal de l’intervalle",
+    },
+    "es": {
+        "Valid measurements ({hours:g} h)": "Mediciones válidas ({hours:g} h)",
+        "Total stored measurements": "Total de mediciones almacenadas",
+        "Largest measurement interval": "Mayor intervalo de medición",
+        "Expected measurement interval": "Intervalo de medición esperado",
+        "Maximum interval deviation": "Desviación máxima del intervalo",
+    },
+    "it": {
+        "Valid measurements ({hours:g} h)": "Misure valide ({hours:g} h)",
+        "Total stored measurements": "Totale misure memorizzate",
+        "Largest measurement interval": "Intervallo di misura massimo",
+        "Expected measurement interval": "Intervallo di misura previsto",
+        "Maximum interval deviation": "Deviazione massima dell’intervallo",
+    },
+    "nl": {
+        "Valid measurements ({hours:g} h)": "Geldige metingen ({hours:g} u)",
+        "Total stored measurements": "Totaal opgeslagen metingen",
+        "Largest measurement interval": "Grootste meetinterval",
+        "Expected measurement interval": "Verwacht meetinterval",
+        "Maximum interval deviation": "Maximale intervalafwijking",
+    },
+    "pl": {
+        "Valid measurements ({hours:g} h)": "Prawidłowe pomiary ({hours:g} godz.)",
+        "Total stored measurements": "Łączna liczba zapisanych pomiarów",
+        "Largest measurement interval": "Największy odstęp pomiarowy",
+        "Expected measurement interval": "Oczekiwany odstęp pomiarowy",
+        "Maximum interval deviation": "Maksymalne odchylenie odstępu",
+    },
+    "hr": {
+        "Valid measurements ({hours:g} h)": "Valjana mjerenja ({hours:g} h)",
+        "Total stored measurements": "Ukupno pohranjenih mjerenja",
+        "Largest measurement interval": "Najveći razmak mjerenja",
+        "Expected measurement interval": "Očekivani razmak mjerenja",
+        "Maximum interval deviation": "Najveće odstupanje razmaka",
+    },
+}
+for _language, _catalogue in _stability_card_overrides.items():
+    CATALOGS[_language].update(_catalogue)
+
 
 # Two legacy indirection labels intentionally carry format fields only in their
 # translated template. Callers resolve them to the real source sentence before

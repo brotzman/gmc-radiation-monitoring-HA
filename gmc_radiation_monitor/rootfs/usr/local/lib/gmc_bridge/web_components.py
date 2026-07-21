@@ -69,7 +69,7 @@ def render_metric_card(metric: AnalysisMetric, translator: TranslatorLike) -> st
     return (
         f'<div class="metric{priority_class}" data-metric-key="{html.escape(metric.key, quote=True)}" '
         f'data-analysis-tier="{metric.level.value}">'
-        f'<strong>{html.escape(translator(metric.label_key))}</strong>'
+        f'<strong>{html.escape(translator(metric.label_key, **translated_template_values(dict(metric.label_values), translator)))}</strong>'
         f'<div class="value">{html.escape(shown_value)}</div>'
         f'<small>{html.escape(note)}</small>'
         f'{interpretation_html}'

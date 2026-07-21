@@ -72,6 +72,7 @@ class AnalysisMetric:
     interpretation_key: str = ""
     interpretation_values: Mapping[str, Any] = field(default_factory=dict)
     priority: bool = False
+    label_values: Mapping[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True, slots=True)
@@ -196,6 +197,7 @@ def _metric_dict(metric: AnalysisMetric) -> dict[str, Any]:
     return {
         "key": metric.key,
         "label_key": metric.label_key,
+        "label_values": dict(metric.label_values),
         "value": metric.value,
         "value_key": metric.value_key,
         "value_values": dict(metric.value_values),
