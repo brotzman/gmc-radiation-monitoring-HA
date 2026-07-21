@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import io
 import json
 import os
@@ -15,6 +16,8 @@ from typing import Any
 
 from .file_security import secure_file
 from .history import HistoryRow, HistoryStore, metadata_json_bytes
+from .metrology import ALGORITHM_VERSION
+from .version import APP_VERSION
 
 CSV_HEADER = [
     "device_serial",
@@ -172,6 +175,37 @@ def full_history_zip_to_path(store: HistoryStore, destination_path: str | Path) 
                     raw_text.detach()
                 raw_archive.close()
             archive.writestr("gmc_history.metadata.json", metadata_json_bytes(store))
+            protected_names = [
+                "gmc_history.sqlite3",
+                "gmc_history.csv",
+                "gmc_raw_history.csv",
+                "gmc_history.metadata.json",
+            ]
+            checksums = {
+                name: hashlib.sha256(archive.read(name)).hexdigest()
+                for name in protected_names
+            }
+            manifest = {
+                "package_schema_version": 1,
+                "app_version": APP_VERSION,
+                "algorithm_version": ALGORITHM_VERSION,
+                "generated_at_utc": datetime.now(UTC).isoformat(timespec="seconds").replace("+00:00", "Z"),
+                "integrity_algorithm": "SHA-256",
+                "files": checksums,
+                "separation_note": "Raw measurements and derived analysis products are stored separately.",
+                "limitations": [
+                    "Dose values are derived estimates unless a traceable calibration reference is documented.",
+                    "Missing data, exclusions and saturation indicators must be considered during interpretation.",
+                ],
+            }
+            archive.writestr(
+                "scientific_manifest.json",
+                json.dumps(manifest, indent=2, sort_keys=True).encode("utf-8") + b"\n",
+            )
+            archive.writestr(
+                "SHA256SUMS",
+                "".join(f"{digest}  {name}\n" for name, digest in sorted(checksums.items())),
+            )
         secure_file(destination_path)
         return destination_path
     finally:

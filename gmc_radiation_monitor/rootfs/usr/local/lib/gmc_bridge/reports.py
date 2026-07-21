@@ -25,6 +25,7 @@ from .file_security import secure_file
 from .history import HistoryRow, HistoryStore
 from .quality_pipeline import filter_history_rows, robust_sigma, robust_trimmed_mean
 from .scientific_analysis import counting_uncertainty, detect_persistent_level_shift, recent_change_significance
+from .metrology import ALGORITHM_VERSION, MetrologyConfig, derived_dose_estimate, integrated_dose_estimate
 from .translations import Translator
 from .version import APP_VERSION
 
@@ -502,6 +503,15 @@ def _metadata_int(value: str | None) -> int | None:
     except ValueError:
         return None
 
+
+def _metadata_float(value: object) -> float | None:
+    if value in (None, ""):
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
 def csv_bytes(rows: Iterable[HistoryRow], tz: ZoneInfo, *, language: str = "en") -> bytes:
     # Keep stable machine-readable field identifiers for backwards compatibility.
     # Human-readable reports and explanatory text are localized separately.
@@ -739,8 +749,33 @@ def analysis_document(
         yellow_percent=yellow_percent,
         red_percent=red_percent,
     )
+    metrology = MetrologyConfig(
+        dead_time_us=_metadata_float(device_metadata.get("dead_time_us")),
+        reliable_max_cpm=_metadata_int(device_metadata.get("reliable_max_cpm")),
+        dead_time_model=str(device_metadata.get("dead_time_model") or "none"),
+        conversion_factor_uncertainty_percent=_metadata_float(device_metadata.get("conversion_factor_uncertainty_percent")),
+        calibration_uncertainty_percent=_metadata_float(device_metadata.get("calibration_uncertainty_percent")),
+        calibration_reference=str(device_metadata.get("calibration_reference") or ""),
+        tube_model=str(device_metadata.get("tube_model") or ""),
+    )
+    counting = counting_uncertainty(rows)
+    dose_estimate = derived_dose_estimate(
+        cpm=analysis.get("cpm_mean"),
+        cpm_per_usvh=cpm_per_usvh,
+        counting_relative_percent=counting.get("relative_uncertainty_percent"),
+        config=metrology,
+        coverage_percent=analysis.get("completeness_percent"),
+        gap_count=analysis.get("missing_samples"),
+    )
+    integrated_dose = integrated_dose_estimate(
+        samples=[(row.timestamp_utc, row.cpm) for row in rows],
+        cpm_per_usvh=cpm_per_usvh,
+        config=metrology,
+        expected_interval_seconds=scan_interval_seconds,
+    )
     return {
-        "analysis_schema_version": 2,
+        "analysis_schema_version": 3,
+        "algorithm_version": ALGORITHM_VERSION,
         "app_version": device_metadata.get("app_version", APP_VERSION),
         "device_model": normalize_device_version_display(device_metadata.get("device_model", t("Unknown GMC"))),
         "hardware_model": device_metadata.get("hardware_model"),
@@ -760,10 +795,14 @@ def analysis_document(
         "language": language,
         "presentation": build_period_analysis_result(analysis).as_dict(),
         "statistics": analysis,
+        "derived_dose_estimate": dose_estimate,
+        "derived_integrated_dose_estimate": integrated_dose,
+        "metrology_configuration": metrology.as_dict(),
         "derived_dose_rate_usvh": {
-            "mean": analysis.get("cpm_mean") / cpm_per_usvh if analysis.get("cpm_mean") is not None else None,
-            "median": analysis.get("cpm_median") / cpm_per_usvh if analysis.get("cpm_median") is not None else None,
-            "maximum": analysis.get("cpm_max") / cpm_per_usvh if analysis.get("cpm_max") is not None else None,
+            "qualification": "derived estimate",
+            "mean": dose_estimate.get("value_usvh"),
+            "median": analysis.get("cpm_median") / cpm_per_usvh if dose_estimate.get("available") and analysis.get("cpm_median") is not None else None,
+            "maximum": analysis.get("cpm_max") / cpm_per_usvh if dose_estimate.get("available") and analysis.get("cpm_max") is not None else None,
         },
         "notes": [
             t("CPM is the primary measurement."),

@@ -50,6 +50,13 @@ class DeviceConfig:
     device_clock_warning_seconds: int = 120
     heartbeat_enabled: bool = False
     cpm_per_usvh: float = 154.0
+    dead_time_us: float | None = None
+    reliable_max_cpm: int | None = None
+    dead_time_model: str = "none"
+    conversion_factor_uncertainty_percent: float | None = None
+    calibration_uncertainty_percent: float | None = None
+    calibration_reference: str = ""
+    tube_model: str = ""
     gmcmap_counter_id: str = ""
     gmcmap_upload_interval: int = 300
     gmcmap_timeout: float = 10.0
@@ -107,6 +114,17 @@ class DeviceConfig:
                     raise ValueError(
                         f"orientation_scale_{axis} for {self.port} must not be zero"
                     )
+        if self.dead_time_us is not None and self.dead_time_us <= 0:
+            raise ValueError(f"dead_time_us for {self.port} must be greater than zero")
+        if self.reliable_max_cpm is not None and self.reliable_max_cpm <= 0:
+            raise ValueError(f"reliable_max_cpm for {self.port} must be greater than zero")
+        if self.dead_time_model not in {"none", "nonparalyzable"}:
+            raise ValueError(f"dead_time_model for {self.port} must be none or nonparalyzable")
+        if self.dead_time_model != "none" and self.dead_time_us is None:
+            raise ValueError(f"dead_time_us for {self.port} is required for dead-time correction")
+        for field_name, value in (("conversion_factor_uncertainty_percent", self.conversion_factor_uncertainty_percent), ("calibration_uncertainty_percent", self.calibration_uncertainty_percent)):
+            if value is not None and value < 0:
+                raise ValueError(f"{field_name} for {self.port} must not be negative")
         if self.cpm_per_usvh <= 0:
             raise ValueError(f"cpm_per_usvh for {self.port} must be greater than zero")
         if not 60 <= self.gmcmap_upload_interval <= 86400:
@@ -254,7 +272,9 @@ class Settings:
             "port", "name", "baudrate", "scan_interval", "command_timeout",
             "inter_command_delay_ms", "serial_startup_delay", "auxiliary_read_interval",
             "read_gyro", "read_device_time", "device_clock_warning_seconds",
-            "heartbeat_enabled", "cpm_per_usvh", "gmcmap_counter_id",
+            "heartbeat_enabled", "cpm_per_usvh", "dead_time_us", "reliable_max_cpm",
+            "dead_time_model", "conversion_factor_uncertainty_percent",
+            "calibration_uncertainty_percent", "calibration_reference", "tube_model", "gmcmap_counter_id",
             "gmcmap_upload_interval", "gmcmap_timeout", "serial_debug", "serial_debug_max_bytes",
             "orientation_calibration_enabled", "orientation_calibration_serial",
             "orientation_offset_x", "orientation_offset_y", "orientation_offset_z",
@@ -308,6 +328,13 @@ class Settings:
                     defaults.heartbeat_enabled,
                 ),
                 cpm_per_usvh=float(item.get("cpm_per_usvh", defaults.cpm_per_usvh)),
+                dead_time_us=None if item.get("dead_time_us") in (None, "") else float(item["dead_time_us"]),
+                reliable_max_cpm=None if item.get("reliable_max_cpm") in (None, "") else int(item["reliable_max_cpm"]),
+                dead_time_model=str(item.get("dead_time_model", "none")).strip().lower(),
+                conversion_factor_uncertainty_percent=None if item.get("conversion_factor_uncertainty_percent") in (None, "") else float(item["conversion_factor_uncertainty_percent"]),
+                calibration_uncertainty_percent=None if item.get("calibration_uncertainty_percent") in (None, "") else float(item["calibration_uncertainty_percent"]),
+                calibration_reference=str(item.get("calibration_reference", "")).strip(),
+                tube_model=str(item.get("tube_model", "")).strip(),
                 gmcmap_counter_id=str(item.get("gmcmap_counter_id", "")).strip(),
                 gmcmap_upload_interval=int(
                     item.get("gmcmap_upload_interval", defaults.gmcmap_upload_interval)
