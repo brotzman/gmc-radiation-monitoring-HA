@@ -28,8 +28,8 @@ DUAL_KEYS = {
 
 def test_release_metadata_is_841() -> None:
     config = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
-    assert APP_VERSION == "8.4.3"
-    assert config["version"] == "8.4.3"
+    assert APP_VERSION == "8.4.4"
+    assert config["version"] == "8.4.4"
 
 
 def test_supervisor_configuration_has_one_entry_per_physical_device() -> None:
@@ -107,7 +107,7 @@ def test_complete_gmc500_entry_is_emitted_once_without_affecting_gmc320() -> Non
     assert list(gmc500).count("high_dose_tube_model") == 1
 
 
-def test_detector_profile_card_removes_repeated_cpm_and_conversion_factor() -> None:
+def test_detector_profile_card_moves_conversion_factor_into_tube_card() -> None:
     item = {
         "configured_name": "GMC-320",
         "detector_profile": "gmc_320_plus_v4",
@@ -124,7 +124,8 @@ def test_detector_profile_card_removes_repeated_cpm_and_conversion_factor() -> N
 
     assert "Detektorprofil" in panel
     assert "Aktuelle CPM" not in panel
-    assert "154 CPM/(µSv/h)" not in panel
+    assert "<dt>Umrechnungsfaktor</dt>" in panel
+    assert "154\xa0CPM/(µSv/h)" in panel
     assert "measurement-quality-card" not in panel
     assert "Ein physisches Zählrohr" in panel
     assert "<dt>Totzeit</dt>" in panel

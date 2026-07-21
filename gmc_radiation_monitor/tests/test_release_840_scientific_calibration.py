@@ -231,6 +231,9 @@ def test_advanced_dashboard_contains_release_840_controls(tmp_path: Path) -> Non
     assert 'id="device-comparison"' not in page
     assert 'class="device-comparison-section"' not in page
     assert "measurement-quality-card" not in page
+    assert "Teilweise kalibriert" in page
+    assert "154\xa0CPM/(µSv/h)" in page
+    assert "Nicht konfiguriert" in page
 
 
 def test_scientific_pdf_adds_sixth_page_and_comparison_mode(tmp_path: Path) -> None:
@@ -268,8 +271,8 @@ def test_scientific_pdf_adds_sixth_page_and_comparison_mode(tmp_path: Path) -> N
 
 def test_release_metadata_and_supervisor_schema_are_840() -> None:
     config = yaml.safe_load(Path("config.yaml").read_text(encoding="utf-8"))
-    assert APP_VERSION == "8.4.3"
-    assert config["version"] == "8.4.3"
+    assert APP_VERSION == "8.4.4"
+    assert config["version"] == "8.4.4"
     profile_schema = config["schema"]["devices"][0]["detector_profile"]
     for profile in ("gmc_300", "gmc_320_plus_v4", "gmc_500_plus", "gmc_600_plus"):
         assert profile in profile_schema

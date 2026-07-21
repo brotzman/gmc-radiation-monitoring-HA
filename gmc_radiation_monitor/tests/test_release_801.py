@@ -12,7 +12,7 @@ from gmc_bridge.version import APP_VERSION
 
 
 def test_version_801() -> None:
-    assert APP_VERSION == "8.4.3"
+    assert APP_VERSION == "8.4.4"
 
 
 def test_acpm_accumulator_uses_all_accepted_session_readings() -> None:
