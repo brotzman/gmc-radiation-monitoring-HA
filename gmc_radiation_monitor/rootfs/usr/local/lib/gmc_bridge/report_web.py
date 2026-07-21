@@ -1291,6 +1291,10 @@ class ReportApplication(WorkflowApplicationMixin):
                 device_visual_class, device_icon = "device-generic", "GMC"
             latest_cpm = item.get("cpm")
             latest_value = "—" if latest_cpm is None else f"{int(latest_cpm)} CPM"
+            dose_value = item.get("derived_dose_usvh")
+            dose_display = "—" if dose_value in (None, "") else f"{float(dose_value):.4f} µSv/h"
+            quality_stars = str(item.get("measurement_quality_star_text") or "☆☆☆☆☆")
+            detector_name = str(item.get("active_tube") or item.get("tube_model") or model_display)
             tube_values = ""
             if item.get("tube_low_cpm") is not None or item.get("tube_high_cpm") is not None:
                 tube_values = (
@@ -1479,10 +1483,12 @@ class ReportApplication(WorkflowApplicationMixin):
                 f'<div class="device-card-title-copy"><h3>{html.escape(model_display)}</h3>'
                 f"<small>{html.escape(serial_value)}</small></div></div>"
                 f'<span class="device-status {status_class}">{html.escape(status_label)}</span></div>'
-                f'<div class="device-live"><strong>{html.escape(t("Latest measurement"))}</strong>'
-                f"<span>{html.escape(latest_value)}</span></div>"
+                f'<div class="device-live measurement-hero"><strong>{html.escape(t("Latest measurement"))}</strong>'
+                f'<span class="dose-value">{html.escape(dose_display)}</span>'
+                f'<small class="quality-stars" title="{html.escape(t("Measurement quality explanation"), quote=True)}">{html.escape(quality_stars)}</small>'
+                f'<div class="measurement-context"><span>{html.escape(latest_value)}</span><span>{html.escape(detector_name)}</span></div></div>'
                 f"{alert_html}"
-                '<div class="device-fields">'
+                '<div class="device-fields" data-analysis-tier="expert">'
                 f'<div class="device-field"><strong>{html.escape(t("Serial"))}</strong><span>{html.escape(serial_value)}</span></div>'
                 f'<div class="device-field"><strong>{html.escape(t("Serial port"))}</strong><span class="technical-value">{html.escape(str(item.get("port", "—")))}</span></div>'
                 f'<div class="device-field"><strong>{html.escape(t("Baud rate"))}</strong><span>{html.escape(str(item.get("baudrate", "—")))}</span></div>'

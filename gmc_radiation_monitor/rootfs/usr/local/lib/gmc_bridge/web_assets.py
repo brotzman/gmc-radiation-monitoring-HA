@@ -996,4 +996,14 @@ DASHBOARD_CSS += r"""
 .report-data-mode-card{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin:1rem 0}.report-data-mode-card>div:first-child{display:flex;flex-direction:column}.data-mode-switch{display:flex;gap:.45rem;flex-wrap:wrap}
 @media(max-width:820px){.calibration-manager-grid{grid-template-columns:1fr}.calibration-profile-form{grid-template-columns:1fr 1fr}.report-data-mode-card{align-items:flex-start;flex-direction:column}}
 @media(max-width:560px){.calibration-profile-form{grid-template-columns:1fr}.calibration-profile-row,.calibration-history-row{align-items:flex-start;flex-direction:column;gap:.25rem}.calibration-wizard-steps i{display:none}.calibration-wizard-steps{align-items:flex-start;flex-direction:column}}
+
+.measurement-hero { display:grid; grid-template-columns:1fr auto; gap:.25rem .75rem; align-items:end; padding:1rem; border:1px solid var(--border); border-radius:12px; background:var(--panel-strong); }
+.measurement-hero > strong { grid-column:1/-1; font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; opacity:.72; }
+.measurement-hero .dose-value { font-size:clamp(1.65rem,4vw,2.35rem); font-weight:800; line-height:1; font-variant-numeric:tabular-nums; }
+.measurement-hero .quality-stars { font-size:1rem; letter-spacing:.08em; align-self:center; }
+.measurement-context { grid-column:1/-1; display:flex; flex-wrap:wrap; gap:.45rem; margin-top:.35rem; }
+.measurement-context span { padding:.18rem .48rem; border-radius:999px; background:var(--panel); font-size:.78rem; }
+.expert-details { display:block; border:1px solid var(--border); border-radius:10px; margin-top:.7rem; }
+.expert-details > summary { padding:.7rem .8rem; min-height:auto; }
+.expert-details > .expert-statistics, .expert-details > .measurement-quality-explanation { margin:.7rem; }
 """

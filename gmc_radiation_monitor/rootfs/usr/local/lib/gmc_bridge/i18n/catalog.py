@@ -397,7 +397,7 @@ def _fields(text: str) -> set[str]:
 
 
 
-# Version 8.4.4: dual-tube detector profile calibration status.
+# Version 8.4.5: dual-tube detector profile calibration status.
 _partial_calibration_overrides = {
     "en": {"Partially calibrated": "Partially calibrated"},
     "de": {"Partially calibrated": "Teilweise kalibriert"},
