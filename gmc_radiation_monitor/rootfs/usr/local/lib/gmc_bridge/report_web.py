@@ -4,6 +4,7 @@ import contextlib
 import html
 import logging
 import os
+import re
 import secrets
 import statistics
 import threading
@@ -98,6 +99,7 @@ from .report_web_support import (
 )
 from .reports import build_live_analysis, load_timezone
 from .revision_cache import RevisionCache
+from .scientific_web import render_calibration_management, render_device_comparison
 from .security_logging import configure_secure_logging
 from .translations import SUPPORTED_UI_LANGUAGES, Translator, resolve_language
 from .utils import slugify
@@ -136,8 +138,6 @@ from .workflow_web import (
 )
 
 LOG = logging.getLogger("gmc_reports")
-
-
 class ReportApplication(WorkflowApplicationMixin):
     def __init__(
         self,
@@ -193,7 +193,6 @@ class ReportApplication(WorkflowApplicationMixin):
         self.backup_manager = ManagedBackupManager(store)
         self.scheduled_report_directory = store.path.parent / "scheduled_reports"
         self.scheduled_report_directory.mkdir(parents=True, exist_ok=True, mode=0o700)
-
     def _device_is_connected(self, item: dict[str, Any]) -> bool:
         """Return the bridge-owned live state, with a legacy freshness fallback."""
         runtime_online = item.get("runtime_online")
@@ -206,7 +205,6 @@ class ReportApplication(WorkflowApplicationMixin):
             # resets every known device to explicit offline at startup, so this
             # compatibility path is only used before that first runtime write.
             return True
-
         latest_timestamp = int(item.get("timestamp_utc") or item.get("last_timestamp_utc") or 0)
         last_seen_text = str(item.get("last_seen_utc", ""))
         last_seen_epoch = latest_timestamp
@@ -218,11 +216,9 @@ class ReportApplication(WorkflowApplicationMixin):
                 )
         online_window = max(180, int(item.get("scan_interval_seconds") or self.scan_interval_seconds) * 3)
         return last_seen_epoch > 0 and int(datetime.now(UTC).timestamp()) - last_seen_epoch <= online_window
-
     def _connected_devices(self, devices: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Hide historical/offline counters from the live analysis views."""
         return [item for item in devices if self._device_is_connected(item)]
-
     def _data_revision(self) -> tuple[int, int | None, int]:
         count = self.store.count(all_devices=True)
         _first, last = self.store.bounds()
@@ -376,6 +372,7 @@ class ReportApplication(WorkflowApplicationMixin):
         history_start_override: str | None = None,
         history_end_override: str | None = None,
         history_raw_override: str | None = None,
+        data_mode_override: str | None = None,
         accept_language: str = "",
     ) -> bytes:
         script_nonce = secrets.token_urlsafe(18)
@@ -392,6 +389,7 @@ class ReportApplication(WorkflowApplicationMixin):
             else "auto"
         )
         t = Translator(language)
+        data_mode = data_mode_override if data_mode_override in {"raw", "corrected", "comparison"} else "raw"
         all_sorted_devices = sorted(
             status.get("devices", []),
             key=lambda item: (str(item.get("device_model", "")), str(item.get("serial", ""))),
@@ -534,10 +532,12 @@ class ReportApplication(WorkflowApplicationMixin):
 <nav class="dashboard-controls" id="dashboard-controls" aria-label="{html.escape(t("Dashboard navigation"), quote=True)}">
 <div class="jump-links">
 <a href="#devices">{html.escape(t("Devices"))}</a>
+<a href="#device-comparison">{html.escape(t("Device comparison"))}</a>
 <a href="#radiation-intelligence">{html.escape(t("Intelligence"))}</a>
 <a href="#analysis">{html.escape(t("Analysis"))}</a>
 <a href="#history">{html.escape(t("History"))}</a>
 <a href="#workflow">{html.escape(t("Workflows"))}</a>
+<a href="#calibration-management">{html.escape(t("Calibration profiles"))}</a>
 <a href="#reports">{html.escape(t("Reports"))}</a>
 </div>
 <div class="dashboard-actions">
@@ -664,6 +664,15 @@ class ReportApplication(WorkflowApplicationMixin):
             language=language,
             t=t,
         )
+        device_comparison_html = render_device_comparison(devices=card_devices, t=t)
+        calibration_management_html = render_calibration_management(
+            store=self.store,
+            timezone=self.timezone,
+            devices=devices,
+            selected_serial=selected_serial,
+            t=t,
+            csrf_token=self.csrf_tokens.issue("calibration-profiles"),
+        )
         analysis_level_controls_html = self._render_analysis_level_controls(
             default_level="summary" if mode == "simple" else "analysis",
             t=t,
@@ -743,7 +752,13 @@ class ReportApplication(WorkflowApplicationMixin):
         expected_history_samples = max(
             1, round((explorer_end - explorer_start) / max(1, selected_scan_interval))
         )
-        history_values = [float(row.cpm) for row in explorer_rows]
+        if data_mode == "corrected":
+            history_values = [
+                float(row.corrected_cpm if row.corrected_cpm is not None else row.cpm)
+                for row in explorer_rows
+            ]
+        else:
+            history_values = [float(row.raw_cpm if row.raw_cpm is not None else row.cpm) for row in explorer_rows]
         history_summary = {
             "samples": len(explorer_rows),
             "coverage_percent": min(100.0, 100.0 * len(explorer_rows) / expected_history_samples),
@@ -817,6 +832,7 @@ class ReportApplication(WorkflowApplicationMixin):
             history_start_utc=explorer_start,
             history_end_utc=explorer_end,
             history_summary=history_summary,
+            data_mode=data_mode,
         )
         workflow_html = render_workflow_section(
             t=t,
@@ -926,6 +942,7 @@ class ReportApplication(WorkflowApplicationMixin):
 {dashboard_controls_html}
 <div id="primary-dashboard" class="primary-dashboard">
 {multi_device_html}
+{device_comparison_html}
 {radiation_intelligence_html}
 {adaptive_background_html}
 {cosmic_influence_html}
@@ -934,6 +951,7 @@ class ReportApplication(WorkflowApplicationMixin):
 {analysis_html}
 {history_html}
 {workflow_html}
+{calibration_management_html}
 <section id="reports">
 <h2>{html.escape(t("Reports"))}</h2>
 <div class="report-target-card active-report-context">
@@ -941,6 +959,7 @@ class ReportApplication(WorkflowApplicationMixin):
 <span>{html.escape(selected_device_label or t("No connected GMC device"))}</span>
 <small>{html.escape(t("All downloads below automatically use the GMC device currently shown in Analysis. Select another connected device above to change the report source."))}</small>
 </div>
+<div class="report-data-mode-card advanced-only"><div><strong>{html.escape(t("Report data mode"))}</strong><small>{html.escape(t("Choose whether charts and statistics use raw or dead-time-corrected values."))}</small></div><div class="data-mode-switch"><a class="button{' primary' if data_mode == 'raw' else ''}" href="?device={quote_plus(selected_serial)}&amp;lang={quote_plus(language)}&amp;mode={quote_plus(mode)}&amp;data_mode=raw#reports">{html.escape(t("Raw data"))}</a><a class="button{' primary' if data_mode == 'corrected' else ''}" href="?device={quote_plus(selected_serial)}&amp;lang={quote_plus(language)}&amp;mode={quote_plus(mode)}&amp;data_mode=corrected#reports">{html.escape(t("Dead-time corrected"))}</a><a class="button{' primary' if data_mode == 'comparison' else ''}" href="?device={quote_plus(selected_serial)}&amp;lang={quote_plus(language)}&amp;mode={quote_plus(mode)}&amp;data_mode=comparison#reports">{html.escape(t("Comparison view"))}</a></div></div>
 <h3>{html.escape(t("Quick downloads"))}</h3>
 <div class="report-format-guide" aria-label="{html.escape(t("Format"), quote=True)}">
 <div class="report-format-item"><strong>{html.escape(t("PDF report"))}</strong><small>{html.escape(t("Best for reading, printing and sharing"))}</small></div>
@@ -968,6 +987,8 @@ class ReportApplication(WorkflowApplicationMixin):
 <div class="actions" style="margin-top:.7rem">
 <a class="button" href="?action=download&amp;period=daily&amp;selection=today&amp;format=zip">{html.escape(t("Today so far bundle"))}</a>
 <a class="button" href="?action=download&amp;period=weekly&amp;selection=current&amp;format=zip">{html.escape(t("Current week bundle"))}</a>
+<a class="button" href="?action=download&amp;period=daily&amp;selection=previous&amp;format=pdf&amp;scientific=1">{html.escape(t("Scientific PDF"))}</a>
+<a class="button" href="?action=download&amp;period=weekly&amp;selection=previous&amp;format=zip&amp;scientific=1">{html.escape(t("Scientific ZIP bundle"))}</a>
 </div>
 
 {scheduled_reports_html}
@@ -1067,14 +1088,21 @@ class ReportApplication(WorkflowApplicationMixin):
         # Bind every download server-side to the device currently shown in Analysis.
         # JavaScript is only a progressive enhancement; Ingress-safe links work without it.
         report_prefix = (
-            f"?device={quote_plus(selected_serial)}&amp;lang={quote_plus(language)}&amp;action=download"
+            f"?device={quote_plus(selected_serial)}&amp;lang={quote_plus(language)}"
+            "&amp;action=download"
         )
         page = page.replace('href="?action=download', f'href="{report_prefix}')
+        page = re.sub(
+            r'(href="\?device=[^"]*?&amp;action=download[^"]*)"',
+            lambda match: match.group(1) + f"&amp;data_mode={quote_plus(data_mode)}\"", page,
+        )
         hidden_report_fields = (
             '<input type="hidden" name="device" value="'
             + html.escape(selected_serial, quote=True)
             + '"><input type="hidden" name="lang" value="'
             + html.escape(language, quote=True)
+            + '"><input type="hidden" name="data_mode" value="'
+            + html.escape(data_mode, quote=True)
             + '">'
         )
         page = page.replace(
@@ -1629,11 +1657,8 @@ class ReportApplication(WorkflowApplicationMixin):
             build_recommendation_result(analysis, config=self._presentation_config()),
             translator,
         )
-
     def _render_assessment_legend(self, *, t: Translator | None = None) -> str:
         return render_assessment_legend(t or Translator("en"))
-
-
 def run_report_server() -> None:
     level_name = os.environ.get("LOG_LEVEL", "info").upper()
     configure_secure_logging(
@@ -1699,7 +1724,6 @@ def run_report_server() -> None:
         raise ValueError("UI_MODE must be simple or advanced")
     if ui_language not in {"auto", *SUPPORTED_UI_LANGUAGES}:
         raise ValueError("UI_LANGUAGE is unsupported")
-
     store = HistoryStore(DEFAULT_DB_PATH, retention_days=retention_days)
     home_assistant_client = HomeAssistantConfigClient()
     pressure_client = (
@@ -1747,7 +1771,6 @@ def run_report_server() -> None:
         backup_manager=app.backup_manager,
     )
     automation_service.start()
-
     max_http_workers = int(os.environ.get("HTTP_MAX_WORKERS", "12"))
     socket_timeout_seconds = float(os.environ.get("HTTP_SOCKET_TIMEOUT_SECONDS", "30"))
     if not 2 <= max_http_workers <= 64:

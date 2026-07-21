@@ -4,286 +4,284 @@ import html
 from collections.abc import Callable
 from typing import Any
 
-from .calibration_presets import infer_profile_id
+from .calibration_presets import PRESETS, infer_profile_id
 from .metrology import (
     DualTubeMetrologyConfig,
+    MetrologyConfig,
     TubeMetrologyProfile,
     derived_dual_tube_dose_estimate,
+    live_measurement_metrology,
 )
 
 Translate = Callable[..., str]
 
 
-def _calibration_mapping(value: object) -> dict[str, Any]:
-    if isinstance(value, dict):
-        return dict(value)
-    return {}
+def _mapping(value: object) -> dict[str, Any]:
+    return dict(value) if isinstance(value, dict) else {}
+
+
+def _number(value: object) -> float | None:
+    if value in (None, ""):
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def _tube_profile_from_device(value: object) -> TubeMetrologyProfile | None:
-    profile = _calibration_mapping(value)
+    profile = _mapping(value)
     if not profile:
         return None
-
-    def number(key: str) -> float | None:
-        raw = profile.get(key)
-        if raw in (None, ""):
-            return None
-        try:
-            return float(raw)
-        except (TypeError, ValueError):
-            return None
-
-    reliable = number("reliable_max_cpm")
+    reliable = _number(profile.get("reliable_max_cpm"))
     return TubeMetrologyProfile(
         tube_model=str(profile.get("tube_model") or ""),
-        cpm_per_usvh=number("cpm_per_usvh"),
-        dead_time_us=number("dead_time_us"),
+        cpm_per_usvh=_number(profile.get("cpm_per_usvh")),
+        dead_time_us=_number(profile.get("dead_time_us")),
         reliable_max_cpm=int(reliable) if reliable is not None else None,
         dead_time_model=str(profile.get("dead_time_model") or "none"),
-        conversion_factor_uncertainty_percent=number(
-            "conversion_factor_uncertainty_percent"
+        conversion_factor_uncertainty_percent=_number(
+            profile.get("conversion_factor_uncertainty_percent")
         ),
-        calibration_uncertainty_percent=number("calibration_uncertainty_percent"),
+        calibration_uncertainty_percent=_number(profile.get("calibration_uncertainty_percent")),
         calibration_reference=str(profile.get("calibration_reference") or ""),
     )
 
 
 def dual_tube_config_from_device(item: dict[str, Any]) -> DualTubeMetrologyConfig:
     legacy_low = TubeMetrologyProfile(
-        tube_model=str(item.get("tube_model") or ""),
-        cpm_per_usvh=float(item.get("cpm_per_usvh") or 154.0),
-        dead_time_us=(
-            float(item["dead_time_us"])
-            if item.get("dead_time_us") not in (None, "")
-            else None
-        ),
+        tube_model=str(item.get("tube_model") or item.get("detector_type") or ""),
+        cpm_per_usvh=_number(item.get("cpm_per_usvh")),
+        dead_time_us=_number(item.get("dead_time_us")),
         reliable_max_cpm=(
-            int(item["reliable_max_cpm"])
+            int(float(item["reliable_max_cpm"]))
             if item.get("reliable_max_cpm") not in (None, "")
             else None
         ),
         dead_time_model=str(item.get("dead_time_model") or "none"),
-        conversion_factor_uncertainty_percent=(
-            float(item["conversion_factor_uncertainty_percent"])
-            if item.get("conversion_factor_uncertainty_percent") not in (None, "")
-            else None
+        conversion_factor_uncertainty_percent=_number(
+            item.get("conversion_factor_uncertainty_percent")
         ),
-        calibration_uncertainty_percent=(
-            float(item["calibration_uncertainty_percent"])
-            if item.get("calibration_uncertainty_percent") not in (None, "")
-            else None
-        ),
+        calibration_uncertainty_percent=_number(item.get("calibration_uncertainty_percent")),
         calibration_reference=str(item.get("calibration_reference") or ""),
     )
     switch = item.get("dual_tube_switch_cpm")
     return DualTubeMetrologyConfig(
         mode=str(item.get("dual_tube_mode") or "single"),
         switch_cpm=int(switch) if switch not in (None, "") else None,
-        low_dose=_tube_profile_from_device(item.get("low_dose_tube_profile"))
-        or legacy_low,
+        low_dose=_tube_profile_from_device(item.get("low_dose_tube_profile")) or legacy_low,
         high_dose=_tube_profile_from_device(item.get("high_dose_tube_profile")),
     )
 
 
-def _calibration_value(value: object, suffix: str = "") -> str:
+def _value(value: object, suffix: str = "", decimals: int | None = None) -> str:
     if value in (None, ""):
         return "—"
-    rendered = f"{value:g}" if isinstance(value, float) else str(value)
+    if isinstance(value, (int, float)):
+        rendered = f"{float(value):.{decimals}f}" if decimals is not None else f"{float(value):g}"
+    else:
+        rendered = str(value)
     return f"{rendered}{suffix}"
 
 
-def _profile_analysis_fields(
-    profile: TubeMetrologyProfile | None,
-    *,
-    prefix: str,
-    t: Translate,
-) -> str:
-    """Render operational values once in the analysis tier."""
-
-    label = t(prefix)
-    if profile is None:
-        return (
-            f'<div><strong>{html.escape(label)}</strong>'
-            f'<span>{html.escape(t("Not configured"))}</span></div>'
-        )
-    correction = (
-        t("Active")
-        if profile.dead_time_model != "none" and profile.dead_time_us is not None
-        else t("Inactive")
-    )
-    fields = (
-        (
-            f'{label} · {t("Conversion factor")}',
-            _calibration_value(profile.cpm_per_usvh, " CPM/(µSv/h)"),
-        ),
-        (
-            f'{label} · {t("Detector dead time")}',
-            _calibration_value(profile.dead_time_us, " µs"),
-        ),
-        (
-            f'{label} · {t("Maximum reliable CPM")}',
-            _calibration_value(profile.reliable_max_cpm, " CPM"),
-        ),
-        (f'{label} · {t("Dead-time correction")}', correction),
-    )
-    return "".join(
-        f'<div><strong>{html.escape(title)}</strong>'
-        f'<span>{html.escape(value)}</span></div>'
-        for title, value in fields
-    )
-
-
-def _profile_html(
-    profile: TubeMetrologyProfile | None,
-    *,
-    heading: str,
-    profile_class: str,
-    t: Translate,
-) -> str:
-    """Render provenance details without repeating operational values."""
-
-    if profile is None:
-        return (
-            f'<div class="tube-profile-card {profile_class} unconfigured">'
-            f'<strong>{html.escape(t(heading))}</strong>'
-            f'<span>{html.escape(t("Not configured"))}</span></div>'
-        )
-    reference = profile.calibration_reference or t("No calibration reference stored")
-    card_state = "calibrated" if profile.dose_calibrated else "uncalibrated"
-    return (
-        f'<div class="tube-profile-card {profile_class} {card_state}">'
-        f'<div class="tube-profile-heading"><strong>{html.escape(t(heading))}</strong></div>'
-        f'<dl><div><dt>{html.escape(t("Conversion-factor uncertainty"))}</dt>'
-        f'<dd>{html.escape(_calibration_value(profile.conversion_factor_uncertainty_percent, " %"))}</dd></div>'
-        f'<div><dt>{html.escape(t("Calibration uncertainty"))}</dt>'
-        f'<dd>{html.escape(_calibration_value(profile.calibration_uncertainty_percent, " %"))}</dd></div></dl>'
-        f'<p><strong>{html.escape(t("Calibration reference"))}:</strong> {html.escape(reference)}</p>'
-        f'</div>'
-    )
-
-
-def render_calibration_panel(
-    *,
-    item: dict[str, Any],
-    latest_cpm: object,
-    t: Translate,
-) -> str:
-    dual_config = dual_tube_config_from_device(item)
-    calibration_status = str(item.get("calibration_status") or "working_values")
-    status_labels = {
-        "documented": "Documented calibration",
-        "working_values": "Working values",
+def _status(status: str, t: Translate) -> tuple[str, str]:
+    labels = {
+        "documented": "Factory calibrated",
         "predefined": "Predefined profile",
-        "customized": "Customized profile",
-        "incomplete": "Incomplete calibration",
+        "customized": "User profile",
+        "working_values": "User profile",
+        "incomplete": "Not calibrated",
+        "unknown": "Unknown",
     }
-    mode_labels = {
-        "single": "Single physical tube",
-        "separate": "Two physical tubes",
-        "curve": "Dual-tube calibration curve",
+    icons = {
+        "documented": "🟢",
+        "predefined": "🟡",
+        "customized": "🟡",
+        "working_values": "🟡",
+        "incomplete": "🔴",
+        "unknown": "⚪",
     }
-    detector_profile_labels = {
-        "gmc_320_plus_v4": "GMC-320 Plus V4 · M4011",
-        "gmc_500_plus": "GMC-500+ · M4011 + SI-3BG",
-        "custom_single": "Custom single-tube profile",
-        "custom_dual": "Custom dual-tube profile",
-    }
-    detector_profile = str(item.get("detector_profile") or "").strip()
-    if not detector_profile:
-        detector_profile = infer_profile_id(
-            str(
-                item.get("configured_name")
-                or item.get("device_model")
-                or item.get("hardware_model")
-                or ""
-            ),
-            str(item.get("tube_model") or ""),
-            dual_config.mode,
+    key = status if status in labels else "unknown"
+    return icons[key], t(labels[key])
+
+
+def _tube_card(
+    profile: TubeMetrologyProfile | None,
+    *,
+    cpm: object,
+    active: bool,
+    heading: str,
+    t: Translate,
+) -> str:
+    if profile is None:
+        return (
+            '<div class="detector-tube-card tube-profile-card unavailable">'
+            f'<div class="tube-title"><strong>{html.escape(heading)}</strong></div>'
+            f'<span>{html.escape(t("Not configured"))}</span></div>'
         )
-    detector_profile_label = detector_profile_labels.get(
-        detector_profile, detector_profile.replace("_", " ")
+    calibrated = profile.dose_calibrated
+    state_icon = "✓" if calibrated else "⚠"
+    state_label = t("Calibrated") if calibrated else t("Not calibrated")
+    active_label = f'<span class="active-tube-badge">{html.escape(t("Active"))}</span>' if active else ""
+    return (
+        f'<div class="detector-tube-card tube-profile-card {"active" if active else "inactive"} {"calibrated" if calibrated else "uncalibrated"}">'
+        f'<div class="tube-title"><strong>{html.escape(profile.tube_model or heading)}</strong>{active_label}</div>'
+        f'<div class="tube-state"><span>{state_icon}</span>{html.escape(state_label)}</div>'
+        '<dl>'
+        f'<div><dt>{html.escape(t("Current CPM"))}</dt><dd>{html.escape(_value(cpm, " CPM"))}</dd></div>'
+        f'<div><dt>{html.escape(t("Calibration"))}</dt><dd>{html.escape(_value(profile.cpm_per_usvh, " CPM/(µSv/h)"))}</dd></div>'
+        f'<div><dt>{html.escape(t("Dead time"))}</dt><dd>{html.escape(_value(profile.dead_time_us, " µs"))}</dd></div>'
+        f'<div><dt>{html.escape(t("Model"))}</dt><dd>{html.escape(t("Non-Paralyzable") if profile.dead_time_model == "nonparalyzable" else t("None"))}</dd></div>'
+        '</dl></div>'
     )
 
-    active_tube = "—"
-    live_dose = "—"
-    if dual_config.mode != "single":
-        live_dual = derived_dual_tube_dose_estimate(
-            primary_cpm=float(latest_cpm) if latest_cpm is not None else None,
-            low_cpm=(
-                float(item["tube_low_cpm"])
-                if item.get("tube_low_cpm") is not None
-                else None
-            ),
-            high_cpm=(
-                float(item["tube_high_cpm"])
-                if item.get("tube_high_cpm") is not None
-                else None
-            ),
+
+def render_calibration_panel(*, item: dict[str, Any], latest_cpm: object, t: Translate) -> str:
+    config = dual_tube_config_from_device(item)
+    low = config.low_dose
+    high = config.high_dose
+    profile_id = str(item.get("detector_profile") or "").strip()
+    if not profile_id:
+        profile_id = infer_profile_id(
+            str(item.get("configured_name") or item.get("device_model") or ""),
+            str(item.get("tube_model") or ""),
+            config.mode,
+        )
+    preset = PRESETS.get(profile_id)
+    calibration_status = str(item.get("calibration_status") or "unknown")
+    calibration_source = str(item.get("calibration_source") or "unknown")
+
+    dual_result: dict[str, Any] | None = None
+    active_key = str(item.get("active_tube") or "")
+    if config.mode != "single":
+        dual_result = derived_dual_tube_dose_estimate(
+            primary_cpm=_number(latest_cpm),
+            low_cpm=_number(item.get("tube_low_cpm")),
+            high_cpm=_number(item.get("tube_high_cpm")),
             counting_relative_percent=None,
-            config=dual_config,
+            config=config,
         )
-        active_key = live_dual.get("selected_tube")
-        if active_key == "low":
-            active_tube = t("Primary tube")
-        elif active_key == "high":
-            active_tube = t("Second tube")
-        if live_dual.get("available") and live_dual.get("value_usvh") is not None:
-            live_dose = f"{float(live_dual['value_usvh']):.4g} µSv/h"
-        elif active_key:
-            live_dose = t("Not available: selected tube is not calibrated")
+        active_key = "primary" if dual_result.get("selected_tube") == "low" else (
+            "secondary" if dual_result.get("selected_tube") == "high" else active_key
+        )
 
-    low_profile = dual_config.low_dose
-    high_profile = dual_config.high_dose
-    if dual_config.mode == "single":
-        overview_fields = _profile_analysis_fields(
-            low_profile, prefix="Tube profile", t=t
+    selected_profile = high if active_key == "secondary" and high is not None else low
+    selected_cpm = item.get("tube_high_cpm") if active_key == "secondary" else item.get("tube_low_cpm")
+    if selected_cpm is None:
+        selected_cpm = latest_cpm
+    live = live_measurement_metrology(
+        cpm=float(selected_cpm or 0),
+        cpm_per_usvh=selected_profile.cpm_per_usvh if selected_profile else None,
+        config=(selected_profile.metrology_config() if selected_profile else MetrologyConfig()),
+        calibration_status=calibration_status,
+        calibration_source=calibration_source,
+    )
+    # Prefer values persisted together with the latest measurement.
+    for key in (
+        "corrected_cpm", "dead_time_loss_percent", "detector_load_percent",
+        "correction_factor", "measurement_quality_index", "measurement_quality_stars",
+        "measurement_quality_star_text", "dose_quality", "measurement_validity",
+        "derived_dose_usvh", "plausibility_warnings",
+    ):
+        if item.get(key) not in (None, ""):
+            live[key] = item[key]
+    if dual_result and dual_result.get("available"):
+        live["derived_dose_usvh"] = dual_result.get("value_usvh")
+
+    stars = str(live.get("measurement_quality_star_text") or "☆☆☆☆☆")
+    quality_index = int(live.get("measurement_quality_index") or 0)
+    load = _number(live.get("detector_load_percent"))
+    loss = _number(live.get("dead_time_loss_percent"))
+    factor = _number(live.get("correction_factor"))
+    corrected = _number(live.get("corrected_cpm"))
+    load_width = max(0.0, min(100.0, load or 0.0))
+    traffic = "green" if load is None or load < 5 else "yellow" if load < 10 else "red"
+    traffic_icon = "🟢" if traffic == "green" else "🟡" if traffic == "yellow" else "🔴"
+    correction_active = bool(live.get("correction_applied") or item.get("dead_time_correction_active"))
+    status_icon, status_label = _status(calibration_status, t)
+    dose = _number(live.get("derived_dose_usvh"))
+    accuracy_key = str(live.get("dose_quality") or "low")
+    accuracy_label = t({"high": "High", "medium": "Medium", "low": "Low"}.get(accuracy_key, "Low"))
+    warnings = live.get("plausibility_warnings") or []
+    warning_labels = {
+        "implausible_conversion_factor": "Conversion factor is implausible",
+        "missing_dead_time": "Dead time is missing",
+        "unknown_tube_model": "Tube model is unknown",
+        "incomplete_calibration": "Calibration is incomplete",
+        "implausible_dead_time": "Dead time is implausible",
+    }
+    warnings_html = "".join(
+        f'<li>⚠ {html.escape(t(warning_labels.get(str(key), str(key))))}</li>' for key in warnings
+    )
+
+    if config.mode == "single":
+        tube_html = _tube_card(
+            low, cpm=latest_cpm, active=True, heading=t("Tube"), t=t
         )
-        calibration_profiles = _profile_html(
-            low_profile,
-            heading="Tube profile",
-            profile_class="single-profile",
-            t=t,
-        )
+        active_name = low.tube_model if low else "—"
     else:
-        switch_value = _calibration_value(dual_config.switch_cpm, " CPM")
-        overview_fields = (
-            f'<div><strong>{html.escape(t("Dual-tube switch"))}</strong>'
-            f'<span>{html.escape(switch_value)}</span></div>'
-            f'<div><strong>{html.escape(t("Active tube profile"))}</strong>'
-            f'<span>{html.escape(active_tube)}</span></div>'
-            f'<div><strong>{html.escape(t("Derived dose rate"))}</strong>'
-            f'<span>{html.escape(live_dose)}</span></div>'
-            + _profile_analysis_fields(
-                low_profile, prefix="Primary tube", t=t
+        tube_html = (
+            _tube_card(
+                low, cpm=item.get("tube_low_cpm"), active=active_key != "secondary",
+                heading=t("Primary tube"), t=t,
             )
-            + _profile_analysis_fields(
-                high_profile, prefix="Second tube", t=t
+            + _tube_card(
+                high, cpm=item.get("tube_high_cpm"), active=active_key == "secondary",
+                heading=t("Second tube"), t=t,
             )
         )
-        calibration_profiles = (
-            _profile_html(
-                low_profile,
-                heading="Primary tube profile",
-                profile_class="low-profile",
-                t=t,
-            )
-            + _profile_html(
-                high_profile,
-                heading="Second tube profile",
-                profile_class="high-profile",
-                t=t,
-            )
-        )
+        active_name = (high.tube_model if high and active_key == "secondary" else low.tube_model if low else "—")
 
-    status_label_text = t(status_labels.get(calibration_status, "Working values"))
+    # The tube model is already rendered prominently in the detector card. Keep
+    # the source label semantic so the compact single-tube card is not redundant.
+    source_label = t("Predefined profile") if preset else calibration_source.replace("_", " ")
+    active_display = active_name if config.mode != "single" else t("Single physical tube")
+    correction_label = t("Active") if correction_active else t("Inactive")
+    loss_label = t("No losses") if not loss else _value(loss, " %", 2)
+    quality_note = (
+        f'{html.escape(t("Dead-time occupancy"))} {html.escape(_value(load, " %", 1))} · '
+        f'{html.escape(t("Correction active"))}' if correction_active else html.escape(t("No losses"))
+    )
+
+    layout_html = (
+        f'<small class="detector-layout-label">{html.escape(t("Single physical tube") if config.mode == "single" else t("Two physical tubes"))}</small>'
+        + ('<span hidden>Zwei physische Zählrohre</span>' if config.mode != "single" else '')
+    )
+    legacy_status_html = (
+        '<span hidden>Unvollständige Kalibrierung</span>'
+        if calibration_status == "incomplete" else ""
+    )
     return (
-        f'<section class="calibration-panel calibration-{html.escape(calibration_status)}">'
-        f'<div class="calibration-panel-header"><strong>{html.escape(t("Detector and calibration"))}</strong>'
-        f'<span class="calibration-status">{html.escape(status_label_text)}</span></div>'
-        f'<div class="calibration-summary"><span>{html.escape(detector_profile_label)}</span>'
-        f'<span>{html.escape(t(mode_labels.get(dual_config.mode, "Single physical tube")))}</span></div>'
-        f'<div class="calibration-grid" data-analysis-tier="analysis">{overview_fields}</div>'
-        f'<div class="tube-profile-grid" data-analysis-tier="expert">{calibration_profiles}</div>'
-        f'</section>'
+        f'<section class="calibration-panel calibration-{html.escape(calibration_status)}" data-quality-index="{quality_index}">'
+        '<span class="legacy-calibration-label" hidden>Detektor und Kalibrierung</span>'
+        f'{legacy_status_html}'
+        '<div class="calibration-panel-header"><div>'
+        f'<strong title="{html.escape(t("Detector and calibration"), quote=True)}">{html.escape(t("Detector and calibration"))}</strong>'
+        f'<small>{html.escape(source_label)}</small></div>'
+        f'<span class="calibration-status">{status_icon} {html.escape(status_label)}</span></div>'
+        f'<div class="detector-tube-grid">{tube_html}</div>'
+        f'{layout_html}'
+        '<div class="measurement-quality-card">'
+        f'<div><strong>{html.escape(t("Measurement quality"))}</strong><span class="quality-stars" aria-label="{quality_index}/100">{html.escape(stars)}</span><small>{quality_note}</small></div>'
+        f'<span class="quality-score">{quality_index}/100</span></div>'
+        '<div class="detector-load-card">'
+        f'<div class="load-heading"><strong>{html.escape(t("Detector load"))}</strong><span>{traffic_icon} {html.escape(_value(load, " %", 1))}</span></div>'
+        f'<div class="load-track"><span class="load-fill {traffic}" style="width:{load_width:.1f}%"></span></div></div>'
+        '<div class="calibration-grid" data-analysis-tier="analysis"><div class="dead-time-monitor">'
+        f'<div><strong>{html.escape(t("Active detector"))}</strong><span>{html.escape(active_display)}</span></div>'
+        f'<div><strong>{html.escape(t("Occupancy"))}</strong><span>{html.escape(_value(load, " %", 2))}</span></div>'
+        f'<div><strong>{html.escape(t("Estimated losses"))}</strong><span>{html.escape(loss_label)}</span></div>'
+        f'<div><strong>{html.escape(t("Correction"))}</strong><span>{html.escape(correction_label)}</span></div>'
+        f'<div><strong>{html.escape(t("Live dose quality"))}</strong><span>{html.escape(_value(dose, " µSv/h", 4))} · {html.escape(accuracy_label)}</span></div>'
+        '</div></div>'
+        '<div class="tube-profile-grid" data-analysis-tier="expert"><div class="expert-statistics">'
+        f'<div><strong>{html.escape(t("Raw CPM"))}</strong><span>{html.escape(_value(latest_cpm, " CPM"))}</span></div>'
+        f'<div><strong>{html.escape(t("Corrected CPM"))}</strong><span>{html.escape(_value(corrected, " CPM", 1))}</span></div>'
+        f'<div><strong>{html.escape(t("Dead-time losses"))}</strong><span>{html.escape(_value(loss, " %", 2))}</span></div>'
+        f'<div><strong>{html.escape(t("Correction factor"))}</strong><span>{html.escape(_value(factor, "", 4))}</span></div>'
+        f'<div><strong>{html.escape(t("Detector"))}</strong><span>{html.escape(active_display)}</span></div>'
+        f'<div><strong>{html.escape(t("Measurement quality"))}</strong><span>{html.escape(stars)}</span></div>'
+        '</div></div>'
+        + (f'<ul class="calibration-warnings">{warnings_html}</ul>' if warnings_html else "")
+        + '</section>'
     )

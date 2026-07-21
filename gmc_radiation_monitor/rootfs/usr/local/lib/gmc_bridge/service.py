@@ -8,11 +8,17 @@ import sqlite3
 import threading
 import time
 from collections import deque
+from dataclasses import replace
 from datetime import datetime
 from typing import Any
 from zoneinfo import ZoneInfo
 
-from .config import DeviceConfig, Settings
+from .config import (
+    DeviceConfig,
+    Settings,
+    TubeCalibrationConfig,
+    apply_detected_detector_profile,
+)
 from .device_health import DeviceHealthMonitor
 from .device_profiles import (
     DeviceCapabilities,
@@ -34,6 +40,13 @@ from .gmcmap import (
 )
 from .history import DEFAULT_DB_PATH, HistoryStore
 from .home_assistant import HomeAssistantPressureClient, HomeAssistantTemperatureClient
+from .metrology import (
+    DualTubeMetrologyConfig,
+    MetrologyConfig,
+    TubeMetrologyProfile,
+    derived_dual_tube_dose_estimate,
+    live_measurement_metrology,
+)
 from .monitoring import SmartMonitor
 from .mqtt_pub import MqttPublisher
 from .orientation import calculate_orientation, calibration_for_serial
@@ -78,6 +91,103 @@ def format_published_sample(sample: dict[str, Any]) -> str:
     if all(key in sample for key in ("gyro_x", "gyro_y", "gyro_z")):
         parts.append(f"gyro=({int(sample['gyro_x'])}, {int(sample['gyro_y'])}, {int(sample['gyro_z'])})")
     return " ".join(parts)
+
+
+def _tube_metrology_profile(profile: Any) -> TubeMetrologyProfile | None:
+    if profile is None:
+        return None
+    return TubeMetrologyProfile(
+        tube_model=profile.tube_model,
+        cpm_per_usvh=profile.cpm_per_usvh,
+        dead_time_us=profile.dead_time_us,
+        reliable_max_cpm=profile.reliable_max_cpm,
+        dead_time_model=profile.dead_time_model,
+        conversion_factor_uncertainty_percent=profile.conversion_factor_uncertainty_percent,
+        calibration_uncertainty_percent=profile.calibration_uncertainty_percent,
+        calibration_reference=profile.calibration_reference,
+    )
+
+
+def _enrich_metrology_state(state: dict[str, Any], config: DeviceConfig) -> None:
+    if state.get("cpm") is None:
+        return
+    registry = config.calibration_registry_values()
+    status = str(registry.get("calibration_status") or "unknown")
+    source = str(registry.get("calibration_source") or "unknown")
+    active_tube = "primary"
+    selected_profile = config.effective_low_dose_tube()
+    derived_dose = None
+
+    if config.dual_tube_mode != "single":
+        dual = DualTubeMetrologyConfig(
+            mode=config.dual_tube_mode,
+            switch_cpm=config.dual_tube_switch_cpm,
+            low_dose=_tube_metrology_profile(config.effective_low_dose_tube()),
+            high_dose=_tube_metrology_profile(config.high_dose_tube),
+        )
+        dual_result = derived_dual_tube_dose_estimate(
+            primary_cpm=float(state["cpm"]),
+            low_cpm=float(state["tube_low_cpm"]) if state.get("tube_low_cpm") is not None else None,
+            high_cpm=float(state["tube_high_cpm"]) if state.get("tube_high_cpm") is not None else None,
+            counting_relative_percent=None,
+            config=dual,
+        )
+        if dual_result.get("selected_tube") == "high":
+            active_tube = "secondary"
+            if config.high_dose_tube is not None:
+                selected_profile = config.high_dose_tube
+        elif dual_result.get("selected_tube") == "low":
+            active_tube = "primary"
+        derived_dose = dual_result.get("value_usvh") if dual_result.get("available") else None
+        state["dual_tube_selection_reason"] = dual_result.get("selection_reason")
+
+    selected_cpm = float(state["cpm"])
+    if active_tube == "primary" and state.get("tube_low_cpm") is not None:
+        selected_cpm = float(state["tube_low_cpm"])
+    elif active_tube == "secondary" and state.get("tube_high_cpm") is not None:
+        selected_cpm = float(state["tube_high_cpm"])
+
+    result = live_measurement_metrology(
+        cpm=selected_cpm,
+        cpm_per_usvh=selected_profile.cpm_per_usvh,
+        config=MetrologyConfig(
+            dead_time_us=selected_profile.dead_time_us,
+            reliable_max_cpm=selected_profile.reliable_max_cpm,
+            dead_time_model=selected_profile.dead_time_model,
+            conversion_factor_uncertainty_percent=selected_profile.conversion_factor_uncertainty_percent,
+            calibration_uncertainty_percent=selected_profile.calibration_uncertainty_percent,
+            calibration_reference=selected_profile.calibration_reference,
+            tube_model=selected_profile.tube_model,
+        ),
+        calibration_status=status,
+        calibration_source=source,
+    )
+    if derived_dose is not None:
+        result["derived_dose_usvh"] = derived_dose
+    state.update(
+        {
+            "raw_cpm": float(state["cpm"]),
+            "corrected_cpm": result.get("corrected_cpm"),
+            "detector_type": selected_profile.tube_model,
+            "dual_tube_mode": config.dual_tube_mode,
+            "active_tube": active_tube,
+            "dead_time_model": selected_profile.dead_time_model,
+            "dead_time_us": selected_profile.dead_time_us,
+            "dead_time_loss_percent": result.get("dead_time_loss_percent"),
+            "detector_load_percent": result.get("detector_load_percent"),
+            "correction_factor": result.get("correction_factor"),
+            "calibration_status": status,
+            "calibration_source": source,
+            "measurement_quality_index": result.get("measurement_quality_index"),
+            "measurement_quality_stars": result.get("measurement_quality_stars"),
+            "measurement_quality_star_text": result.get("measurement_quality_star_text"),
+            "measurement_validity": result.get("measurement_validity"),
+            "dose_quality": result.get("dose_quality"),
+            "derived_dose_usvh": result.get("derived_dose_usvh"),
+            "plausibility_warnings": result.get("plausibility_warnings", []),
+            "dead_time_correction_active": bool(result.get("correction_applied")),
+        }
+    )
 
 
 def _diagnostics(
@@ -233,6 +343,72 @@ def _hard_recovery_pause(port: str, stop_event: threading.Event, delay: float = 
     return interruptible_sleep(delay, stop_event)
 
 
+def _apply_runtime_calibration_assignment(
+    config: DeviceConfig, history_store: HistoryStore | None, device_serial: str
+) -> DeviceConfig:
+    """Apply an app-local custom calibration after the physical device is known."""
+    if history_store is None:
+        return config
+    try:
+        assignment = history_store.get_custom_calibration_assignment(device_serial)
+    except (OSError, sqlite3.Error, RuntimeError, ValueError) as exc:
+        LOG.warning("[%s] Could not load custom calibration assignment: %s", device_serial, exc)
+        return config
+    if not assignment or not isinstance(assignment.get("values"), dict):
+        return config
+    values = assignment["values"]
+    try:
+        tube = TubeCalibrationConfig(
+            tube_model=str(values.get("tube_model") or config.tube_model).strip(),
+            cpm_per_usvh=(
+                float(values["cpm_per_usvh"])
+                if values.get("cpm_per_usvh") not in (None, "")
+                else config.cpm_per_usvh
+            ),
+            dead_time_us=(
+                float(values["dead_time_us"])
+                if values.get("dead_time_us") not in (None, "")
+                else None
+            ),
+            reliable_max_cpm=(
+                int(float(values["reliable_max_cpm"]))
+                if values.get("reliable_max_cpm") not in (None, "")
+                else None
+            ),
+            dead_time_model=str(values.get("dead_time_model") or "none").strip().lower(),
+            conversion_factor_uncertainty_percent=(
+                float(values["conversion_factor_uncertainty_percent"])
+                if values.get("conversion_factor_uncertainty_percent") not in (None, "")
+                else None
+            ),
+            calibration_uncertainty_percent=(
+                float(values["calibration_uncertainty_percent"])
+                if values.get("calibration_uncertainty_percent") not in (None, "")
+                else None
+            ),
+            calibration_reference=str(values.get("calibration_reference") or "").strip(),
+        )
+        tube.validate("custom calibration assignment")
+    except (TypeError, ValueError) as exc:
+        LOG.warning("[%s] Ignoring invalid custom calibration assignment: %s", device_serial, exc)
+        return config
+    updates: dict[str, Any] = {
+        "detector_profile": str(assignment.get("profile_id") or "custom_single"),
+        "calibration_overrides": True,
+        "tube_model": tube.tube_model,
+        "cpm_per_usvh": float(tube.cpm_per_usvh or config.cpm_per_usvh),
+        "dead_time_us": tube.dead_time_us,
+        "reliable_max_cpm": tube.reliable_max_cpm,
+        "dead_time_model": tube.dead_time_model,
+        "conversion_factor_uncertainty_percent": tube.conversion_factor_uncertainty_percent,
+        "calibration_uncertainty_percent": tube.calibration_uncertainty_percent,
+        "calibration_reference": tube.calibration_reference,
+    }
+    if config.dual_tube_mode != "single":
+        updates["low_dose_tube"] = tube
+    return replace(config, **updates)
+
+
 def _run_device(
     settings: Settings,
     device_config: DeviceConfig,
@@ -283,6 +459,8 @@ def _run_device(
             with serial_scheduler.window(device_index, "INIT", STOP_EVENT):
                 device.open()
                 version, serial = read_identity(device)
+                device_config = apply_detected_detector_profile(device_config, version)
+                device_config = _apply_runtime_calibration_assignment(device_config, history_store, serial)
                 profile = resolve_device_profile(version)
                 hardware_model, firmware_version = split_device_version(version)
                 display_version = normalize_device_version_display(version)
@@ -731,6 +909,8 @@ def _run_device(
                         pressure_reading = pressure_client.get_pressure()
                         if pressure_reading.available and pressure_reading.pressure_hpa is not None:
                             state["pressure_hpa"] = pressure_reading.pressure_hpa
+                if accepted:
+                    _enrich_metrology_state(state, device_config)
                 state.pop("device_time_local", None)
                 if device_config.heartbeat_enabled and capabilities.heartbeat and heartbeat_window:
                     state["cps"] = heartbeat_window[-1]

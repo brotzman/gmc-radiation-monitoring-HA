@@ -10,7 +10,7 @@ import tempfile
 import textwrap
 import zipfile
 from collections.abc import Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, date, datetime, timedelta
 from datetime import time as dt_time
 from pathlib import Path
@@ -1489,6 +1489,44 @@ def _draw_assessment_panel(
     )
 
 
+def _report_rows_for_data_mode(rows: list[HistoryRow], data_mode: str) -> list[HistoryRow]:
+    mode = data_mode if data_mode in {"raw", "corrected", "comparison"} else "raw"
+    result: list[HistoryRow] = []
+    for row in rows:
+        raw = float(row.raw_cpm if row.raw_cpm is not None else row.cpm)
+        corrected = float(row.corrected_cpm if row.corrected_cpm is not None else raw)
+        selected = corrected if mode == "corrected" else raw
+        result.append(replace(row, cpm=round(selected), raw_cpm=raw, corrected_cpm=corrected))
+    return result
+
+
+def _report_metrology_summary(rows: list[HistoryRow], metadata: dict[str, Any]) -> dict[str, Any]:
+    quality_values = [int(row.measurement_quality_index) for row in rows if row.measurement_quality_index is not None]
+    load_values = [float(row.detector_load_percent) for row in rows if row.detector_load_percent is not None]
+    loss_values = [float(row.dead_time_loss_percent) for row in rows if row.dead_time_loss_percent is not None]
+    factor_values = [float(row.correction_factor) for row in rows if row.correction_factor is not None and math.isfinite(float(row.correction_factor))]
+    quality_index = round(statistics.fmean(quality_values)) if quality_values else 0
+    stars = 5 if quality_index >= 90 else 4 if quality_index >= 75 else 3 if quality_index >= 55 else 2 if quality_index >= 30 else 1
+    status = str(metadata.get("calibration_status") or (rows[-1].calibration_status if rows else "unknown") or "unknown")
+    source = str(metadata.get("calibration_source") or (rows[-1].calibration_source if rows else "unknown") or "unknown")
+    validity = "fully_valid" if quality_index >= 85 else "qualified" if quality_index >= 50 else "limited"
+    return {
+        "quality_index": quality_index,
+        "stars": "★" * stars + "☆" * (5 - stars),
+        "load_mean": statistics.fmean(load_values) if load_values else None,
+        "load_max": max(load_values) if load_values else None,
+        "loss_mean": statistics.fmean(loss_values) if loss_values else None,
+        "correction_factor_mean": statistics.fmean(factor_values) if factor_values else 1.0,
+        "calibration_status": status,
+        "calibration_source": source,
+        "validity": validity,
+        "detector_type": str(metadata.get("tube_model") or (rows[-1].detector_type if rows else "") or "—"),
+        "dead_time_model": str(metadata.get("dead_time_model") or (rows[-1].dead_time_model if rows else "none") or "none"),
+        "dead_time_us": metadata.get("dead_time_us") if metadata.get("dead_time_us") not in (None, "") else (rows[-1].dead_time_us if rows else None),
+        "active_tube": str(rows[-1].active_tube if rows and rows[-1].active_tube else "—"),
+    }
+
+
 def pdf_bytes(
     rows: list[HistoryRow],
     *,
@@ -1502,6 +1540,8 @@ def pdf_bytes(
     yellow_percent: float = 125.0,
     red_percent: float = 175.0,
     language: str = "en",
+    data_mode: str = "raw",
+    scientific_page: bool = False,
 ) -> bytes:
     import matplotlib
 
@@ -1513,7 +1553,7 @@ def pdf_bytes(
     generated_at = datetime.now(UTC)
     display_end_local = _report_display_end(period, generated_at)
     report_id = f"RM-{generated_at.strftime('%Y%m%d-%H%M%S')}"
-    page_count = 5
+    page_count = 6 if scientific_page else 5
     output = io.BytesIO()
     model = normalize_device_version_display(
         device_metadata.get("device_model", _report_phrase(language, "Unbekanntes GMC", "Unknown GMC"))
@@ -1528,7 +1568,10 @@ def pdf_bytes(
         analysis, language=language
     )
     values = [float(row.cpm) for row in rows]
+    raw_values = [float(row.raw_cpm if row.raw_cpm is not None else row.cpm) for row in rows]
+    corrected_values = [float(row.corrected_cpm if row.corrected_cpm is not None else row.cpm) for row in rows]
     local_times = [datetime.fromtimestamp(row.timestamp_utc, UTC).astimezone(tz) for row in rows]
+    metrology_summary = _report_metrology_summary(rows, device_metadata)
     last_cpm = values[-1] if values else None
     quality = analysis.get("data_quality") or {}
     baseline = analysis.get("baseline_mean_cpm")
@@ -1610,7 +1653,9 @@ def pdf_bytes(
         )
         chart_axis = fig.add_axes(_PAGE1_CHART_RECT)
         if values:
-            chart_axis.plot(local_times, values, linewidth=0.8, alpha=0.55, label=_report_phrase(language, "Messwert", "Measurement"))
+            chart_axis.plot(local_times, values, linewidth=0.8, alpha=0.55, label=_report_phrase(language, "Rohwert" if data_mode == "comparison" else "Messwert", "Raw value" if data_mode == "comparison" else "Measurement"))
+            if data_mode == "comparison":
+                chart_axis.plot(local_times, corrected_values, linewidth=1.0, alpha=0.75, label=_report_phrase(language, "Totzeitkorrigiert", "Dead-time corrected"))
             chart_axis.plot(local_times, rolling_values, linewidth=1.8, label=_report_phrase(language, "Gleitendes 1-h-Mittel", "Rolling 1 h mean"))
             if baseline is not None:
                 chart_axis.axhline(float(baseline), linewidth=1.0, linestyle="--", label=_report_phrase(language, "Lokale Basislinie", "Local baseline"))
@@ -1644,6 +1689,33 @@ def pdf_bytes(
         )
         _configure_report_axis(chart_axis)
 
+        calibration_labels = {
+            "documented": _report_phrase(language, "Werkswert", "Factory value"),
+            "predefined": _report_phrase(language, "Werkswert", "Factory value"),
+            "customized": _report_phrase(language, "Benutzerprofil", "User profile"),
+            "working_values": _report_phrase(language, "Arbeitswert", "Working value"),
+            "incomplete": _report_phrase(language, "nicht kalibriert", "not calibrated"),
+            "unknown": _report_phrase(language, "unbekannt", "unknown"),
+        }
+        validity_labels = {
+            "fully_valid": _report_phrase(language, "vollständig gültig", "fully valid"),
+            "qualified": _report_phrase(language, "mit Einschränkungen gültig", "qualified"),
+            "limited": _report_phrase(language, "nur eingeschränkt verwendbar", "limited"),
+        }
+        fig.text(
+            0.065,
+            0.493,
+            _report_phrase(language, "Messqualität", "Measurement quality") + ": "
+            + str(metrology_summary["stars"]) + " · "
+            + _report_phrase(language, "Totzeit", "Dead time") + " "
+            + (_format_number(metrology_summary.get("load_mean"), 2) + "%" if metrology_summary.get("load_mean") is not None else "—")
+            + " · " + _report_phrase(language, "Kalibrierung", "Calibration") + ": "
+            + calibration_labels.get(str(metrology_summary.get("calibration_status")), str(metrology_summary.get("calibration_status")))
+            + " · " + validity_labels.get(str(metrology_summary.get("validity")), str(metrology_summary.get("validity"))),
+            fontsize=7.4,
+            color="#334155",
+            fontweight="bold",
+        )
         recommendation_text = _report_phrase(language, "Empfehlung: ", "Recommendation: ") + recommendation
         _draw_assessment_panel(
             fig,
@@ -1887,6 +1959,7 @@ def pdf_bytes(
             [_report_phrase(language, "Zeitzone", "Time zone"), timezone_name, _report_phrase(language, "Messintervall", "Sampling interval"), f"{scan_interval_seconds} s"],
             [_report_phrase(language, "Umrechnungsfaktor", "Conversion factor"), f"{cpm_per_usvh:g} CPM/(µSv/h)", _report_phrase(language, "Datenquelle", "Data source"), str(device_metadata.get("data_source") or "USB / local history")],
             [_report_phrase(language, "App-Version", "App version"), APP_VERSION, _report_phrase(language, "Bericht-ID", "Report ID"), report_id],
+            [_report_phrase(language, "Datenmodus", "Data mode"), {"raw": _report_phrase(language, "Rohdaten", "Raw data"), "corrected": _report_phrase(language, "Totzeitkorrigiert", "Dead-time corrected"), "comparison": _report_phrase(language, "Roh-/Korrekturvergleich", "Raw/corrected comparison")}.get(data_mode, data_mode), _report_phrase(language, "Messqualität", "Measurement quality"), str(metrology_summary["stars"]) + f" ({int(metrology_summary['quality_index'])}/100)"],
         ]
         device_axis = fig.add_axes([0.065, 0.67, 0.87, 0.19])
         _draw_table(device_axis, device_rows, font_size=7.25, column_widths=[0.18, 0.31, 0.18, 0.33])
@@ -1922,6 +1995,56 @@ def pdf_bytes(
         fig.text(0.065, 0.095, textwrap.fill(method_note, width=120), fontsize=7.5, va="top")
         pdf.savefig(fig)
         plt.close(fig)
+
+        if scientific_page:
+            fig = plt.figure(figsize=(8.27, 11.69), facecolor="white")
+            _draw_report_header(
+                fig,
+                title=_report_phrase(language, "Wissenschaftliche Detektor- und Korrekturdokumentation", "Scientific detector and correction documentation"),
+                subtitle=_report_phrase(language, "Transparente Darstellung von Rohwert, Totzeitmodell, Korrektur und Kalibrierstatus.", "Transparent presentation of raw count rate, dead-time model, correction and calibration status."),
+                report_id=report_id,
+                page_number=6,
+                page_count=page_count,
+                generated_at=generated_at,
+                language=language,
+            )
+            science_rows = [
+                [_report_phrase(language, "Detektor", "Detector"), str(metrology_summary.get("detector_type") or "—")],
+                [_report_phrase(language, "Aktives Zählrohr", "Active tube"), str(metrology_summary.get("active_tube") or "—")],
+                [_report_phrase(language, "Totzeitmodell", "Dead-time model"), str(metrology_summary.get("dead_time_model") or "none")],
+                [_report_phrase(language, "Totzeit", "Dead time"), _format_number(metrology_summary.get("dead_time_us"), 2) + " µs"],
+                [_report_phrase(language, "Mittlere Detektorauslastung", "Mean detector load"), _format_number(metrology_summary.get("load_mean"), 3) + "%"],
+                [_report_phrase(language, "Maximale Detektorauslastung", "Maximum detector load"), _format_number(metrology_summary.get("load_max"), 3) + "%"],
+                [_report_phrase(language, "Mittlere Totzeitverluste", "Mean dead-time losses"), _format_number(metrology_summary.get("loss_mean"), 3) + "%"],
+                [_report_phrase(language, "Mittlerer Korrekturfaktor", "Mean correction factor"), _format_number(metrology_summary.get("correction_factor_mean"), 5)],
+                [_report_phrase(language, "Kalibrierstatus", "Calibration status"), calibration_labels.get(str(metrology_summary.get("calibration_status")), str(metrology_summary.get("calibration_status")))],
+                [_report_phrase(language, "Kalibrierquelle", "Calibration source"), str(metrology_summary.get("calibration_source") or "—")],
+                [_report_phrase(language, "Messqualität", "Measurement quality"), str(metrology_summary["stars"]) + f" ({int(metrology_summary['quality_index'])}/100)"],
+                [_report_phrase(language, "Datenmodus", "Data mode"), data_mode],
+            ]
+            fig.text(0.065, 0.875, _report_phrase(language, "Metrologische Parameter", "Metrological parameters"), fontsize=12.5, fontweight="bold")
+            science_axis = fig.add_axes([0.065, 0.53, 0.87, 0.32])
+            _draw_table(science_axis, science_rows, columns=[_report_phrase(language, "Parameter", "Parameter"), _report_phrase(language, "Wert", "Value")], font_size=7.8, column_widths=[0.43, 0.57])
+            comparison_axis = fig.add_axes([0.09, 0.22, 0.84, 0.22])
+            if rows:
+                comparison_axis.plot(local_times, raw_values, linewidth=0.9, label=_report_phrase(language, "Roh-CPM", "Raw CPM"))
+                comparison_axis.plot(local_times, corrected_values, linewidth=1.1, label=_report_phrase(language, "Korrigierte CPM", "Corrected CPM"))
+                comparison_axis.legend(loc="upper left", fontsize=7, frameon=False)
+                comparison_axis.set_xlim(period.start_local, display_end_local)
+                _format_report_time_axis(comparison_axis, tz)
+            else:
+                comparison_axis.text(0.5, 0.5, _report_phrase(language, "Keine Messwerte", "No measurements"), ha="center", va="center", transform=comparison_axis.transAxes)
+            comparison_axis.set_title(_report_phrase(language, "Rohdaten- und Totzeitkorrekturvergleich", "Raw-data and dead-time-correction comparison"), fontsize=10.5, fontweight="bold")
+            comparison_axis.set_ylabel("CPM", fontsize=8.5)
+            _configure_report_axis(comparison_axis)
+            note = _report_phrase(
+                language,
+                "Die Totzeitkorrektur ist ein mathematisches Modell. Bei Sättigung oder unvollständiger Kalibrierung darf sie nicht als Ersatz für eine rückführbare Dosimetrie interpretiert werden.",
+                "Dead-time correction is a mathematical model. During saturation or with incomplete calibration it must not be interpreted as a substitute for traceable dosimetry.",
+            )
+            fig.text(0.065, 0.145, textwrap.fill(note, width=118), fontsize=7.8, va="top")
+            pdf.savefig(fig)
+            plt.close(fig)
     return output.getvalue()
 
 
@@ -1950,6 +2073,7 @@ def _prepare_report(
     device_serial: str | None,
     all_devices: bool,
     language: str,
+    data_mode: str = "raw",
 ) -> tuple[
     Translator,
     ZoneInfo,
@@ -2030,6 +2154,9 @@ def _prepare_report(
                 "high_dose_tube_profile": device.get("high_dose_tube_profile"),
                 "calibration_status": device.get("calibration_status", "working_values"),
             }
+    rows = _report_rows_for_data_mode(rows, data_mode)
+    baseline_rows = _report_rows_for_data_mode(baseline_rows, "corrected" if data_mode == "corrected" else "raw")
+    metadata["data_mode"] = data_mode
     annotations = store.list_event_annotations(
         start_utc=start_ts,
         end_utc=end_ts,
@@ -2075,6 +2202,8 @@ def build_report_to_path(
     device_serial: str | None = None,
     all_devices: bool = False,
     language: str = "en",
+    data_mode: str = "raw",
+    scientific_page: bool = False,
 ) -> tuple[str, str, Path]:
     """Build a report directly into a file.
 
@@ -2094,6 +2223,7 @@ def build_report_to_path(
         device_serial=device_serial,
         all_devices=all_devices,
         language=language,
+        data_mode=data_mode,
     )
 
     def write(payload: bytes) -> None:
@@ -2175,6 +2305,8 @@ def build_report_to_path(
                 yellow_percent=traffic_light_yellow_percent,
                 red_percent=traffic_light_red_percent,
                 language=language,
+                data_mode=data_mode,
+                scientific_page=scientific_page,
             )
         )
     elif output_format == "zip":
@@ -2248,6 +2380,8 @@ def build_report_to_path(
                     yellow_percent=traffic_light_yellow_percent,
                     red_percent=traffic_light_red_percent,
                     language=language,
+                    data_mode=data_mode,
+                    scientific_page=scientific_page,
                 ),
             )
             bundle.writestr(
@@ -2283,6 +2417,8 @@ def build_report(
     device_serial: str | None = None,
     all_devices: bool = False,
     language: str = "en",
+    data_mode: str = "raw",
+    scientific_page: bool = False,
 ) -> tuple[str, str, bytes]:
     """Compatibility wrapper returning bytes for callers outside the web server."""
     fd, temp_name = tempfile.mkstemp(prefix="gmc-report-build-", suffix=".tmp")
@@ -2302,6 +2438,8 @@ def build_report(
             device_serial=device_serial,
             all_devices=all_devices,
             language=language,
+            data_mode=data_mode,
+            scientific_page=scientific_page,
         )
         return filename, content_type, temp_path.read_bytes()
     finally:

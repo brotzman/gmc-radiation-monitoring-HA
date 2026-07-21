@@ -15,6 +15,11 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, quote_plus, urlparse
 
 from .automation import automation_status
+from .calibration_http import (
+    calibration_history_payload,
+    calibration_profiles_payload,
+    persist_calibration_profile,
+)
 from .maintenance import diagnostics_json_bytes, full_history_zip_to_path
 from .report_web_support import (
     MAX_DOWNLOAD_BYTES,
@@ -244,6 +249,21 @@ class ReportRequestHandler(BaseHTTPRequestHandler):
                     json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8"),
                 )
                 return
+            if path == "/api/v1/calibration-profiles":
+                self._send_bytes(
+                    HTTPStatus.OK, "application/json; charset=utf-8",
+                    json.dumps(calibration_profiles_payload(self.app.store), separators=(",", ":"), sort_keys=True).encode("utf-8"),
+                )
+                return
+            if path == "/api/v1/calibration-history":
+                payload = calibration_history_payload(
+                    self.app.store, device_serial=_optional_one(query, "device")
+                )
+                self._send_bytes(
+                    HTTPStatus.OK, "application/json; charset=utf-8",
+                    json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8"),
+                )
+                return
             if path == "/api/v1/scheduled-reports":
                 payload = {"reports": self.app.list_scheduled_reports(limit=200)}
                 self._send_bytes(
@@ -345,6 +365,7 @@ class ReportRequestHandler(BaseHTTPRequestHandler):
                         history_start_override=_optional_one(query, "history_start"),
                         history_end_override=_optional_one(query, "history_end"),
                         history_raw_override=_optional_one(query, "history_raw"),
+                        data_mode_override=_optional_one(query, "data_mode"),
                         accept_language=self.headers.get("Accept-Language", ""),
                     ),
                 )
@@ -474,6 +495,21 @@ class ReportRequestHandler(BaseHTTPRequestHandler):
             self._send_error(HTTPStatus.BAD_REQUEST, _localized_exception_message(t, exc))
             return True
 
+    def _handle_calibration_action(self, action: str | None, t: Translator) -> bool:
+        if action != "save-calibration-profile":
+            return False
+        try:
+            data = self._read_urlencoded_form()
+            token = (data.get("calibration_csrf_token") or [""])[0]
+            if not self._consume_csrf_token(token, "calibration-profiles", t):
+                return True
+            persist_calibration_profile(self.app.store, data, translate=t)
+            self._redirect_dashboard(anchor="calibration-management", language=t.language)
+        except (ValueError, OSError, sqlite3.Error) as exc:
+            LOG.warning("Calibration profile action rejected: %s", exc)
+            self._send_error(HTTPStatus.BAD_REQUEST, _localized_exception_message(t, exc))
+        return True
+
     def do_POST(self) -> None:
         parsed = urlparse(self.path)
         path = parsed.path.rstrip("/") or "/"
@@ -499,6 +535,8 @@ class ReportRequestHandler(BaseHTTPRequestHandler):
                 self._send_error(HTTPStatus.BAD_REQUEST, _localized_exception_message(t, exc))
             return
         action = _optional_one(query, "action")
+        if path == "/" and self._handle_calibration_action(action, t):
+            return
         if path == "/" and self._handle_workflow_action(action, t):
             return
         is_purge = path == "/purge-all-history" or (path == "/" and action == "purge-all-history")
@@ -708,6 +746,10 @@ class ReportRequestHandler(BaseHTTPRequestHandler):
         if not device_serial or device_serial not in known_serials:
             raise ValueError(t("Unknown report device"))
         all_devices = False
+        data_mode = _optional_one(query, "data_mode") or "raw"
+        if data_mode not in {"raw", "corrected", "comparison"}:
+            raise ValueError(t("Unsupported data mode"))
+        scientific_page = str(_optional_one(query, "scientific") or "").strip().lower() in {"1", "true", "yes", "on"}
         period = resolve_period(
             kind=period_kind,
             selection=selection,
@@ -737,6 +779,8 @@ class ReportRequestHandler(BaseHTTPRequestHandler):
                     device_serial=device_serial,
                     all_devices=all_devices,
                     language=language,
+                    data_mode=data_mode,
+                    scientific_page=scientific_page,
                 )
                 if temp_path.stat().st_size > MAX_DOWNLOAD_BYTES:
                     raise ValueError(t("Generated report exceeds the 64 MiB safety limit"))

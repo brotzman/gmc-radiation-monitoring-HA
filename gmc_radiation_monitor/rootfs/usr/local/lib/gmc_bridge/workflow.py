@@ -219,10 +219,17 @@ def downsample_history(rows: list[HistoryRow], *, maximum_points: int = 600) -> 
     points: list[dict[str, Any]] = []
     for index in range(0, len(rows), step):
         group = rows[index:index + step]
+        raw_values = [float(row.raw_cpm if row.raw_cpm is not None else row.cpm) for row in group]
+        corrected_values = [
+            float(row.corrected_cpm if row.corrected_cpm is not None else (row.raw_cpm if row.raw_cpm is not None else row.cpm))
+            for row in group
+        ]
         points.append(
             {
                 "timestamp_utc": group[-1].timestamp_utc,
                 "cpm": round(statistics.fmean(row.cpm for row in group), 3),
+                "raw_cpm": round(statistics.fmean(raw_values), 3),
+                "corrected_cpm": round(statistics.fmean(corrected_values), 3),
                 "samples": len(group),
                 "quality": "confirmed_high" if any(row.cpm_quality == "confirmed_high" for row in group) else "normal",
             }

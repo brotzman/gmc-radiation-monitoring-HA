@@ -87,7 +87,7 @@ The workflow area provides configurable Home Assistant notifications, event anno
 
 The internal SQLite schema is migrated automatically to version 8. Existing measurement and device data remain compatible.
 
-Version 8.3.5 introduces explicit detector presets. The GMC-320 Plus V4 preset represents one M4011 tube and supplies the application working values automatically. The GMC-500+ preset represents M4011 + SI-3BG as two physical tubes and keeps the SI-3BG dose conversion unavailable until a verified factor is supplied. The duplicated low-dose option block has been removed: the normal calibration fields now describe the only/primary tube, while high-dose fields apply only to a second tube. Matching 8.3.4 values are migrated automatically, the dashboard avoids repeated single-tube information, and configuration terminology is corrected in all eight supported languages.
+Version 8.4.0 adds a scientific detector and calibration layer. Connected GMC-300, GMC-320, GMC-500+ and GMC-600/600+ counters are resolved to model-aware application profiles automatically. The dashboard shows the physical detector, active tube, calibration state, raw and corrected CPM, detector load, dead-time losses, correction factor and measurement quality. GMC-500+ channels remain separate, custom calibration changes are audited, and history and reports can display raw, corrected or comparison data. An optional scientific PDF adds a sixth metrology page. Predefined values are labelled as application profiles rather than traceable factory certificates.
 
 ## Installation
 
@@ -247,6 +247,17 @@ The `gmc_500_plus` preset represents two physical tubes: M4011 as the primary/no
 The normal calibration fields in the Home Assistant form are optional overrides for the only tube on a single-tube device or the primary tube on a dual-tube device. `high_dose_*` fields apply exclusively to the second tube of a dual-tube device. `dual_tube_mode` and `dual_tube_switch_cpm` are advanced overrides and are normally supplied by the preset. Old `low_dose_*` or nested tube blocks remain readable only for migration and should not be used in new configurations.
 
 Predefined values are transparent application working values, not a traceable calibration certificate. Explicit overrides are labelled as a customized profile.
+
+
+### Scientific detector and calibration workflow (8.4.0)
+
+The Expert view places **Detector and calibration** directly below each connected device. Single-tube counters show one tube card; the GMC-500+ shows M4011 and SI-3BG separately with the active channel, per-channel CPM, calibration availability and dead time. The SI-3BG channel remains explicitly uncalibrated for dose conversion until a verified device-specific factor is stored.
+
+For every accepted measurement, the app records raw CPM, corrected CPM, detector load, estimated dead-time loss, correction factor, active tube, calibration source/status, dose quality and a 0–100 measurement-quality index. The dashboard converts these fields into a five-star quality display, a green/yellow/red detector-load bar, a live dead-time monitor and targeted plausibility warnings.
+
+The **Calibration management** workspace lists predefined and custom profiles, provides a four-step assistant, assigns a profile to a physical serial number and records every change with timestamp, source, changed values and comment. Predefined profiles are transparent application working values. Only a documented calibration should be presented as factory calibrated.
+
+History and reports support **Raw data**, **Dead-time corrected** and **Raw and corrected comparison** modes. The optional scientific PDF adds a sixth technical page containing detector identity, dead-time model, correction factor, estimated losses, measurement quality and the raw/corrected trace. Version 8.4 additions are applied idempotently to existing schema-8 databases, preserving backup compatibility.
 
 ### Optional public GMCMap uploads
 

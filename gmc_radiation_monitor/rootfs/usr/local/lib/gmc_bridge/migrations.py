@@ -146,6 +146,57 @@ def _migration_8(connection: sqlite3.Connection) -> None:
     )
 
 
+def _migration_9(connection: sqlite3.Connection) -> None:
+    columns = {row[1] for row in connection.execute("PRAGMA table_info(measurements)")}
+    additions = {
+        "raw_cpm": "REAL",
+        "corrected_cpm": "REAL",
+        "detector_type": "TEXT",
+        "dual_tube_mode": "TEXT",
+        "active_tube": "TEXT",
+        "dead_time_model": "TEXT",
+        "dead_time_us": "REAL",
+        "dead_time_loss_percent": "REAL",
+        "detector_load_percent": "REAL",
+        "correction_factor": "REAL",
+        "calibration_status": "TEXT",
+        "calibration_source": "TEXT",
+        "measurement_quality_index": "INTEGER",
+        "dose_quality": "TEXT",
+        "derived_dose_usvh": "REAL",
+    }
+    for name, sql_type in additions.items():
+        if name not in columns:
+            connection.execute(f"ALTER TABLE measurements ADD COLUMN {name} {sql_type}")
+    connection.executescript(
+        """
+        CREATE TABLE IF NOT EXISTS calibration_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            device_serial TEXT,
+            timestamp_utc INTEGER NOT NULL,
+            profile_id TEXT NOT NULL,
+            detector_type TEXT,
+            values_json TEXT NOT NULL,
+            changed_fields_json TEXT NOT NULL DEFAULT '[]',
+            source TEXT NOT NULL,
+            comment TEXT NOT NULL DEFAULT ''
+        );
+        CREATE INDEX IF NOT EXISTS idx_calibration_history_device_time
+        ON calibration_history(device_serial, timestamp_utc DESC);
+        CREATE TABLE IF NOT EXISTS custom_calibration_profiles (
+            profile_id TEXT PRIMARY KEY,
+            display_name TEXT NOT NULL,
+            detector_type TEXT NOT NULL,
+            values_json TEXT NOT NULL,
+            created_at_utc INTEGER NOT NULL,
+            updated_at_utc INTEGER NOT NULL,
+            source TEXT NOT NULL,
+            comment TEXT NOT NULL DEFAULT ''
+        );
+        """
+    )
+
+
 MIGRATIONS: dict[int, Migration] = {
     1: _migration_1,
     2: _migration_2,
@@ -181,4 +232,9 @@ def apply_migrations(connection: sqlite3.Connection) -> int:
         )
         connection.execute(f"PRAGMA user_version={version}")
         connection.commit()
+    # Release 8.4 adds only backward-compatible columns and audit tables.  Keep
+    # the public schema generation at v8 while ensuring these additions on every
+    # startup, including databases that were already at v8 before the update.
+    _migration_9(connection)
+    connection.commit()
     return SCHEMA_VERSION

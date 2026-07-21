@@ -57,6 +57,21 @@ class HistoryRow:
     tube_low_cpm: int | None = None
     tube_high_cpm: int | None = None
     pressure_hpa: float | None = None
+    raw_cpm: float | None = None
+    corrected_cpm: float | None = None
+    detector_type: str | None = None
+    dual_tube_mode: str | None = None
+    active_tube: str | None = None
+    dead_time_model: str | None = None
+    dead_time_us: float | None = None
+    dead_time_loss_percent: float | None = None
+    detector_load_percent: float | None = None
+    correction_factor: float | None = None
+    calibration_status: str | None = None
+    calibration_source: str | None = None
+    measurement_quality_index: int | None = None
+    dose_quality: str | None = None
+    derived_dose_usvh: float | None = None
 
 
 class HistoryStore:
@@ -212,8 +227,7 @@ class HistoryStore:
         with closing(self._connect(read_only=True)) as connection:
             latest_rows = connection.execute(
                 """
-                SELECT m.device_serial, m.timestamp_utc, m.cpm, m.tube_low_cpm, m.tube_high_cpm,
-                       m.temperature_c, m.voltage_v, m.gyro_x, m.gyro_y, m.gyro_z, m.pressure_hpa
+                SELECT m.*
                 FROM measurements m
                 JOIN (
                     SELECT device_serial, MAX(timestamp_utc) AS timestamp_utc
@@ -249,7 +263,12 @@ class HistoryStore:
         for serial in serials:
             item = dict(registry.get(serial, {}))
             item.update(history.get(serial, {}))
-            item.update(latest.get(serial, {}))
+            # A newly added measurement column can be NULL for legacy rows.  Do not
+            # let those NULL values erase the detector metadata already stored in
+            # the registry (especially dual-tube mode and calibration profiles).
+            item.update(
+                {key: value for key, value in latest.get(serial, {}).items() if value is not None}
+            )
             item["serial"] = serial
             item["capabilities_map"] = capabilities.get(serial, {})
             devices.append(item)
@@ -346,6 +365,21 @@ class HistoryStore:
             _optional_int(sample.get("gyro_z")),
             cpm_quality,
             _optional_float(sample.get("pressure_hpa")),
+            _optional_float(sample.get("raw_cpm", sample.get("cpm"))),
+            _optional_float(sample.get("corrected_cpm")),
+            _optional_text(sample.get("detector_type")),
+            _optional_text(sample.get("dual_tube_mode")),
+            _optional_text(sample.get("active_tube")),
+            _optional_text(sample.get("dead_time_model")),
+            _optional_float(sample.get("dead_time_us")),
+            _optional_float(sample.get("dead_time_loss_percent")),
+            _optional_float(sample.get("detector_load_percent")),
+            _optional_float(sample.get("correction_factor")),
+            _optional_text(sample.get("calibration_status")),
+            _optional_text(sample.get("calibration_source")),
+            _optional_int(sample.get("measurement_quality_index")),
+            _optional_text(sample.get("dose_quality")),
+            _optional_float(sample.get("derived_dose_usvh")),
         )
         with self._database_lock(exclusive=True), closing(self._connect()) as connection:
             existing = connection.execute(
@@ -376,8 +410,12 @@ class HistoryStore:
                 """
                 INSERT INTO measurements (
                     device_serial, timestamp_utc, cpm, tube_low_cpm, tube_high_cpm, temperature_c, voltage_v,
-                    gyro_x, gyro_y, gyro_z, cpm_quality, pressure_hpa
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    gyro_x, gyro_y, gyro_z, cpm_quality, pressure_hpa,
+                    raw_cpm, corrected_cpm, detector_type, dual_tube_mode, active_tube,
+                    dead_time_model, dead_time_us, dead_time_loss_percent, detector_load_percent,
+                    correction_factor, calibration_status, calibration_source,
+                    measurement_quality_index, dose_quality, derived_dose_usvh
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(device_serial, timestamp_utc) DO UPDATE SET
                     cpm=excluded.cpm,
                     tube_low_cpm=excluded.tube_low_cpm,
@@ -388,7 +426,22 @@ class HistoryStore:
                     gyro_y=excluded.gyro_y,
                     gyro_z=excluded.gyro_z,
                     cpm_quality=excluded.cpm_quality,
-                    pressure_hpa=excluded.pressure_hpa
+                    pressure_hpa=excluded.pressure_hpa,
+                    raw_cpm=excluded.raw_cpm,
+                    corrected_cpm=excluded.corrected_cpm,
+                    detector_type=excluded.detector_type,
+                    dual_tube_mode=excluded.dual_tube_mode,
+                    active_tube=excluded.active_tube,
+                    dead_time_model=excluded.dead_time_model,
+                    dead_time_us=excluded.dead_time_us,
+                    dead_time_loss_percent=excluded.dead_time_loss_percent,
+                    detector_load_percent=excluded.detector_load_percent,
+                    correction_factor=excluded.correction_factor,
+                    calibration_status=excluded.calibration_status,
+                    calibration_source=excluded.calibration_source,
+                    measurement_quality_index=excluded.measurement_quality_index,
+                    dose_quality=excluded.dose_quality,
+                    derived_dose_usvh=excluded.derived_dose_usvh
                 """,
                 values,
             )
@@ -856,6 +909,127 @@ class HistoryStore:
             "annotations": annotations,
         }
 
+    def assign_custom_calibration_profile(
+        self, *, device_serial: str, profile_id: str, values: dict[str, Any]
+    ) -> None:
+        """Persist an app-local device calibration assignment used at runtime."""
+        metadata = self.get_metadata()
+        try:
+            assignments = json.loads(metadata.get("calibration_assignments", "{}"))
+        except (TypeError, ValueError, json.JSONDecodeError):
+            assignments = {}
+        assignments[str(device_serial)] = {
+            "profile_id": str(profile_id),
+            "values": dict(values),
+            "updated_at_utc": int(time.time()),
+        }
+        self.set_metadata(
+            {"calibration_assignments": json.dumps(assignments, sort_keys=True, separators=(",", ":"))}
+        )
+
+    def get_custom_calibration_assignment(self, device_serial: str) -> dict[str, Any] | None:
+        metadata = self.get_metadata()
+        try:
+            assignments = json.loads(metadata.get("calibration_assignments", "{}"))
+        except (TypeError, ValueError, json.JSONDecodeError):
+            return None
+        item = assignments.get(str(device_serial))
+        return dict(item) if isinstance(item, dict) else None
+
+    def record_calibration_change(
+        self,
+        *,
+        device_serial: str | None,
+        profile_id: str,
+        detector_type: str,
+        values: dict[str, Any],
+        changed_fields: list[str] | None = None,
+        source: str = "user",
+        comment: str = "",
+        timestamp_utc: int | None = None,
+    ) -> int:
+        timestamp = _coerce_epoch_timestamp(timestamp_utc)
+        with self._database_lock(exclusive=True), closing(self._connect()) as connection:
+            cursor = connection.execute(
+                """
+                INSERT INTO calibration_history(
+                    device_serial,timestamp_utc,profile_id,detector_type,values_json,
+                    changed_fields_json,source,comment
+                ) VALUES (?,?,?,?,?,?,?,?)
+                """,
+                (
+                    device_serial, timestamp, profile_id, detector_type,
+                    json.dumps(values, sort_keys=True, separators=(",", ":"), default=str),
+                    json.dumps(changed_fields or [], sort_keys=True, separators=(",", ":")),
+                    source, comment,
+                ),
+            )
+            connection.commit()
+            return int(cursor.lastrowid)
+
+    def list_calibration_history(
+        self, *, device_serial: str | None = None, limit: int = 100
+    ) -> list[dict[str, Any]]:
+        query = "SELECT * FROM calibration_history"
+        params: list[Any] = []
+        if device_serial:
+            query += " WHERE device_serial = ?"
+            params.append(device_serial)
+        query += " ORDER BY timestamp_utc DESC, id DESC LIMIT ?"
+        params.append(max(1, min(int(limit), 1000)))
+        with closing(self._connect(read_only=True)) as connection:
+            rows = connection.execute(query, params).fetchall()
+        result: list[dict[str, Any]] = []
+        for row in rows:
+            item = dict(row)
+            item["values"] = json.loads(item.pop("values_json"))
+            item["changed_fields"] = json.loads(item.pop("changed_fields_json"))
+            result.append(item)
+        return result
+
+    def save_custom_calibration_profile(
+        self,
+        *,
+        profile_id: str,
+        display_name: str,
+        detector_type: str,
+        values: dict[str, Any],
+        source: str = "user",
+        comment: str = "",
+    ) -> None:
+        now = int(time.time())
+        normalized = str(profile_id).strip()
+        if not normalized or not all(ch.isalnum() or ch in "_-" for ch in normalized):
+            raise ValueError("Custom calibration profile ID is invalid")
+        with self._database_lock(exclusive=True), closing(self._connect()) as connection:
+            connection.execute(
+                """
+                INSERT INTO custom_calibration_profiles(
+                    profile_id,display_name,detector_type,values_json,created_at_utc,updated_at_utc,source,comment
+                ) VALUES (?,?,?,?,?,?,?,?)
+                ON CONFLICT(profile_id) DO UPDATE SET
+                    display_name=excluded.display_name, detector_type=excluded.detector_type,
+                    values_json=excluded.values_json, updated_at_utc=excluded.updated_at_utc,
+                    source=excluded.source, comment=excluded.comment
+                """,
+                (normalized, display_name, detector_type,
+                 json.dumps(values, sort_keys=True, separators=(",", ":"), default=str),
+                 now, now, source, comment),
+            )
+            connection.commit()
+
+    def list_custom_calibration_profiles(self) -> list[dict[str, Any]]:
+        with closing(self._connect(read_only=True)) as connection:
+            rows = connection.execute(
+                "SELECT * FROM custom_calibration_profiles ORDER BY display_name, profile_id"
+            ).fetchall()
+        result = []
+        for row in rows:
+            item = dict(row)
+            item["values"] = json.loads(item.pop("values_json"))
+            result.append(item)
+        return result
+
     def query_range(
         self,
         start_utc: int,
@@ -874,7 +1048,11 @@ class HistoryStore:
                 rows = connection.execute(
                     """
                     SELECT device_serial, timestamp_utc, cpm, temperature_c, voltage_v,
-                           gyro_x, gyro_y, gyro_z, cpm_quality, tube_low_cpm, tube_high_cpm, pressure_hpa
+                           gyro_x, gyro_y, gyro_z, cpm_quality, tube_low_cpm, tube_high_cpm, pressure_hpa,
+                           raw_cpm, corrected_cpm, detector_type, dual_tube_mode, active_tube,
+                           dead_time_model, dead_time_us, dead_time_loss_percent, detector_load_percent,
+                           correction_factor, calibration_status, calibration_source,
+                           measurement_quality_index, dose_quality, derived_dose_usvh
                     FROM measurements
                     WHERE device_serial = ? AND timestamp_utc >= ? AND timestamp_utc < ?
                     ORDER BY timestamp_utc ASC
@@ -885,7 +1063,11 @@ class HistoryStore:
                 rows = connection.execute(
                     """
                     SELECT device_serial, timestamp_utc, cpm, temperature_c, voltage_v,
-                           gyro_x, gyro_y, gyro_z, cpm_quality, tube_low_cpm, tube_high_cpm, pressure_hpa
+                           gyro_x, gyro_y, gyro_z, cpm_quality, tube_low_cpm, tube_high_cpm, pressure_hpa,
+                           raw_cpm, corrected_cpm, detector_type, dual_tube_mode, active_tube,
+                           dead_time_model, dead_time_us, dead_time_loss_percent, detector_load_percent,
+                           correction_factor, calibration_status, calibration_source,
+                           measurement_quality_index, dose_quality, derived_dose_usvh
                     FROM measurements
                     WHERE timestamp_utc >= ? AND timestamp_utc < ?
                     ORDER BY timestamp_utc ASC
@@ -903,7 +1085,11 @@ class HistoryStore:
                 rows = connection.execute(
                     """
                     SELECT device_serial, timestamp_utc, cpm, temperature_c, voltage_v,
-                           gyro_x, gyro_y, gyro_z, cpm_quality, tube_low_cpm, tube_high_cpm, pressure_hpa
+                           gyro_x, gyro_y, gyro_z, cpm_quality, tube_low_cpm, tube_high_cpm, pressure_hpa,
+                           raw_cpm, corrected_cpm, detector_type, dual_tube_mode, active_tube,
+                           dead_time_model, dead_time_us, dead_time_loss_percent, detector_load_percent,
+                           correction_factor, calibration_status, calibration_source,
+                           measurement_quality_index, dose_quality, derived_dose_usvh
                     FROM measurements WHERE device_serial = ? ORDER BY timestamp_utc ASC
                     """,
                     (serial,),
@@ -912,7 +1098,11 @@ class HistoryStore:
                 rows = connection.execute(
                     """
                     SELECT device_serial, timestamp_utc, cpm, temperature_c, voltage_v,
-                           gyro_x, gyro_y, gyro_z, cpm_quality, tube_low_cpm, tube_high_cpm, pressure_hpa
+                           gyro_x, gyro_y, gyro_z, cpm_quality, tube_low_cpm, tube_high_cpm, pressure_hpa,
+                           raw_cpm, corrected_cpm, detector_type, dual_tube_mode, active_tube,
+                           dead_time_model, dead_time_us, dead_time_loss_percent, detector_load_percent,
+                           correction_factor, calibration_status, calibration_source,
+                           measurement_quality_index, dose_quality, derived_dose_usvh
                     FROM measurements ORDER BY device_serial, timestamp_utc ASC
                     """
                 ).fetchall()
@@ -1397,6 +1587,12 @@ class HistoryStore:
 
 def _optional_float(value: Any) -> float | None:
     return None if value is None else float(value)
+
+
+def _optional_text(value: Any) -> str | None:
+    if value in (None, ""):
+        return None
+    return str(value)
 
 
 def _optional_int(value: Any) -> int | None:

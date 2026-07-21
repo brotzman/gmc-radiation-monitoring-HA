@@ -5,7 +5,7 @@ from dataclasses import asdict, dataclass
 from itertools import pairwise
 from typing import Any
 
-ALGORITHM_VERSION = "8.3-metrology-2"
+ALGORITHM_VERSION = "8.4-metrology-1"
 
 
 @dataclass(frozen=True)
@@ -84,31 +84,150 @@ def assess_count_rate(cpm: float, config: MetrologyConfig) -> dict[str, Any]:
     corrected: float | None = None
     correction_applied = False
     correction_reason = "not configured"
+    load_percent: float | None = None
+    loss_percent: float | None = None
+    correction_factor = 1.0
 
     if config.dead_time_model == "nonparalyzable" and config.dead_time_us is not None:
         tau = config.dead_time_us / 1_000_000.0
         measured_hz = measured / 60.0
-        denominator = 1.0 - measured_hz * tau
+        occupancy = measured_hz * tau
+        load_percent = max(0.0, occupancy * 100.0)
+        denominator = 1.0 - occupancy
         if denominator > 0 and not saturation:
             corrected = measured / denominator
-            correction_applied = True
+            correction_factor = corrected / measured if measured > 0 else 1.0
+            loss_percent = max(0.0, (corrected - measured) / corrected * 100.0) if corrected else 0.0
+            correction_applied = corrected > measured + 1e-9
             correction_reason = "nonparalyzable dead-time correction"
         elif denominator <= 0:
             saturation = True
+            correction_factor = math.inf
+            loss_percent = 100.0
             correction_reason = "dead-time model singularity"
         else:
             correction_reason = "outside reliable range"
 
     return {
         "measured_cpm": measured,
+        "raw_cpm": measured,
         "reliable_max_cpm": reliable,
         "dead_time_us": config.dead_time_us,
         "dead_time_model": config.dead_time_model,
+        "detector_load_percent": load_percent,
+        "dead_time_loss_percent": loss_percent,
+        "correction_factor": correction_factor,
         "possible_saturation_or_count_loss": saturation,
         "dose_rate_display_allowed": not saturation,
         "corrected_cpm": corrected,
         "correction_applied": correction_applied,
         "correction_reason": correction_reason,
+    }
+
+
+def calibration_plausibility(
+    *,
+    tube_model: str,
+    cpm_per_usvh: float | None,
+    dead_time_us: float | None,
+    dead_time_model: str,
+    calibration_status: str,
+) -> list[str]:
+    warnings: list[str] = []
+    normalized_tube = str(tube_model or "").strip()
+    if not normalized_tube:
+        warnings.append("unknown_tube_model")
+    if cpm_per_usvh is None or not 0.1 <= float(cpm_per_usvh) <= 100_000:
+        warnings.append("implausible_conversion_factor")
+    if dead_time_model != "none" and dead_time_us is None:
+        warnings.append("missing_dead_time")
+    if dead_time_us is not None and not 1.0 <= float(dead_time_us) <= 10_000:
+        warnings.append("implausible_dead_time")
+    if calibration_status in {"incomplete", "unknown"}:
+        warnings.append("incomplete_calibration")
+    return warnings
+
+
+def measurement_quality(
+    *,
+    rate: dict[str, Any],
+    calibration_status: str,
+    calibration_source: str,
+    plausibility_warnings: list[str] | None = None,
+) -> dict[str, Any]:
+    warnings = list(plausibility_warnings or [])
+    load = rate.get("detector_load_percent")
+    score = 100.0
+    if calibration_status in {"incomplete", "unknown"}:
+        score -= 30.0
+    elif calibration_status in {"working_values", "customized"}:
+        score -= 10.0
+    if calibration_source == "unknown":
+        score -= 15.0
+    if load is not None:
+        load_value = float(load)
+        if load_value >= 25.0:
+            score -= 60.0
+        elif load_value >= 10.0:
+            score -= 35.0
+        elif load_value >= 5.0:
+            score -= 15.0
+        else:
+            score -= min(5.0, load_value / 2.0)
+    if rate.get("possible_saturation_or_count_loss"):
+        score = min(score, 20.0)
+    score -= min(30.0, len(warnings) * 10.0)
+    index = max(0, min(100, round(score)))
+    stars = 5 if index >= 90 else 4 if index >= 75 else 3 if index >= 55 else 2 if index >= 30 else 1
+    accuracy = "high" if index >= 85 else "medium" if index >= 60 else "low"
+    validity = "fully_valid" if index >= 85 else "qualified" if index >= 50 else "limited"
+    return {
+        "index": index,
+        "stars": stars,
+        "star_text": "★" * stars + "☆" * (5 - stars),
+        "accuracy": accuracy,
+        "validity": validity,
+        "warnings": warnings,
+    }
+
+
+def live_measurement_metrology(
+    *,
+    cpm: float,
+    cpm_per_usvh: float | None,
+    config: MetrologyConfig,
+    calibration_status: str,
+    calibration_source: str,
+) -> dict[str, Any]:
+    rate = assess_count_rate(cpm, config)
+    warnings = calibration_plausibility(
+        tube_model=config.tube_model,
+        cpm_per_usvh=cpm_per_usvh,
+        dead_time_us=config.dead_time_us,
+        dead_time_model=config.dead_time_model,
+        calibration_status=calibration_status,
+    )
+    quality = measurement_quality(
+        rate=rate,
+        calibration_status=calibration_status,
+        calibration_source=calibration_source,
+        plausibility_warnings=warnings,
+    )
+    effective = rate.get("corrected_cpm") if rate.get("correction_applied") else float(cpm)
+    dose = None
+    if cpm_per_usvh and cpm_per_usvh > 0 and rate.get("dose_rate_display_allowed"):
+        dose = float(effective) / float(cpm_per_usvh)
+    return {
+        **rate,
+        "derived_dose_usvh": dose,
+        "measurement_quality_index": quality["index"],
+        "measurement_quality_stars": quality["stars"],
+        "measurement_quality_star_text": quality["star_text"],
+        "dose_quality": quality["accuracy"],
+        "measurement_validity": quality["validity"],
+        "plausibility_warnings": warnings,
+        "calibration_status": calibration_status,
+        "calibration_source": calibration_source,
     }
 
 

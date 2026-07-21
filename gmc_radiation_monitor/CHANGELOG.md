@@ -1,15 +1,22 @@
 # Changelog
 
-## 8.3.5
+## 8.4.0
 
-- Added predefined detector profiles for GMC-320 Plus V4 and GMC-500+.
-- Made the GMC-320 profile explicitly single-tube and ignored stale dual-tube fields for that model.
-- Applied the GMC-320 M4011 working values automatically instead of requiring repeated manual entries.
-- Removed the duplicated low-dose option block from the Home Assistant Supervisor form; primary fields now serve the single/low-dose tube.
-- Kept second/high-dose fields only for dual-tube overrides and clarified their purpose in all eight option translations.
-- Migrated matching 8.3.4 values to the new presets while retaining runtime compatibility with legacy low-dose profile data.
-- Simplified the dashboard calibration panel so single-tube data are not repeated and dual-tube channels remain clearly separated.
-- Preserved safe GMC-500+ behavior: SI-3BG dose conversion stays unavailable until a verified factor is supplied.
+- Added an Expert-view **Detector and calibration** panel to every device card with single- and dual-tube rendering.
+- Added automatic GMC-300, GMC-320, GMC-500+ and GMC-600/600+ detector-profile resolution from the serial identity.
+- Kept the GMC-320 as one physical tube and the GMC-500+ as separate M4011 and SI-3BG channels.
+- Prevented unverified SI-3BG CPM from being converted with the M4011 factor.
+- Added live measurement-quality stars, detector load traffic states, dead-time occupancy, losses, correction state and dose-quality labels.
+- Added raw CPM, corrected CPM, correction factor and detector details to the Expert statistics.
+- Added automatic plausibility warnings for missing or implausible calibration data.
+- Added a multi-device CPM comparison card with relative-deviation assessment.
+- Added calibration-profile management, a four-step custom-profile assistant and device assignments.
+- Added versioned calibration history with source, changed fields and comments plus JSON APIs.
+- Added raw, corrected and comparison modes to history charts and report generation.
+- Added report quality indicators and an optional sixth scientific PDF page with metrology traceability.
+- Added detector/calibration fields and audit tables idempotently to existing schema-8 databases.
+- Completed the new runtime wording in all eight bundled interface languages.
+- Classified predefined application values as a predefined profile rather than claiming a traceable factory calibration.
 
 ## 8.3.4
 

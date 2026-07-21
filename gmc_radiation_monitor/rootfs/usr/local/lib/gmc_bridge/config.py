@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import json
 import os
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from .calibration_presets import SUPPORTED_PROFILE_IDS, resolve_preset
+from .calibration_presets import PRESETS, SUPPORTED_PROFILE_IDS, detect_profile_id, resolve_preset
 from .gmcmap import parse_device_id_mappings, validate_identifier
 
 SUPPORTED_BAUDRATES = {1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200}
@@ -199,7 +199,7 @@ class DeviceConfig:
         if self.dual_tube_mode == "single":
             if self.calibration_overrides:
                 return "customized"
-            if self.detector_profile in {"gmc_320_plus_v4", "gmc_500_plus"}:
+            if self.detector_profile in PRESETS:
                 return "predefined"
             return "documented" if self.calibration_reference.strip() else "working_values"
         low = self.effective_low_dose_tube()
@@ -208,7 +208,7 @@ class DeviceConfig:
             return "incomplete"
         if self.calibration_overrides:
             return "customized"
-        if self.detector_profile in {"gmc_320_plus_v4", "gmc_500_plus"}:
+        if self.detector_profile in PRESETS:
             return "predefined"
         if low.calibration_reference.strip() and high.calibration_reference.strip():
             return "documented"
@@ -225,6 +225,14 @@ class DeviceConfig:
                 self.high_dose_tube.as_dict() if self.high_dose_tube is not None else None
             ),
             "calibration_status": self.calibration_status(),
+            "calibration_source": (
+                "user" if self.calibration_overrides else
+                (PRESETS[self.detector_profile].calibration_source if self.detector_profile in PRESETS else
+                 ("documented" if self.calibration_reference.strip() else "unknown"))
+            ),
+            "warning_load_percent": (PRESETS[self.detector_profile].warning_load_percent if self.detector_profile in PRESETS else 5.0),
+            "critical_load_percent": (PRESETS[self.detector_profile].critical_load_percent if self.detector_profile in PRESETS else 10.0),
+            "invalid_load_percent": (PRESETS[self.detector_profile].invalid_load_percent if self.detector_profile in PRESETS else 25.0),
         }
 
     def validate(self) -> None:
@@ -283,9 +291,9 @@ class DeviceConfig:
             )
         if self.detector_profile not in SUPPORTED_PROFILE_IDS - {"auto"}:
             raise ValueError(f"Unsupported detector_profile for {self.port}: {self.detector_profile}")
-        if self.detector_profile == "gmc_320_plus_v4" and self.dual_tube_mode != "single":
+        if self.detector_profile in {"gmc_300", "gmc_320_plus_v4", "gmc_600_plus"} and self.dual_tube_mode != "single":
             raise ValueError(
-                f"GMC-320 Plus V4 profile for {self.port} must use single-tube mode"
+                f"Single-tube detector profile for {self.port} must use single-tube mode"
             )
         if self.dual_tube_switch_cpm is not None and self.dual_tube_switch_cpm <= 0:
             raise ValueError(f"dual_tube_switch_cpm for {self.port} must be greater than zero")
@@ -306,6 +314,49 @@ class DeviceConfig:
             raise ValueError(f"gmcmap_timeout for {self.port} must be between 1 and 30 seconds")
         if self.gmcmap_counter_id:
             validate_identifier("gmcmap_counter_id", self.gmcmap_counter_id)
+
+
+def apply_detected_detector_profile(config: DeviceConfig, model_or_version: str) -> DeviceConfig:
+    """Apply a detected model preset when no explicit calibration override exists.
+
+    Serial identity is more reliable than a user-entered name. Explicit custom values
+    always win, while automatic/predefined configurations follow the detected device.
+    """
+
+    detected_id = detect_profile_id(model_or_version)
+    if detected_id is None or config.calibration_overrides:
+        return config
+    preset = PRESETS[detected_id]
+    high = None
+    if preset.high_dose_tube_model:
+        high = TubeCalibrationConfig(
+            tube_model=preset.high_dose_tube_model,
+            dead_time_us=preset.high_dose_dead_time_us,
+            reliable_max_cpm=preset.high_dose_reliable_max_cpm,
+            dead_time_model=(
+                "nonparalyzable" if preset.high_dose_dead_time_us is not None else "none"
+            ),
+            calibration_reference=(
+                "Automatic second-tube model detection; dose conversion is not calibrated."
+            ),
+        )
+    return replace(
+        config,
+        detector_profile=detected_id,
+        calibration_overrides=False,
+        cpm_per_usvh=preset.cpm_per_usvh,
+        dead_time_us=preset.dead_time_us,
+        reliable_max_cpm=preset.reliable_max_cpm,
+        dead_time_model=preset.dead_time_model,
+        conversion_factor_uncertainty_percent=preset.conversion_factor_uncertainty_percent,
+        calibration_uncertainty_percent=None,
+        calibration_reference=preset.calibration_reference,
+        tube_model=preset.tube_model,
+        dual_tube_mode=preset.dual_tube_mode,
+        dual_tube_switch_cpm=preset.dual_tube_switch_cpm,
+        low_dose_tube=None,
+        high_dose_tube=high,
+    )
 
 
 @dataclass(frozen=True)
@@ -607,7 +658,7 @@ class Settings:
                     tube_model=preset.high_dose_tube_model
                 )
 
-            if resolved_profile_id == "gmc_320_plus_v4":
+            if resolved_profile_id in {"gmc_300", "gmc_320_plus_v4", "gmc_600_plus"}:
                 # A GMC-320 has one M4011 tube. Stale dual-tube fields from the
                 # 8.3.4 form are deliberately ignored instead of becoming a
                 # second detector profile.

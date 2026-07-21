@@ -63,12 +63,17 @@ def _history_chart(
     annotations: list[dict[str, Any]],
     timezone,
     t: TranslatorLike,
+    *,
+    data_mode: str = "raw",
 ) -> str:
     if len(points) < 2:
         return f'<div class="empty-state"><strong>{html.escape(t("No history data in this period"))}</strong></div>'
-    values = [float(point.get("cpm") or 0.0) for point in points]
-    minimum = min(values)
-    maximum = max(values)
+    raw_values = [float(point.get("raw_cpm", point.get("cpm")) or 0.0) for point in points]
+    corrected_values = [float(point.get("corrected_cpm", point.get("cpm")) or 0.0) for point in points]
+    values = corrected_values if data_mode == "corrected" else raw_values
+    range_values = raw_values + corrected_values if data_mode == "comparison" else values
+    minimum = min(range_values)
+    maximum = max(range_values)
     span = maximum - minimum
     padding = max(1.0, span * 0.08)
     y_min = max(0.0, minimum - padding)
@@ -87,6 +92,10 @@ def _history_chart(
     coords = [
         f"{x_for(int(point['timestamp_utc'])):.2f},{y_for(value):.2f}"
         for point, value in zip(points, values, strict=True)
+    ]
+    corrected_coords = [
+        f"{x_for(int(point['timestamp_utc'])):.2f},{y_for(value):.2f}"
+        for point, value in zip(points, corrected_values, strict=True)
     ]
     smooth_window = max(3, min(21, len(values) // 24 or 3))
     smooth_values: list[float] = []
@@ -145,6 +154,7 @@ def _history_chart(
         + ''.join(markers)
         + ''.join(raw_markers)
         + '<polyline points="' + ' '.join(coords) + '" class="chart-line history-accepted-line" vector-effect="non-scaling-stroke"/>'
+        + ('<polyline points="' + ' '.join(corrected_coords) + '" class="history-corrected-line" vector-effect="non-scaling-stroke"/>' if data_mode == "comparison" else '')
         + '<polyline points="' + ' '.join(smooth_coords) + '" class="history-trend-line" vector-effect="non-scaling-stroke"/>'
         + f'<text x="63.5" y="52.2" text-anchor="middle" class="history-axis-title">{html.escape(t("Local date and time"))}</text>'
         + f'<text x="2.2" y="24.5" text-anchor="middle" transform="rotate(-90 2.2 24.5)" class="history-axis-title">{html.escape(t("Count rate [CPM]"))}</text>'
@@ -275,6 +285,7 @@ def render_history_section(
     history_start_utc: int,
     history_end_utc: int,
     history_summary: dict[str, Any],
+    data_mode: str = "raw",
 ) -> str:
     annotation_rows = _render_annotation_rows(
         t=t,
@@ -290,7 +301,7 @@ def render_history_section(
             f"?device={quote_plus(selected_serial)}&lang={quote_plus(t.language)}&mode=advanced"
             f"&history_start={start_date.isoformat()}&history_end={end_date.isoformat()}"
             + ("&history_raw=1" if show_raw_history else "")
-            + "#history-explorer"
+            + f"&data_mode={quote_plus(data_mode)}#history-explorer"
         )
         range_links.append(f'<a class="history-range-button" href="{html.escape(href, quote=True)}">{html.escape(t(label))}</a>')
 
@@ -312,10 +323,10 @@ def render_history_section(
 <div class="history-section-heading"><div><h2>{html.escape(t("History"))}</h2><p>{html.escape(t("Explore, compare and document accepted measurements for the selected GMC device."))}</p></div><div class="history-period-label"><strong>{html.escape(history_dates['start'])}</strong><span>→</span><strong>{html.escape(history_dates['end'])}</strong></div></div>
 
 <details class="analysis-group" id="history-explorer" open><summary><span class="summary-copy">{html.escape(t("History explorer"))}<small>{html.escape(t("Accepted count rates, smoothed trend, rejected raw values and event markers"))}</small></span></summary><div class="group-body">
-<form method="get" class="history-filter-form"><input type="hidden" name="device" value="{html.escape(selected_serial, quote=True)}"><input type="hidden" name="lang" value="{html.escape(t.language, quote=True)}"><input type="hidden" name="mode" value="advanced"><div class="history-filter-grid"><label>{html.escape(t("History from"))}<input type="date" name="history_start" value="{html.escape(history_dates['start'], quote=True)}"></label><label>{html.escape(t("History to"))}<input type="date" name="history_end" value="{html.escape(history_dates['end'], quote=True)}"></label><label class="toggle-row history-raw-toggle"><input type="checkbox" name="history_raw" value="1"{_checked(show_raw_history)}><span>{html.escape(t("Show rejected raw values"))}</span></label><button class="primary" type="submit">{html.escape(t("Show period"))}</button></div><div class="history-quick-ranges"><span>{html.escape(t("Quick ranges"))}</span>{''.join(range_links)}</div></form>
+<form method="get" class="history-filter-form"><input type="hidden" name="device" value="{html.escape(selected_serial, quote=True)}"><input type="hidden" name="lang" value="{html.escape(t.language, quote=True)}"><input type="hidden" name="mode" value="advanced"><div class="history-filter-grid"><label>{html.escape(t("History from"))}<input type="date" name="history_start" value="{html.escape(history_dates['start'], quote=True)}"></label><label>{html.escape(t("History to"))}<input type="date" name="history_end" value="{html.escape(history_dates['end'], quote=True)}"></label><label>{html.escape(t("Data mode"))}<select name="data_mode"><option value="raw"{" selected" if data_mode == "raw" else ""}>{html.escape(t("Raw data"))}</option><option value="corrected"{" selected" if data_mode == "corrected" else ""}>{html.escape(t("Dead-time corrected"))}</option><option value="comparison"{" selected" if data_mode == "comparison" else ""}>{html.escape(t("Raw and corrected comparison"))}</option></select></label><label class="toggle-row history-raw-toggle"><input type="checkbox" name="history_raw" value="1"{_checked(show_raw_history)}><span>{html.escape(t("Show rejected raw values"))}</span></label><button class="primary" type="submit">{html.escape(t("Show period"))}</button></div><div class="history-quick-ranges"><span>{html.escape(t("Quick ranges"))}</span>{''.join(range_links)}</div></form>
 <div class="metrics history-summary-metrics">{summary_metrics}</div>
-{_history_chart(history_points, raw_history_points, annotations, timezone, t)}
-<div class="history-chart-help"><span class="history-key accepted"></span>{html.escape(t("Accepted CPM"))}<span class="history-key trend"></span>{html.escape(t("Smoothed trend"))}<span class="history-key event"></span>{html.escape(t("Event note"))}<span class="history-key rejected"></span>{html.escape(t("Rejected raw value"))}</div>
+{_history_chart(history_points, raw_history_points, annotations, timezone, t, data_mode=data_mode)}
+<div class="history-chart-help"><span class="history-key accepted"></span>{html.escape(t("Raw CPM") if data_mode != "corrected" else t("Corrected CPM"))}{'<span class="history-key corrected"></span>' + html.escape(t("Corrected CPM")) if data_mode == "comparison" else ''}<span class="history-key trend"></span>{html.escape(t("Smoothed trend"))}<span class="history-key event"></span>{html.escape(t("Event note"))}<span class="history-key rejected"></span>{html.escape(t("Rejected raw value"))}</div>
 <div class="actions"><a class="button" href="./api/v1/history?device={quote_plus(selected_serial)}&amp;start_utc={history_start_utc}&amp;end_utc={history_end_utc}{'&amp;raw=1' if show_raw_history else ''}">{html.escape(t("Open history JSON"))}</a><a class="button" href="./api/v1/events?device={quote_plus(selected_serial)}&amp;start_utc={history_start_utc}&amp;end_utc={history_end_utc}">{html.escape(t("Open events JSON"))}</a></div></div></details>
 
 <details class="analysis-group" id="history-event-notes"><summary><span class="summary-copy">{html.escape(t("Event notes"))}<small>{html.escape(t("Document movement, maintenance, shielding changes or an unknown cause"))}</small></span></summary><div class="group-body">
