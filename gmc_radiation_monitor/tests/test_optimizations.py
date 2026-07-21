@@ -265,6 +265,8 @@ class MigrationAndHistoryMaintenanceTests(unittest.TestCase):
                     "gmc_history.csv",
                     "gmc_raw_history.csv",
                     "gmc_history.metadata.json",
+                    "scientific_manifest.json",
+                    "SHA256SUMS",
                 },
             )
             self.assertIn(b"device_serial,timestamp_utc,cpm", archive.read("gmc_history.csv"))

@@ -11,7 +11,7 @@ REPORT_RUN = ROOT / "rootfs/etc/services.d/gmc-reports/run"
 
 def test_visible_configuration_has_only_devices_and_shared_sections():
     config = yaml.safe_load((ROOT / "config.yaml").read_text())
-    assert config["version"] == "8.2.2"
+    assert config["version"] == "8.3.0"
     assert list(config["options"]) == [
         "devices",
         "gmcmap",
@@ -36,6 +36,13 @@ def test_visible_configuration_has_only_devices_and_shared_sections():
         "device_clock_warning_seconds": 120,
         "heartbeat_enabled": False,
         "cpm_per_usvh": 154.0,
+        "dead_time_us": None,
+        "reliable_max_cpm": None,
+        "dead_time_model": "none",
+        "conversion_factor_uncertainty_percent": None,
+        "calibration_uncertainty_percent": None,
+        "calibration_reference": "",
+        "tube_model": "",
         "gmcmap_counter_id": "",
         "serial_debug": False,
         "serial_debug_max_bytes": 64,
@@ -61,6 +68,13 @@ def test_visible_configuration_has_only_devices_and_shared_sections():
         "device_clock_warning_seconds": 120,
         "heartbeat_enabled": False,
         "cpm_per_usvh": 154.0,
+        "dead_time_us": None,
+        "reliable_max_cpm": None,
+        "dead_time_model": "none",
+        "conversion_factor_uncertainty_percent": None,
+        "calibration_uncertainty_percent": None,
+        "calibration_reference": "",
+        "tube_model": "",
         "gmcmap_counter_id": "",
         "serial_debug": False,
         "serial_debug_max_bytes": 64,
@@ -123,6 +137,13 @@ def test_each_device_owns_all_connection_and_measurement_settings():
         "device_clock_warning_seconds",
         "heartbeat_enabled",
         "cpm_per_usvh",
+        "dead_time_us",
+        "reliable_max_cpm",
+        "dead_time_model",
+        "conversion_factor_uncertainty_percent",
+        "calibration_uncertainty_percent",
+        "calibration_reference",
+        "tube_model",
         "gmcmap_counter_id",
         "serial_debug",
         "serial_debug_max_bytes",
