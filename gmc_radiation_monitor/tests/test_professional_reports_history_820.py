@@ -48,7 +48,7 @@ def test_history_explorer_contains_explicit_axes_quick_ranges_and_responsive_cha
 
 
 def test_release_notes_describe_combined_beta_gamma_scope_and_report_structure() -> None:
-    notes = Path("RELEASE_NOTES_8.4.0.md").read_text()
+    notes = Path("RELEASE_NOTES_8.4.1.md").read_text()
     assert "five-page" in notes
     assert "Count rate [CPM]" in notes
     assert "combined beta/gamma response" in notes

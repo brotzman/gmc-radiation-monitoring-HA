@@ -24,10 +24,14 @@ def test_supervisor_schema_has_no_mandatory_nested_tube_dictionary() -> None:
     assert "high_dose_tube" not in device_schema
     assert "low_dose_tube_model" not in device_schema
     assert device_schema["detector_profile"].startswith("list(")
-    assert device_schema["high_dose_tube_model"] == "str?"
+    assert "high_dose_tube_model" not in device_schema
+    dual_schema = config["schema"]["dual_tube_devices"][0]
+    assert dual_schema["high_dose_tube_model"] == "str?"
     for device in config["options"]["devices"]:
         assert "low_dose_tube" not in device
         assert "high_dose_tube" not in device
+        assert "high_dose_tube_model" not in device
+    assert config["options"]["dual_tube_devices"][0]["high_dose_tube_model"] == "SI-3BG"
 
 
 def test_pre_833_device_options_parse_without_profile_placeholders() -> None:

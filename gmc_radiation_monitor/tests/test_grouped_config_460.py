@@ -11,9 +11,10 @@ REPORT_RUN = ROOT / "rootfs/etc/services.d/gmc-reports/run"
 
 def test_visible_configuration_has_only_devices_and_shared_sections():
     config = yaml.safe_load((ROOT / "config.yaml").read_text())
-    assert config["version"] == "8.4.0"
+    assert config["version"] == "8.4.1"
     assert list(config["options"]) == [
         "devices",
+        "dual_tube_devices",
         "gmcmap",
         "history",
         "analysis",
@@ -108,16 +109,6 @@ def test_each_device_owns_all_connection_and_measurement_settings():
         "calibration_uncertainty_percent",
         "calibration_reference",
         "tube_model",
-        "dual_tube_mode",
-        "dual_tube_switch_cpm",
-        "high_dose_tube_model",
-        "high_dose_cpm_per_usvh",
-        "high_dose_dead_time_us",
-        "high_dose_reliable_max_cpm",
-        "high_dose_dead_time_model",
-        "high_dose_conversion_factor_uncertainty_percent",
-        "high_dose_calibration_uncertainty_percent",
-        "high_dose_calibration_reference",
         "gmcmap_counter_id",
         "serial_debug",
         "serial_debug_max_bytes",
@@ -135,12 +126,13 @@ def test_each_device_owns_all_connection_and_measurement_settings():
     assert "high_cpm_confirmations" not in fields
     assert "gmcmap_upload_interval" not in fields
     assert "gmcmap_timeout" not in fields
-    for prefix in ("high_dose",):
-        assert device_schema[f"{prefix}_tube_model"] == "str?"
-        assert device_schema[f"{prefix}_cpm_per_usvh"] == "float(0.001,)?"
-        assert device_schema[f"{prefix}_dead_time_us"] == "float(0.001,)?"
-        assert device_schema[f"{prefix}_reliable_max_cpm"] == "int(1,)?"
-        assert device_schema[f"{prefix}_dead_time_model"] == "list(none|nonparalyzable)?"
+    dual_schema = config["schema"]["dual_tube_devices"][0]
+    assert dual_schema["dual_tube_mode"] == "list(separate|curve)"
+    assert dual_schema["high_dose_tube_model"] == "str?"
+    assert dual_schema["high_dose_cpm_per_usvh"] == "float(0.001,)?"
+    assert dual_schema["high_dose_dead_time_us"] == "float(0.001,)?"
+    assert dual_schema["high_dose_reliable_max_cpm"] == "int(1,)?"
+    assert dual_schema["high_dose_dead_time_model"] == "list(none|nonparalyzable)?"
     assert set(config["schema"]["gmcmap"]) == {
         "enabled",
         "privacy_confirmed",

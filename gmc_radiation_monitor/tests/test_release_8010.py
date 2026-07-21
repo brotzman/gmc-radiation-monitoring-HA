@@ -11,14 +11,14 @@ REPO_ROOT = ROOT.parent
 
 
 def test_release_version_and_current_notes() -> None:
-    assert APP_VERSION == "8.4.0"
-    assert yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))["version"] == "8.4.0"
-    assert (ROOT / "RELEASE_NOTES_8.4.0.md").is_file()
+    assert APP_VERSION == "8.4.1"
+    assert yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))["version"] == "8.4.1"
+    assert (ROOT / "RELEASE_NOTES_8.4.1.md").is_file()
 
 
 def test_only_current_release_notes_are_distributed() -> None:
     notes = sorted(path.name for path in ROOT.glob("RELEASE_NOTES_*.md"))
-    assert notes == ["RELEASE_NOTES_8.4.0.md"]
+    assert notes == ["RELEASE_NOTES_8.4.1.md"]
 
 
 def test_all_eight_manuals_and_embedded_versions_are_current() -> None:
@@ -132,7 +132,7 @@ def test_dashboard_cleanup_keeps_status_overview_and_removes_duplicate_ui(tmp_pa
     assert 'class="location-details manual-link"' in page
     assert 'href="./docs/user-manual.pdf?lang=de"' in page
     assert "Benutzerhandbuch" in page
-    assert "PDF · Version 8.4.0 · Deutsch" in page
+    assert "PDF · Version 8.4.1 · Deutsch" in page
     for language, native_name in {
         "en": "English",
         "es": "Español",
@@ -144,7 +144,7 @@ def test_dashboard_cleanup_keeps_status_overview_and_removes_duplicate_ui(tmp_pa
     }.items():
         localized_page = app.render_index(language_override=language, mode_override="advanced").decode()
         assert f'href="./docs/user-manual.pdf?lang={language}"' in localized_page
-        assert f"PDF · Version 8.4.0 · {native_name}" in localized_page
+        assert f"PDF · Version 8.4.1 · {native_name}" in localized_page
     assert page.index('class="header-resource-links"') < page.index('id="analysis-level-panel"')
     assert page.index('class="location-details external-map-link"') < page.index(
         'class="location-details manual-link"'

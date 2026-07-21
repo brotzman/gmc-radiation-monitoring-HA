@@ -212,7 +212,7 @@ def test_advanced_dashboard_contains_release_840_controls(tmp_path: Path) -> Non
         language_override="de", mode_override="advanced", device_override="SERIAL-500"
     ).decode("utf-8")
     for text in (
-        "Detektor &amp; Kalibrierung",
+        "Detektor Profil",
         "Messqualität",
         "Detektorauslastung",
         "Gerätevergleich",
@@ -266,8 +266,8 @@ def test_scientific_pdf_adds_sixth_page_and_comparison_mode(tmp_path: Path) -> N
 
 def test_release_metadata_and_supervisor_schema_are_840() -> None:
     config = yaml.safe_load(Path("config.yaml").read_text(encoding="utf-8"))
-    assert APP_VERSION == "8.4.0"
-    assert config["version"] == "8.4.0"
+    assert APP_VERSION == "8.4.1"
+    assert config["version"] == "8.4.1"
     profile_schema = config["schema"]["devices"][0]["detector_profile"]
     for profile in ("gmc_300", "gmc_320_plus_v4", "gmc_500_plus", "gmc_600_plus"):
         assert profile in profile_schema

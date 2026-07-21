@@ -144,4 +144,6 @@ def test_single_tube_panel_does_not_render_dual_tube_details() -> None:
     assert "Umschaltung des zweiten Zählrohrs" not in panel
     assert panel.count("tube-profile-card") == 1
     assert panel.count("M4011") == 1
-    assert panel.count("154 CPM/(µSv/h)") == 1
+    assert "Aktuelle CPM" not in panel
+    assert "154 CPM/(µSv/h)" not in panel
+    assert "Detektor Profil" in panel

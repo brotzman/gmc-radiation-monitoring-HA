@@ -1,46 +1,39 @@
 All GMC history was deleted: Sva GMC povijest je izbrisana
-Another report or maintenance job is running: Drugi izvještaj ili zadatak održavanja
-  je u tijeku
+Another report or maintenance job is running: Drugi izvještaj ili zadatak održavanja je u tijeku
 Complete history deletion failed: Potpuno brisanje povijesti nije uspjelo
 Danger zone: Opasna zona
 Delete all GMC history: Izbriši svu GMC povijest
-Deletion confirmation text must be exactly DELETE ALL GMC HISTORY: Tekst potvrde mora
-  biti točno DELETE ALL GMC HISTORY
+Deletion confirmation text must be exactly DELETE ALL GMC HISTORY: Tekst potvrde mora biti točno DELETE ALL
+  GMC HISTORY
 History deleted: Povijest izbrisana
 Invalid deletion confirmation: Nevažeća potvrda brisanja
-? Permanently delete all GMC history from this app and Home Assistant Recorder. This
-  includes CPM, temperature, voltage, gyro and tube measurements for every known GMC
-  and all time periods.
-: Trajno izbrišite svu GMC povijest iz ove aplikacije i Home Assistant Recordera,
-  uključujući CPM, temperaturu, napon, žiroskop i mjerenja cijevi za sve poznate GMC
-  uređaje i sva razdoblja.
-This cannot be undone. Delete all GMC history?: Ovo se ne može poništiti. Izbrisati
-  svu GMC povijest?
+? Permanently delete all GMC history from this app and Home Assistant Recorder. This includes CPM, temperature,
+  voltage, gyro and tube measurements for every known GMC and all time periods.
+: Trajno izbrišite svu GMC povijest iz ove aplikacije i Home Assistant Recordera, uključujući CPM, temperaturu,
+  napon, žiroskop i mjerenja cijevi za sve poznate GMC uređaje i sva razdoblja.
+This cannot be undone. Delete all GMC history?: Ovo se ne može poništiti. Izbrisati svu GMC povijest?
 Type DELETE ALL GMC HISTORY to confirm: Za potvrdu upišite DELETE ALL GMC HISTORY
 configuration:
   analysis:
     description: Zajedničke postavke osnovne razine, semafora i događaja za sve uređaje.
     fields:
       baseline_learning_days:
-        description: Broj dana povijesti koji se koristi za lokalnu osnovnu vrijednost
-          pozadine.
+        description: Broj dana povijesti koji se koristi za lokalnu osnovnu vrijednost pozadine.
         name: Razdoblje učenja osnovne vrijednosti
       external_temperature_entity:
-        description: Senzor Home Assistanta koji se koristi za korelaciju CPM-a i
-          temperature kada GMC nema unutarnji senzor temperature. ID entiteta ostaje
-          moguće uređivati.
+        description: Senzor Home Assistanta koji se koristi za korelaciju CPM-a i temperature kada GMC nema
+          unutarnji senzor temperature. ID entiteta ostaje moguće uređivati.
         name: Entitet vanjske temperature
       external_temperature_max_age_seconds:
-        description: Starija stanja temperature iz Home Assistanta ne koriste se za
-          korelaciju.
+        description: Starija stanja temperature iz Home Assistanta ne koriste se za korelaciju.
         name: Najveća starost vanjske temperature
       external_temperature_name:
-        description: Rezervni opisni naziv za pronalaženje senzora temperature kada
-          se konfigurirani ID entiteta razlikuje ili je preimenovan.
+        description: Rezervni opisni naziv za pronalaženje senzora temperature kada se konfigurirani ID entiteta
+          razlikuje ili je preimenovan.
         name: Naziv za pretraživanje vanjske temperature
       cosmic_hint_enabled:
-        description: Uči oprezan pozadinski potpis povezan s tlakom. To je samo statistička
-          naznaka i ne potiskuje upozorenja.
+        description: Uči oprezan pozadinski potpis povezan s tlakom. To je samo statistička naznaka i ne potiskuje
+          upozorenja.
         name: Statistička naznaka kozmičkog utjecaja
       pressure_weather_entity_primary:
         description: Primarni Home Assistant vremenski entitet za trenutačni tlak.
@@ -58,8 +51,7 @@ configuration:
         description: Najveća dopuštena razlika između dvaju izvora tlaka.
         name: Najveća razlika izvora tlaka
       rapid_rise_percent:
-        description: Postotno povećanje koje stvara događaj unutar odabranog vremenskog
-          prozora.
+        description: Postotno povećanje koje stvara događaj unutar odabranog vremenskog prozora.
         name: Prag brzog porasta
       rapid_rise_window_minutes:
         description: Razdoblje usporedbe u minutama.
@@ -68,33 +60,29 @@ configuration:
         description: Otkrivaj brze poraste, trajno povišenje i povratak u normalu.
         name: Pametni događaji
       sustained_alert_minutes:
-        description: Broj minuta iznad naučene osnovne vrijednosti prije stvaranja
-          trajnog događaja.
+        description: Broj minuta iznad naučene osnovne vrijednosti prije stvaranja trajnog događaja.
         name: Trajno povišenje
       traffic_light_red_percent:
-        description: Crveni prag odstupanja; mora biti viši od žutog. Nije sigurnosni
-          prag.
+        description: Crveni prag odstupanja; mora biti viši od žutog. Nije sigurnosni prag.
         name: 'Relativni semafor: crveno'
       traffic_light_yellow_percent:
-        description: Postotno odstupanje 1-satnog prosjeka od naučene osnovne vrijednosti.
-          Nije sigurnosni prag.
+        description: Postotno odstupanje 1-satnog prosjeka od naučene osnovne vrijednosti. Nije sigurnosni
+          prag.
         name: 'Relativni semafor: žuto'
     name: Analiza pozadine
   devices:
-    description: Svaki povezani GMC brojač konfigurira se zasebno. Dodajte jedan unos
-      za svaki fizički uređaj.
+    description: Svaki povezani GMC brojač konfigurira se zasebno. Dodajte jedan unos za svaki fizički uređaj.
     fields:
       auxiliary_read_interval:
-        description: Sekunde između očitanja temperature, napona, dviju cijevi, vremena
-          uređaja i žiroskopa. CPM i dalje koristi mjerni interval; 0 očitava pomoćne
-          vrijednosti u svakom ciklusu.
+        description: Sekunde između očitanja temperature, napona, dviju cijevi, vremena uređaja i žiroskopa.
+          CPM i dalje koristi mjerni interval; 0 očitava pomoćne vrijednosti u svakom ciklusu.
         name: Interval pomoćnog očitanja
       command_timeout:
         description: Najdulje čekanje odgovora u sekundama.
         name: Istek odgovora
       cpm_per_usvh:
-        description: Unaprijed određeno profilom detektora. Vrijednost unesite samo
-          ako želite zamijeniti zadanu postavku za ovaj uređaj.
+        description: Unaprijed određeno profilom detektora. Vrijednost unesite samo ako želite zamijeniti zadanu
+          postavku za ovaj uređaj.
         name: 'Jedina/primarna cijev: Faktor pretvorbe'
       device_clock_warning_seconds:
         description: Dopušteno odstupanje u sekundama.
@@ -121,21 +109,20 @@ configuration:
         description: Sekunde između spremljenih mjerenja.
         name: Interval mjerenja
       serial_debug:
-        description: Bilježi ograničene heksadecimalne i ASCII preglede TX/RX okvira
-          za ovaj uređaj. Omogući samo tijekom dijagnostike.
+        description: Bilježi ograničene heksadecimalne i ASCII preglede TX/RX okvira za ovaj uređaj. Omogući
+          samo tijekom dijagnostike.
         name: Otklanjanje pogrešaka serijskih okvira
       serial_debug_max_bytes:
         description: Najveći broj bajtova prikazanih za svaki TX/RX okvir.
         name: Ograničenje bajtova okvira za dijagnostiku
       serial_startup_delay:
-        description: Odgoda pokretanja u sekundama prije inicijalizacije uređaja.
-          Veće konfigurirane vrijednosti ostaju, a uzastopni uređaji uvijek su razmaknuti
-          najmanje 15 sekundi.
+        description: Odgoda pokretanja u sekundama prije inicijalizacije uređaja. Veće konfigurirane vrijednosti
+          ostaju, a uzastopni uređaji uvijek su razmaknuti najmanje 15 sekundi.
         name: Odgoda pokretanja serijske veze
       orientation_calibration_enabled:
         name: Kalibracija orijentacije
-        description: Upotrijebi konfigurirane pomake i mjerila za nagib po uzdužnoj
-          i poprečnoj osi te ukupni nagib.
+        description: Upotrijebi konfigurirane pomake i mjerila za nagib po uzdužnoj i poprečnoj osi te ukupni
+          nagib.
       orientation_calibration_serial:
         name: Serijski broj kalibriranog uređaja
         description: Serijski broj kojem pripada ova kalibracija.
@@ -161,117 +148,108 @@ configuration:
         name: Naziv kalibracijskog profila
         description: Naziv prikazan uz izračunate vrijednosti orijentacije.
       dead_time_us:
-        description: Unaprijed određeno profilom detektora. Vrijednost unesite samo
-          ako želite zamijeniti zadanu postavku za ovaj uređaj.
+        description: Unaprijed određeno profilom detektora. Vrijednost unesite samo ako želite zamijeniti zadanu
+          postavku za ovaj uređaj.
         name: 'Jedina/primarna cijev: Mrtvo vrijeme detektora'
       reliable_max_cpm:
-        description: Unaprijed određeno profilom detektora. Vrijednost unesite samo
-          ako želite zamijeniti zadanu postavku za ovaj uređaj.
+        description: Unaprijed određeno profilom detektora. Vrijednost unesite samo ako želite zamijeniti zadanu
+          postavku za ovaj uređaj.
         name: 'Jedina/primarna cijev: Najveći pouzdani CPM'
       dead_time_model:
-        description: Unaprijed određeno profilom detektora. Vrijednost unesite samo
-          ako želite zamijeniti zadanu postavku za ovaj uređaj.
+        description: Unaprijed određeno profilom detektora. Vrijednost unesite samo ako želite zamijeniti zadanu
+          postavku za ovaj uređaj.
         name: 'Jedina/primarna cijev: Model mrtvog vremena'
       conversion_factor_uncertainty_percent:
-        description: Unaprijed određeno profilom detektora. Vrijednost unesite samo
-          ako želite zamijeniti zadanu postavku za ovaj uređaj.
+        description: Unaprijed određeno profilom detektora. Vrijednost unesite samo ako želite zamijeniti zadanu
+          postavku za ovaj uređaj.
         name: 'Jedina/primarna cijev: Nesigurnost faktora pretvorbe'
       calibration_uncertainty_percent:
-        description: Unaprijed određeno profilom detektora. Vrijednost unesite samo
-          ako želite zamijeniti zadanu postavku za ovaj uređaj.
+        description: Unaprijed određeno profilom detektora. Vrijednost unesite samo ako želite zamijeniti zadanu
+          postavku za ovaj uređaj.
         name: 'Jedina/primarna cijev: Nesigurnost kalibracije'
       calibration_reference:
-        description: Unaprijed određeno profilom detektora. Vrijednost unesite samo
-          ako želite zamijeniti zadanu postavku za ovaj uređaj.
+        description: Unaprijed određeno profilom detektora. Vrijednost unesite samo ako želite zamijeniti zadanu
+          postavku za ovaj uređaj.
         name: 'Jedina/primarna cijev: Referenca kalibracije'
       tube_model:
-        description: Unaprijed određeno profilom detektora. Vrijednost unesite samo
-          ako želite zamijeniti zadanu postavku za ovaj uređaj.
+        description: Unaprijed određeno profilom detektora. Vrijednost unesite samo ako želite zamijeniti zadanu
+          postavku za ovaj uređaj.
         name: 'Jedina/primarna cijev: Model cijevi'
-      dual_tube_mode:
-        name: Način rada cijevi (napredno)
-        description: Uobičajeno ga postavlja profil detektora. Koristite single za
-          jednu fizičku cijev, a separate ili curve samo za podržane uređaje s dvije
-          cijevi.
-      dual_tube_switch_cpm:
-        name: Prag CPM-a druge cijevi
-        description: Samo za uređaje s dvije cijevi. Radna vrijednost za GMC-500+
-          unaprijed je postavljena i smije se mijenjati samo uz provjerenu kalibraciju.
-      high_dose_tube_model:
-        description: Samo za drugu/visokodoznu cijev uređaja s dvije cijevi. Ostavite
-          prazno za GMC-320 i druge modele s jednom cijevi.
-        name: 'Druga cijev (samo uređaji s dvije cijevi): Model cijevi'
-      high_dose_cpm_per_usvh:
-        description: Samo za drugu/visokodoznu cijev uređaja s dvije cijevi. Ostavite
-          prazno za GMC-320 i druge modele s jednom cijevi.
-        name: 'Druga cijev (samo uređaji s dvije cijevi): Faktor pretvorbe'
-      high_dose_dead_time_us:
-        description: Samo za drugu/visokodoznu cijev uređaja s dvije cijevi. Ostavite
-          prazno za GMC-320 i druge modele s jednom cijevi.
-        name: 'Druga cijev (samo uređaji s dvije cijevi): Mrtvo vrijeme detektora'
-      high_dose_reliable_max_cpm:
-        description: Samo za drugu/visokodoznu cijev uređaja s dvije cijevi. Ostavite
-          prazno za GMC-320 i druge modele s jednom cijevi.
-        name: 'Druga cijev (samo uređaji s dvije cijevi): Najveći pouzdani CPM'
-      high_dose_dead_time_model:
-        description: Samo za drugu/visokodoznu cijev uređaja s dvije cijevi. Ostavite
-          prazno za GMC-320 i druge modele s jednom cijevi.
-        name: 'Druga cijev (samo uređaji s dvije cijevi): Model mrtvog vremena'
-      high_dose_conversion_factor_uncertainty_percent:
-        description: Samo za drugu/visokodoznu cijev uređaja s dvije cijevi. Ostavite
-          prazno za GMC-320 i druge modele s jednom cijevi.
-        name: 'Druga cijev (samo uređaji s dvije cijevi): Nesigurnost faktora pretvorbe'
-      high_dose_calibration_uncertainty_percent:
-        description: Samo za drugu/visokodoznu cijev uređaja s dvije cijevi. Ostavite
-          prazno za GMC-320 i druge modele s jednom cijevi.
-        name: 'Druga cijev (samo uređaji s dvije cijevi): Nesigurnost kalibracije'
-      high_dose_calibration_reference:
-        description: Samo za drugu/visokodoznu cijev uređaja s dvije cijevi. Ostavite
-          prazno za GMC-320 i druge modele s jednom cijevi.
-        name: 'Druga cijev (samo uređaji s dvije cijevi): Referenca kalibracije'
       detector_profile:
         name: Profil detektora (zadana postavka)
-        description: Automatski prepoznaje GMC-300, GMC-320, GMC-500+ i GMC-600+ te
-          učitava model cijevi, mrtvo vrijeme, faktor pretvorbe, pragove upozorenja
-          i stanje kalibracije. Drugu vrijednost odaberite samo za namjerno prilagođeni
-          profil.
+        description: Automatski prepoznaje GMC-300, GMC-320, GMC-500+ i GMC-600+ te učitava model cijevi, mrtvo
+          vrijeme, faktor pretvorbe, pragove upozorenja i stanje kalibracije. Drugu vrijednost odaberite samo
+          za namjerno prilagođeni profil.
     name: Uređaji
+  dual_tube_devices:
+    name: Uređaji s dvije cijevi (napredno)
+    description: Napredne postavke načina rada cijevi i druge cijevi. Naziv mora točno odgovarati stavci pod
+      Uređaji. Samo za GMC-500+ i druge podržane modele s dvije cijevi.
+    fields:
+      name:
+        name: Naziv uređaja
+        description: Točan naziv odgovarajuće stavke pod Uređaji.
+      dual_tube_mode:
+        name: Način rada cijevi (napredno)
+        description: «separate» zasebno procjenjuje oba kanala; «curve» koristi postavljenu točku prebacivanja.
+      dual_tube_switch_cpm:
+        name: CPM prebacivanja druge cijevi
+        description: Radna točka prebacivanja druge cijevi. Mijenjati samo uz provjerene podatke za uređaj.
+      high_dose_tube_model:
+        name: 'Druga cijev: Model cijevi'
+        description: Model druge visokodozne cijevi.
+      high_dose_cpm_per_usvh:
+        name: 'Druga cijev: Faktor pretvorbe'
+        description: Faktor pretvorbe CPM-doza za drugu cijev. Ostaviti prazno bez provjerene kalibracije.
+      high_dose_dead_time_us:
+        name: 'Druga cijev: Mrtvo vrijeme detektora'
+        description: Mrtvo vrijeme druge cijevi u mikrosekundama.
+      high_dose_reliable_max_cpm:
+        name: 'Druga cijev: Najveći pouzdani CPM'
+        description: Najveća brzina brojanja koja se smatra pouzdanom za drugu cijev.
+      high_dose_dead_time_model:
+        name: 'Druga cijev: Model mrtvog vremena'
+        description: Model mrtvog vremena druge cijevi.
+      high_dose_conversion_factor_uncertainty_percent:
+        name: 'Druga cijev: Nesigurnost faktora pretvorbe'
+        description: Relativna standardna nesigurnost faktora pretvorbe druge cijevi u postocima.
+      high_dose_calibration_uncertainty_percent:
+        name: 'Druga cijev: Nesigurnost kalibracije'
+        description: Relativna standardna nesigurnost kalibracije druge cijevi u postocima.
+      high_dose_calibration_reference:
+        name: 'Druga cijev: Referenca kalibracije'
+        description: Certifikat, laboratorij ili druga referenca kalibracije druge cijevi.
   gmcmap:
-    description: Zajednički račun i mrežne postavke za javno slanje. ID brojača ostaje
-      vezan uz pojedini uređaj.
+    description: Zajednički račun i mrežne postavke za javno slanje. ID brojača ostaje vezan uz pojedini uređaj.
     fields:
       account_id:
-        description: Korisnički ID registriranog GMCMap računa. Ne zapisuje se u dnevnike
-          ni dijagnostičke izvoze.
+        description: Korisnički ID registriranog GMCMap računa. Ne zapisuje se u dnevnike ni dijagnostičke
+          izvoze.
         name: Korisnički ID (AID)
       enabled:
-        description: Po želji šalje mjerenja na javnu svjetsku kartu GMCMap. Zadano
-          je onemogućeno.
+        description: Po želji šalje mjerenja na javnu svjetsku kartu GMCMap. Zadano je onemogućeno.
         name: Omogući javno slanje
       privacy_confirmed:
-        description: Mora biti omogućeno prije slanja. Lokacija i podaci postaje uređuju
-          se u GMCMap računu i mogu biti javno vidljivi.
+        description: Mora biti omogućeno prije slanja. Lokacija i podaci postaje uređuju se u GMCMap računu
+          i mogu biti javno vidljivi.
         name: Potvrdi javni prijenos podataka
       timeout:
-        description: Najdulje čekanje po GMCMap zahtjevu u sekundama. Pogreške se
-          ponovno pokušavaju u pozadini s postupnim odmakom.
+        description: Najdulje čekanje po GMCMap zahtjevu u sekundama. Pogreške se ponovno pokušavaju u pozadini
+          s postupnim odmakom.
         name: Mrežno vremensko ograničenje
       upload_interval:
-        description: Sekunde između javnih slanja za svaki uređaj. Preporučuje se
-          najmanje 120 do 300 sekundi.
+        description: Sekunde između javnih slanja za svaki uređaj. Preporučuje se najmanje 120 do 300 sekundi.
         name: Interval slanja
     name: GMCMap (zajedničko)
   history:
-    description: Lokalno zadržavanje, vremenska zona izvještaja i zaštićeno upravljanje
-      poviješću.
+    description: Lokalno zadržavanje, vremenska zona izvještaja i zaštićeno upravljanje poviješću.
     fields:
       history_management_enabled:
-        description: Omogućuje zaštićene alate za vraćanje i potpuno brisanje povijesti.
-          Tijekom normalnog rada ostavite isključeno.
+        description: Omogućuje zaštićene alate za vraćanje i potpuno brisanje povijesti. Tijekom normalnog
+          rada ostavite isključeno.
         name: Upravljanje poviješću
       report_timezone:
-        description: IANA vremenska zona za granice dana i vremenske oznake, npr.
-          Europe/Zagreb.
+        description: IANA vremenska zona za granice dana i vremenske oznake, npr. Europe/Zagreb.
         name: Vremenska zona izvješća
       retention_days:
         description: Broj dana tijekom kojih mjerenja ostaju u lokalnoj SQLite bazi.
@@ -281,15 +259,14 @@ configuration:
     description: Zajednički jezik, način prikaza i MQTT prezentacija.
     fields:
       publish_advanced_sensors:
-        description: Izloži statistiku, osnovnu vrijednost i upozorenja putem MQTT
-          Discoveryja.
+        description: Izloži statistiku, osnovnu vrijednost i upozorenja putem MQTT Discoveryja.
         name: Objavi napredne MQTT senzore
       ui_language:
         description: Automatski način slijedi jezik preglednika.
         name: Jezik sučelja
       ui_mode:
-        description: Jednostavni prikaz pokazuje osnovne vrijednosti; napredni dodaje
-          analizu, održavanje i izvoz.
+        description: Jednostavni prikaz pokazuje osnovne vrijednosti; napredni dodaje analizu, održavanje i
+          izvoz.
         name: Prikaz izvješća
     name: Sučelje
   safety:
@@ -302,13 +279,13 @@ configuration:
         description: Početak crvene razine za izvedenu brzinu doze.
         name: Prilagođena opasnost u µSv/h
       profile:
-        description: GQ koristi raspone proizvođača. BfS i ICRP reference matematički
-          pretvaraju 1 i 20 mSv/godinu u kontinuiranu brzinu; nisu službeni trenutačni
-          pragovi alarma. Prilagođeni profil koristi polja u nastavku.
+        description: GQ koristi raspone proizvođača. BfS i ICRP reference matematički pretvaraju 1 i 20 mSv/godinu
+          u kontinuiranu brzinu; nisu službeni trenutačni pragovi alarma. Prilagođeni profil koristi polja
+          u nastavku.
         name: Profil pragova
       threshold_basis:
-        description: Upotrijebi CPM, izvedenu brzinu doze ili stroži rezultat. Primjenjuje
-          se samo na prilagođeni profil.
+        description: Upotrijebi CPM, izvedenu brzinu doze ili stroži rezultat. Primjenjuje se samo na prilagođeni
+          profil.
         name: Procjena prilagođenog profila
       warning_cpm:
         description: Početak žute razine. Primjenjuje se samo na prilagođeni profil.
@@ -324,19 +301,16 @@ configuration:
         description: Razina pojedinosti u zapisnicima dodatka.
         name: Razina zapisivanja
       serial_scheduler_enabled:
-        description: Serijalizira prozore naredbi brojača koji dijele USB kontroler
-          glavnog računala.
+        description: Serijalizira prozore naredbi brojača koji dijele USB kontroler glavnog računala.
         name: Zajednički serijski raspoređivač
       serial_scheduler_gap_seconds:
-        description: Vrijeme mirovanja u sekundama između prozora naredbi različitih
-          brojača.
+        description: Vrijeme mirovanja u sekundama između prozora naredbi različitih brojača.
         name: Razmak mirovanja raspoređivača
     name: Sustav
-'{count} measurements and {events} events were removed.': Uklonjeno je {count} mjerenja
-  i {events} događaja.
-? All downloads below automatically use the GMC device currently shown in Analysis.
-  Select another connected device above to change the report source.
-: Sva preuzimanja u nastavku automatski koriste GMC uređaj koji je trenutno prikazan
-  u analizi. Odaberite drugi povezani uređaj iznad da biste promijenili izvor izvješća.
+'{count} measurements and {events} events were removed.': Uklonjeno je {count} mjerenja i {events} događaja.
+? All downloads below automatically use the GMC device currently shown in Analysis. Select another connected
+  device above to change the report source.
+: Sva preuzimanja u nastavku automatski koriste GMC uređaj koji je trenutno prikazan u analizi. Odaberite drugi
+  povezani uređaj iznad da biste promijenili izvor izvješća.
 No connected GMC device: Nema povezanog GMC uređaja
 Reports for the displayed analysis: Izvješća za prikazanu analizu

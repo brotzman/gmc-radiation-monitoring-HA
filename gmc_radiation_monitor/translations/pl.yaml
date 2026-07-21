@@ -1,45 +1,39 @@
 All GMC history was deleted: Cała historia GMC została usunięta
-Another report or maintenance job is running: Trwa wykonywanie innego zadania raportu
-  lub konserwacji
+Another report or maintenance job is running: Trwa wykonywanie innego zadania raportu lub konserwacji
 Complete history deletion failed: Całkowite usunięcie historii nie powiodło się
 Danger zone: Strefa niebezpieczeństwa
 Delete all GMC history: Usuń całą historię GMC
-Deletion confirmation text must be exactly DELETE ALL GMC HISTORY: Tekst potwierdzenia
-  usunięcia musi mieć dokładnie postać DELETE ALL GMC HISTORY
+Deletion confirmation text must be exactly DELETE ALL GMC HISTORY: Tekst potwierdzenia usunięcia musi mieć
+  dokładnie postać DELETE ALL GMC HISTORY
 History deleted: Historia usunięta
 Invalid deletion confirmation: Nieprawidłowe potwierdzenie usunięcia
-? Permanently delete all GMC history from this app and Home Assistant Recorder. This
-  includes CPM, temperature, voltage, gyro and tube measurements for every known GMC
-  and all time periods.
-: Trwale usuń całą historię GMC z tej aplikacji i rejestratora Home Assistant. Obejmuje
-  to pomiary CPM, temperatury, napięcia, żyroskopu i rurki dla każdego znanego GMC
-  i wszystkich okresów.
-This cannot be undone. Delete all GMC history?: Tego nie można cofnąć. Usunąć całą
-  historię GMC?
+? Permanently delete all GMC history from this app and Home Assistant Recorder. This includes CPM, temperature,
+  voltage, gyro and tube measurements for every known GMC and all time periods.
+: Trwale usuń całą historię GMC z tej aplikacji i rejestratora Home Assistant. Obejmuje to pomiary CPM, temperatury,
+  napięcia, żyroskopu i rurki dla każdego znanego GMC i wszystkich okresów.
+This cannot be undone. Delete all GMC history?: Tego nie można cofnąć. Usunąć całą historię GMC?
 Type DELETE ALL GMC HISTORY to confirm: Wpisz DELETE ALL GMC HISTORY, aby potwierdzić
 configuration:
   analysis:
-    description: Wspólne ustawienia poziomu bazowego, sygnalizacji i zdarzeń dla wszystkich
-      urządzeń.
+    description: Wspólne ustawienia poziomu bazowego, sygnalizacji i zdarzeń dla wszystkich urządzeń.
     fields:
       baseline_learning_days:
         description: Liczba dni historii używana do lokalnego poziomu tła.
         name: Okres uczenia poziomu bazowego
       external_temperature_entity:
-        description: Czujnik Home Assistant używany do korelacji CPM z temperaturą,
-          gdy GMC nie ma wewnętrznego czujnika temperatury. Identyfikator encji pozostaje
-          edytowalny.
+        description: Czujnik Home Assistant używany do korelacji CPM z temperaturą, gdy GMC nie ma wewnętrznego
+          czujnika temperatury. Identyfikator encji pozostaje edytowalny.
         name: Encja temperatury zewnętrznej
       external_temperature_max_age_seconds:
         description: Starsze stany temperatury Home Assistant nie są używane do korelacji.
         name: Maksymalny wiek temperatury zewnętrznej
       external_temperature_name:
-        description: Zapasowa przyjazna nazwa używana do odnajdywania czujnika temperatury,
-          gdy skonfigurowany identyfikator encji jest inny lub został zmieniony.
+        description: Zapasowa przyjazna nazwa używana do odnajdywania czujnika temperatury, gdy skonfigurowany
+          identyfikator encji jest inny lub został zmieniony.
         name: Nazwa wyszukiwania temperatury zewnętrznej
       cosmic_hint_enabled:
-        description: Uczy ostrożnej sygnatury tła związanej z ciśnieniem. To tylko
-          wskazanie statystyczne i nie wyłącza ostrzeżeń.
+        description: Uczy ostrożnej sygnatury tła związanej z ciśnieniem. To tylko wskazanie statystyczne i
+          nie wyłącza ostrzeżeń.
         name: Statystyczne wskazanie wpływu kosmicznego
       pressure_weather_entity_primary:
         description: Główna encja pogodowa Home Assistant dla bieżącego ciśnienia.
@@ -63,36 +57,33 @@ configuration:
         description: Okres porównania w minutach.
         name: Okno szybkiego wzrostu
       smart_alerts_enabled:
-        description: Wykrywa szybkie wzrosty, utrzymujące się podwyższenie i powrót
-          do normy.
+        description: Wykrywa szybkie wzrosty, utrzymujące się podwyższenie i powrót do normy.
         name: Inteligentne zdarzenia
       sustained_alert_minutes:
         description: Minuty powyżej wyuczonego poziomu bazowego przed zdarzeniem trwałym.
         name: Utrzymujące się podwyższenie
       traffic_light_red_percent:
-        description: Czerwony próg odchylenia; musi być wyższy od żółtego. Nie jest
-          limitem bezpieczeństwa.
+        description: Czerwony próg odchylenia; musi być wyższy od żółtego. Nie jest limitem bezpieczeństwa.
         name: 'Względny sygnalizator: czerwony'
       traffic_light_yellow_percent:
-        description: Procentowe odchylenie średniej godzinowej od wyuczonego poziomu
-          bazowego. Nie jest limitem bezpieczeństwa.
+        description: Procentowe odchylenie średniej godzinowej od wyuczonego poziomu bazowego. Nie jest limitem
+          bezpieczeństwa.
         name: 'Względny sygnalizator: żółty'
     name: Analiza tła
   devices:
-    description: Skonfiguruj każdy podłączony licznik GMC niezależnie. Dodaj jeden
-      wpis dla każdego urządzenia fizycznego.
+    description: Skonfiguruj każdy podłączony licznik GMC niezależnie. Dodaj jeden wpis dla każdego urządzenia
+      fizycznego.
     fields:
       auxiliary_read_interval:
-        description: Liczba sekund między odczytami temperatury, napięcia, dwóch tub,
-          czasu urządzenia i żyroskopu. CPM nadal używa interwału pomiarowego; 0 odczytuje
-          wartości pomocnicze w każdym cyklu.
+        description: Liczba sekund między odczytami temperatury, napięcia, dwóch tub, czasu urządzenia i żyroskopu.
+          CPM nadal używa interwału pomiarowego; 0 odczytuje wartości pomocnicze w każdym cyklu.
         name: Interwał odczytu pomocniczego
       command_timeout:
         description: Maksymalne oczekiwanie w sekundach.
         name: Limit czasu odpowiedzi
       cpm_per_usvh:
-        description: Wstępnie ustawione przez profil detektora. Wprowadź wartość tylko
-          w celu zastąpienia ustawienia dla tego urządzenia.
+        description: Wstępnie ustawione przez profil detektora. Wprowadź wartość tylko w celu zastąpienia ustawienia
+          dla tego urządzenia.
         name: 'Jedyna/główna tuba: Współczynnik przeliczeniowy'
       device_clock_warning_seconds:
         description: Dopuszczalna różnica w sekundach.
@@ -119,21 +110,19 @@ configuration:
         description: Sekundy między zapisanymi pomiarami.
         name: Interwał pomiaru
       serial_debug:
-        description: Rejestruj ograniczone podglądy szesnastkowe i ASCII ramek TX/RX
-          dla tego urządzenia. Włączaj tylko podczas diagnostyki.
+        description: Rejestruj ograniczone podglądy szesnastkowe i ASCII ramek TX/RX dla tego urządzenia. Włączaj
+          tylko podczas diagnostyki.
         name: Debugowanie ramek szeregowych
       serial_debug_max_bytes:
         description: Maksymalna liczba bajtów wyświetlanych dla każdej ramki TX/RX.
         name: Limit bajtów ramki debugowania
       serial_startup_delay:
-        description: Opóźnienie uruchomienia w sekundach przed inicjalizacją urządzenia.
-          Większe skonfigurowane wartości są zachowywane, a kolejne urządzenia są
-          zawsze rozdzielone co najmniej 15 sekundami.
+        description: Opóźnienie uruchomienia w sekundach przed inicjalizacją urządzenia. Większe skonfigurowane
+          wartości są zachowywane, a kolejne urządzenia są zawsze rozdzielone co najmniej 15 sekundami.
         name: Opóźnienie uruchomienia portu szeregowego
       orientation_calibration_enabled:
         name: Kalibracja orientacji
-        description: Użyj skonfigurowanych przesunięć i skal dla przechyłu, pochylenia
-          i nachylenia.
+        description: Użyj skonfigurowanych przesunięć i skal dla przechyłu, pochylenia i nachylenia.
       orientation_calibration_serial:
         name: Numer seryjny urządzenia kalibracyjnego
         description: Numer seryjny, do którego należy ta kalibracja.
@@ -159,113 +148,109 @@ configuration:
         name: Nazwa profilu kalibracji
         description: Nazwa wyświetlana wraz z obliczonymi wartościami orientacji.
       dead_time_us:
-        description: Wstępnie ustawione przez profil detektora. Wprowadź wartość tylko
-          w celu zastąpienia ustawienia dla tego urządzenia.
+        description: Wstępnie ustawione przez profil detektora. Wprowadź wartość tylko w celu zastąpienia ustawienia
+          dla tego urządzenia.
         name: 'Jedyna/główna tuba: Czas martwy detektora'
       reliable_max_cpm:
-        description: Wstępnie ustawione przez profil detektora. Wprowadź wartość tylko
-          w celu zastąpienia ustawienia dla tego urządzenia.
+        description: Wstępnie ustawione przez profil detektora. Wprowadź wartość tylko w celu zastąpienia ustawienia
+          dla tego urządzenia.
         name: 'Jedyna/główna tuba: Maksymalne wiarygodne CPM'
       dead_time_model:
-        description: Wstępnie ustawione przez profil detektora. Wprowadź wartość tylko
-          w celu zastąpienia ustawienia dla tego urządzenia.
+        description: Wstępnie ustawione przez profil detektora. Wprowadź wartość tylko w celu zastąpienia ustawienia
+          dla tego urządzenia.
         name: 'Jedyna/główna tuba: Model czasu martwego'
       conversion_factor_uncertainty_percent:
-        description: Wstępnie ustawione przez profil detektora. Wprowadź wartość tylko
-          w celu zastąpienia ustawienia dla tego urządzenia.
+        description: Wstępnie ustawione przez profil detektora. Wprowadź wartość tylko w celu zastąpienia ustawienia
+          dla tego urządzenia.
         name: 'Jedyna/główna tuba: Niepewność współczynnika przeliczeniowego'
       calibration_uncertainty_percent:
-        description: Wstępnie ustawione przez profil detektora. Wprowadź wartość tylko
-          w celu zastąpienia ustawienia dla tego urządzenia.
+        description: Wstępnie ustawione przez profil detektora. Wprowadź wartość tylko w celu zastąpienia ustawienia
+          dla tego urządzenia.
         name: 'Jedyna/główna tuba: Niepewność kalibracji'
       calibration_reference:
-        description: Wstępnie ustawione przez profil detektora. Wprowadź wartość tylko
-          w celu zastąpienia ustawienia dla tego urządzenia.
+        description: Wstępnie ustawione przez profil detektora. Wprowadź wartość tylko w celu zastąpienia ustawienia
+          dla tego urządzenia.
         name: 'Jedyna/główna tuba: Odniesienie kalibracji'
       tube_model:
-        description: Wstępnie ustawione przez profil detektora. Wprowadź wartość tylko
-          w celu zastąpienia ustawienia dla tego urządzenia.
+        description: Wstępnie ustawione przez profil detektora. Wprowadź wartość tylko w celu zastąpienia ustawienia
+          dla tego urządzenia.
         name: 'Jedyna/główna tuba: Model tuby'
-      dual_tube_mode:
-        name: Tryb pracy tub (zaawansowany)
-        description: Zwykle ustawiany przez profil detektora. Użyj single dla jednej
-          fizycznej tuby, a separate lub curve tylko dla obsługiwanych urządzeń dwutubowych.
-      dual_tube_switch_cpm:
-        name: Próg CPM drugiej tuby
-        description: Tylko dla urządzeń dwutubowych. Wartość GMC-500+ jest wstępnie
-          ustawiona i powinna być zmieniana wyłącznie na podstawie zweryfikowanej
-          kalibracji.
-      high_dose_tube_model:
-        description: Tylko dla drugiej/wysokodawkowej tuby urządzenia dwutubowego.
-          Pozostaw puste dla GMC-320 i innych modeli jednotubowych.
-        name: 'Druga tuba (tylko urządzenia dwutubowe): Model tuby'
-      high_dose_cpm_per_usvh:
-        description: Tylko dla drugiej/wysokodawkowej tuby urządzenia dwutubowego.
-          Pozostaw puste dla GMC-320 i innych modeli jednotubowych.
-        name: 'Druga tuba (tylko urządzenia dwutubowe): Współczynnik przeliczeniowy'
-      high_dose_dead_time_us:
-        description: Tylko dla drugiej/wysokodawkowej tuby urządzenia dwutubowego.
-          Pozostaw puste dla GMC-320 i innych modeli jednotubowych.
-        name: 'Druga tuba (tylko urządzenia dwutubowe): Czas martwy detektora'
-      high_dose_reliable_max_cpm:
-        description: Tylko dla drugiej/wysokodawkowej tuby urządzenia dwutubowego.
-          Pozostaw puste dla GMC-320 i innych modeli jednotubowych.
-        name: 'Druga tuba (tylko urządzenia dwutubowe): Maksymalne wiarygodne CPM'
-      high_dose_dead_time_model:
-        description: Tylko dla drugiej/wysokodawkowej tuby urządzenia dwutubowego.
-          Pozostaw puste dla GMC-320 i innych modeli jednotubowych.
-        name: 'Druga tuba (tylko urządzenia dwutubowe): Model czasu martwego'
-      high_dose_conversion_factor_uncertainty_percent:
-        description: Tylko dla drugiej/wysokodawkowej tuby urządzenia dwutubowego.
-          Pozostaw puste dla GMC-320 i innych modeli jednotubowych.
-        name: 'Druga tuba (tylko urządzenia dwutubowe): Niepewność współczynnika przeliczeniowego'
-      high_dose_calibration_uncertainty_percent:
-        description: Tylko dla drugiej/wysokodawkowej tuby urządzenia dwutubowego.
-          Pozostaw puste dla GMC-320 i innych modeli jednotubowych.
-        name: 'Druga tuba (tylko urządzenia dwutubowe): Niepewność kalibracji'
-      high_dose_calibration_reference:
-        description: Tylko dla drugiej/wysokodawkowej tuby urządzenia dwutubowego.
-          Pozostaw puste dla GMC-320 i innych modeli jednotubowych.
-        name: 'Druga tuba (tylko urządzenia dwutubowe): Odniesienie kalibracji'
       detector_profile:
         name: Profil detektora (ustawienie wstępne)
-        description: Automatycznie wykrywa GMC-300, GMC-320, GMC-500+ i GMC-600+ oraz
-          wczytuje model tuby, czas martwy, współczynnik przeliczeniowy, progi ostrzegawcze
-          i stan kalibracji. Inną wartość wybierz tylko dla celowo utworzonego profilu
-          własnego.
+        description: Automatycznie wykrywa GMC-300, GMC-320, GMC-500+ i GMC-600+ oraz wczytuje model tuby,
+          czas martwy, współczynnik przeliczeniowy, progi ostrzegawcze i stan kalibracji. Inną wartość wybierz
+          tylko dla celowo utworzonego profilu własnego.
     name: Urządzenia
+  dual_tube_devices:
+    name: Urządzenia dwutubowe (zaawansowane)
+    description: Zaawansowane ustawienia trybu tub i drugiej tuby. Nazwa musi dokładnie odpowiadać pozycji
+      w sekcji Urządzenia. Tylko dla GMC-500+ i innych obsługiwanych modeli dwutubowych.
+    fields:
+      name:
+        name: Nazwa urządzenia
+        description: Dokładna nazwa odpowiadającej pozycji w sekcji Urządzenia.
+      dual_tube_mode:
+        name: Tryb tub (zaawansowany)
+        description: «separate» ocenia oba kanały osobno; «curve» używa skonfigurowanego punktu przełączenia.
+      dual_tube_switch_cpm:
+        name: CPM przełączenia drugiej tuby
+        description: Roboczy punkt przełączenia drugiej tuby. Zmieniać tylko na podstawie zweryfikowanych danych
+          urządzenia.
+      high_dose_tube_model:
+        name: 'Druga tuba: Model tuby'
+        description: Model drugiej tuby wysokodawkowej.
+      high_dose_cpm_per_usvh:
+        name: 'Druga tuba: Współczynnik przeliczeniowy'
+        description: Współczynnik przeliczeniowy CPM-dawka drugiej tuby. Bez zweryfikowanej kalibracji pozostawić
+          puste.
+      high_dose_dead_time_us:
+        name: 'Druga tuba: Czas martwy detektora'
+        description: Czas martwy drugiej tuby w mikrosekundach.
+      high_dose_reliable_max_cpm:
+        name: 'Druga tuba: Maksymalne wiarygodne CPM'
+        description: Najwyższa częstość zliczeń uznawana za wiarygodną dla drugiej tuby.
+      high_dose_dead_time_model:
+        name: 'Druga tuba: Model czasu martwego'
+        description: Model czasu martwego drugiej tuby.
+      high_dose_conversion_factor_uncertainty_percent:
+        name: 'Druga tuba: Niepewność współczynnika przeliczeniowego'
+        description: Względna niepewność standardowa współczynnika przeliczeniowego drugiej tuby w procentach.
+      high_dose_calibration_uncertainty_percent:
+        name: 'Druga tuba: Niepewność kalibracji'
+        description: Względna niepewność standardowa kalibracji drugiej tuby w procentach.
+      high_dose_calibration_reference:
+        name: 'Druga tuba: Odniesienie kalibracji'
+        description: Certyfikat, laboratorium lub inne odniesienie kalibracji drugiej tuby.
   gmcmap:
-    description: Wspólne konto i ustawienia sieciowe dla publicznych wysyłek. Identyfikator
-      licznika pozostaje przypisany do urządzenia.
+    description: Wspólne konto i ustawienia sieciowe dla publicznych wysyłek. Identyfikator licznika pozostaje
+      przypisany do urządzenia.
     fields:
       account_id:
-        description: Identyfikator zarejestrowanego konta GMCMap. Nie jest zapisywany
-          w logach ani eksportach diagnostycznych.
+        description: Identyfikator zarejestrowanego konta GMCMap. Nie jest zapisywany w logach ani eksportach
+          diagnostycznych.
         name: Identyfikator użytkownika (AID)
       enabled:
-        description: Opcjonalnie wysyła pomiary na publiczną mapę świata GMCMap. Domyślnie
-          wyłączone.
+        description: Opcjonalnie wysyła pomiary na publiczną mapę świata GMCMap. Domyślnie wyłączone.
         name: Włącz publiczne wysyłanie
       privacy_confirmed:
-        description: Musi być włączone przed wysłaniem danych. Lokalizacja i dane
-          stacji są zarządzane na koncie GMCMap i mogą być publiczne.
+        description: Musi być włączone przed wysłaniem danych. Lokalizacja i dane stacji są zarządzane na koncie
+          GMCMap i mogą być publiczne.
         name: Potwierdź publiczne przesyłanie danych
       timeout:
-        description: Maksymalny czas oczekiwania na żądanie GMCMap w sekundach. Błędy
-          są ponawiane w tle z rosnącym opóźnieniem.
+        description: Maksymalny czas oczekiwania na żądanie GMCMap w sekundach. Błędy są ponawiane w tle z
+          rosnącym opóźnieniem.
         name: Limit czasu sieci
       upload_interval:
-        description: Liczba sekund między publicznymi wysłaniami dla każdego urządzenia.
-          Zalecane jest co najmniej 120–300 sekund.
+        description: Liczba sekund między publicznymi wysłaniami dla każdego urządzenia. Zalecane jest co najmniej
+          120–300 sekund.
         name: Interwał wysyłania
     name: GMCMap (wspólne)
   history:
-    description: Lokalne przechowywanie, strefa czasowa raportów i chronione zarządzanie
-      historią.
+    description: Lokalne przechowywanie, strefa czasowa raportów i chronione zarządzanie historią.
     fields:
       history_management_enabled:
-        description: Włącza chronione narzędzia przywracania i całkowitego usuwania
-          historii. Podczas normalnej pracy pozostaw wyłączone.
+        description: Włącza chronione narzędzia przywracania i całkowitego usuwania historii. Podczas normalnej
+          pracy pozostaw wyłączone.
         name: Zarządzanie historią
       report_timezone:
         description: Strefa IANA dla granic dni i znaczników czasu, np. Europe/Warsaw.
@@ -284,8 +269,7 @@ configuration:
         description: Auto używa języka przeglądarki.
         name: Język interfejsu
       ui_mode:
-        description: Prosty pokazuje najważniejsze wartości; Zaawansowany dodaje analizy,
-          konserwację i eksport.
+        description: Prosty pokazuje najważniejsze wartości; Zaawansowany dodaje analizy, konserwację i eksport.
         name: Widok raportów
     name: Interfejs
   safety:
@@ -298,13 +282,12 @@ configuration:
         description: Początek czerwonego zakresu wyliczonej mocy dawki.
         name: Własne zagrożenie µSv/h
       profile:
-        description: GQ używa zakresów producenta. Odniesienia BfS i ICRP matematycznie
-          przeliczają 1 i 20 mSv/rok na ciągłą moc dawki; nie są to oficjalne natychmiastowe
-          progi alarmowe. Profil własny używa pól poniżej.
+        description: GQ używa zakresów producenta. Odniesienia BfS i ICRP matematycznie przeliczają 1 i 20
+          mSv/rok na ciągłą moc dawki; nie są to oficjalne natychmiastowe progi alarmowe. Profil własny używa
+          pól poniżej.
         name: Profil progów
       threshold_basis:
-        description: Używa CPM, wyliczonej mocy dawki lub surowszego wyniku. Działa
-          tylko dla profilu własnego.
+        description: Używa CPM, wyliczonej mocy dawki lub surowszego wyniku. Działa tylko dla profilu własnego.
         name: Ocena profilu własnego
       warning_cpm:
         description: Początek żółtego zakresu. Działa tylko dla profilu własnego.
@@ -320,19 +303,16 @@ configuration:
         description: Szczegółowość dzienników dodatku.
         name: Poziom logowania
       serial_scheduler_enabled:
-        description: Szereguj okna poleceń liczników współdzielących kontroler USB
-          hosta.
+        description: Szereguj okna poleceń liczników współdzielących kontroler USB hosta.
         name: Współdzielony harmonogram portu szeregowego
       serial_scheduler_gap_seconds:
         description: Czas ciszy w sekundach między oknami poleceń różnych liczników.
         name: Przerwa harmonogramu
     name: System
-'{count} measurements and {events} events were removed.': Usunięto pomiary {count}
-  i zdarzenia {events}
-? All downloads below automatically use the GMC device currently shown in Analysis.
-  Select another connected device above to change the report source.
-: Wszystkie poniższe pliki do pobrania automatycznie korzystają z urządzenia GMC aktualnie
-  wyświetlanego w Analizie. Wybierz powyżej inne podłączone urządzenie, aby zmienić
-  źródło raportu.
+'{count} measurements and {events} events were removed.': Usunięto pomiary {count} i zdarzenia {events}
+? All downloads below automatically use the GMC device currently shown in Analysis. Select another connected
+  device above to change the report source.
+: Wszystkie poniższe pliki do pobrania automatycznie korzystają z urządzenia GMC aktualnie wyświetlanego w
+  Analizie. Wybierz powyżej inne podłączone urządzenie, aby zmienić źródło raportu.
 No connected GMC device: Brak podłączonego urządzenia GMC
 Reports for the displayed analysis: Raporty dla wyświetlanej analizy

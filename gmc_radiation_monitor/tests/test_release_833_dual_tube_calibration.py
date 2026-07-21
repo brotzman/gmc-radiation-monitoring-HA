@@ -171,7 +171,7 @@ def test_main_device_card_exposes_calibration_in_analysis_and_expert_tiers(tmp_p
         device_override="SERIAL-500",
     ).decode("utf-8")
 
-    assert "Detektor und Kalibrierung" in page
+    assert "Detektor Profil" in page
     assert "Zwei physische Zählrohre" in page
     assert "M4011 + SI-3BG" in page
     assert "Unvollständige Kalibrierung" in page
@@ -218,7 +218,7 @@ def test_analysis_json_records_dual_tube_configuration_and_selected_profile() ->
         language="de",
     )
 
-    assert document["app_version"] == "8.4.0"
+    assert document["app_version"] == "8.4.1"
     assert document["dual_tube_configuration"]["mode"] == "separate"
     assert document["dual_tube_configuration"]["low_dose"]["tube_model"] == "M4011"
     assert document["derived_dose_estimate"]["selected_tube"] == "low"
