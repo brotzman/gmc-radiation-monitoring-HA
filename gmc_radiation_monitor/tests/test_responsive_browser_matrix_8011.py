@@ -11,6 +11,10 @@ from gmc_bridge.report_web import ReportApplication
 from PIL import Image
 
 playwright = pytest.importorskip("playwright.sync_api")
+pytestmark = pytest.mark.skipif(
+    os.environ.get("GMC_RUN_BROWSER_MATRIX") != "1",
+    reason="full Playwright browser matrix is opt-in; set GMC_RUN_BROWSER_MATRIX=1",
+)
 
 BROWSER_ENGINES = ("chromium", "firefox", "webkit")
 VIEWPORTS = {

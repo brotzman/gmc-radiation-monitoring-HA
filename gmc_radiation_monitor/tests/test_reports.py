@@ -468,7 +468,11 @@ class ReportWebTests(unittest.TestCase):
     def test_health_index_and_csv_download(self):
         with urllib.request.urlopen(f"{self.base_url}/health", timeout=5) as response:
             self.assertEqual(response.status, 200)
-            self.assertEqual(response.read(), b"ok\n")
+            self.assertEqual(response.headers.get_content_type(), "application/json")
+            health = json.loads(response.read())
+            self.assertTrue(health["healthy"])
+            self.assertIn(health["status"], {"ok", "warning"})
+            self.assertTrue(any(item["key"] == "database" for item in health["checks"]))
         with urllib.request.urlopen(f"{self.base_url}/", timeout=5) as response:
             page = response.read().decode("utf-8")
             self.assertIn("GMC Radiation Monitoring", page)

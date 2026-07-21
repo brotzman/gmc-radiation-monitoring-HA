@@ -103,7 +103,7 @@ def test_847_self_test_exposes_configuration_problem_details(tmp_path: Path) -> 
         now_utc=now,
     )
     configuration = next(item for item in checks if item.key == "configuration")
-    assert configuration.status == "warning"
+    assert configuration.status == "error"
     assert configuration.values["count"] == 1
     assert configuration.values["problems"]
     assert "Duplicate device name" in configuration.values["problems"][0]
@@ -125,7 +125,7 @@ def test_847_warning_state_remains_healthy(tmp_path: Path) -> None:
     assert result["ok"] is True
 
 
-def test_847_browser_override_and_expert_disclosure_markup(tmp_path: Path) -> None:
+def test_847_browser_override_and_expert_measurement_markup(tmp_path: Path) -> None:
     store = HistoryStore(tmp_path / "history.sqlite", retention_days=90)
     now = int(time.time())
     store.upsert_device_registry(
@@ -172,9 +172,11 @@ def test_847_browser_override_and_expert_disclosure_markup(tmp_path: Path) -> No
     assert "Lokale Browser-Einstellung aktiv" in page
     assert 'id="reset-main-value-size"' in page
     assert "Auf App-Standard zurücksetzen" in page
-    assert '<details class="expert-details" data-analysis-tier="expert">' in page
+    assert '<section class="measurement-details" data-analysis-tier="expert">' in page
     assert '<details class="tube-profile-grid" data-analysis-tier="expert">' not in page
-    assert 'class="expert-details-body"' in page
+    assert 'class="measurement-details-body"' in page
+    assert "Messdetails" in page
+    assert '<summary>' not in page.split('class="measurement-details"', 1)[1].split('</section>', 1)[0]
 
     script = render_dashboard_script(
         selected_serial="f488c59b0031f0", language="de", translator=Translator("de")
@@ -182,13 +184,14 @@ def test_847_browser_override_and_expert_disclosure_markup(tmp_path: Path) -> No
     assert "hasLocalMeasurementDisplayOverride" in script
     assert "reset-main-value-size" in script
     assert "delete preferences.mainValueSize" in script
-    assert ".expert-details > summary::after" in DASHBOARD_CSS
+    assert ".measurement-details-header" in DASHBOARD_CSS
+    assert ".expert-details > summary::after" not in DASHBOARD_CSS
     assert ".measurement-override-row[hidden]" in DASHBOARD_CSS
 
 
 def test_847_public_defaults_are_installation_neutral() -> None:
     config = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
-    assert config["version"] == "8.4.7"
+    assert config["version"] == "8.4.8"
     analysis = config["options"]["analysis"]
     assert analysis["external_temperature_entity"] == ""
     assert analysis["external_temperature_name"] == ""
