@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from pathlib import Path
 
 from gmc_bridge.history import HistoryStore
@@ -51,7 +51,7 @@ def test_page_one_layout_reserves_a_clear_gap_between_chart_and_assessment() -> 
     # The chart's bottom is above the assessment panel, leaving enough room
     # for tick labels and the x-axis label instead of overlapping the heading.
     assert chart_bottom - panel_top >= 0.05
-    assert _PAGE1_STATS_HEADING_Y < panel_bottom
+    assert panel_bottom > _PAGE1_STATS_HEADING_Y
 
 
 def test_current_period_chart_ends_at_generation_time() -> None:

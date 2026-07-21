@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from pathlib import Path
 import html
+from pathlib import Path
 
 import yaml
 from gmc_bridge.history import HistoryStore
@@ -49,4 +49,4 @@ def test_disabled_history_management_notice_uses_localized_configuration_label(t
 
 
 def test_release_version_is_820() -> None:
-    assert APP_VERSION == "8.3.2"
+    assert APP_VERSION == "8.3.3"

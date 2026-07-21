@@ -8,7 +8,7 @@ ROOT = Path(__file__).parents[1]
 
 def test_current_version_and_store_description():
     config = yaml.safe_load((ROOT / "config.yaml").read_text())
-    assert config["version"] == "8.3.2"
+    assert config["version"] == "8.3.3"
     assert "background anomaly detection" in config["description"]
     assert config["homeassistant_api"] is True
     assert "hassio_api" not in config

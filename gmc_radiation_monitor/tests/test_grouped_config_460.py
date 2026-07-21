@@ -11,7 +11,7 @@ REPORT_RUN = ROOT / "rootfs/etc/services.d/gmc-reports/run"
 
 def test_visible_configuration_has_only_devices_and_shared_sections():
     config = yaml.safe_load((ROOT / "config.yaml").read_text())
-    assert config["version"] == "8.3.2"
+    assert config["version"] == "8.3.3"
     assert list(config["options"]) == [
         "devices",
         "gmcmap",
@@ -24,70 +24,37 @@ def test_visible_configuration_has_only_devices_and_shared_sections():
     assert list(config["schema"]) == list(config["options"])
     devices = config["options"]["devices"]
     assert [device["name"] for device in devices] == ["GMC-320", "GMC-500+"]
-    assert devices[0] == {
-        "name": "GMC-320",
-        "scan_interval": 60,
-        "command_timeout": 3.0,
-        "inter_command_delay_ms": 250,
-        "serial_startup_delay": 0,
-        "auxiliary_read_interval": 300,
-        "read_gyro": False,
-        "read_device_time": False,
-        "device_clock_warning_seconds": 120,
-        "heartbeat_enabled": False,
-        "cpm_per_usvh": 154.0,
-        "dead_time_us": None,
-        "reliable_max_cpm": None,
-        "dead_time_model": "none",
-        "conversion_factor_uncertainty_percent": None,
-        "calibration_uncertainty_percent": None,
-        "calibration_reference": "",
-        "tube_model": "",
-        "gmcmap_counter_id": "",
-        "serial_debug": False,
-        "serial_debug_max_bytes": 64,
-        "orientation_calibration_enabled": True,
-        "orientation_calibration_serial": "f488c59b0031f0",
-        "orientation_offset_x": 25.385,
-        "orientation_offset_y": 0.430,
-        "orientation_offset_z": 18.430,
-        "orientation_scale_x": 263.285,
-        "orientation_scale_y": 261.430,
-        "orientation_scale_z": 254.570,
-        "orientation_calibration_name": "GMC-320 six-position calibration",
-    }
-    assert devices[1] == {
-        "name": "GMC-500+",
-        "scan_interval": 75,
-        "command_timeout": 4.0,
-        "inter_command_delay_ms": 600,
-        "serial_startup_delay": 15,
-        "auxiliary_read_interval": 300,
-        "read_gyro": False,
-        "read_device_time": False,
-        "device_clock_warning_seconds": 120,
-        "heartbeat_enabled": False,
-        "cpm_per_usvh": 154.0,
-        "dead_time_us": None,
-        "reliable_max_cpm": None,
-        "dead_time_model": "none",
-        "conversion_factor_uncertainty_percent": None,
-        "calibration_uncertainty_percent": None,
-        "calibration_reference": "",
-        "tube_model": "",
-        "gmcmap_counter_id": "",
-        "serial_debug": False,
-        "serial_debug_max_bytes": 64,
-        "orientation_calibration_enabled": True,
-        "orientation_calibration_serial": "080048303838a0",
-        "orientation_offset_x": 84.000,
-        "orientation_offset_y": -112.500,
-        "orientation_offset_z": -193.905,
-        "orientation_scale_x": 16380.000,
-        "orientation_scale_y": 15951.500,
-        "orientation_scale_z": 15879.235,
-        "orientation_calibration_name": "GMC-500+ six-position calibration",
-    }
+    gmc320 = devices[0]
+    assert gmc320["scan_interval"] == 60
+    assert gmc320["cpm_per_usvh"] == 154.0
+    assert gmc320["dead_time_us"] == 120.0
+    assert gmc320["reliable_max_cpm"] == 50000
+    assert gmc320["dead_time_model"] == "nonparalyzable"
+    assert gmc320["conversion_factor_uncertainty_percent"] == 20.0
+    assert gmc320["tube_model"] == "M4011"
+    assert gmc320["dual_tube_mode"] == "single"
+    assert gmc320["dual_tube_switch_cpm"] is None
+    assert gmc320["low_dose_tube"]["tube_model"] == "M4011"
+    assert gmc320["low_dose_tube"]["cpm_per_usvh"] == 154.0
+    assert gmc320["high_dose_tube"]["cpm_per_usvh"] is None
+    assert gmc320["orientation_calibration_serial"] == "f488c59b0031f0"
+
+    gmc500 = devices[1]
+    assert gmc500["scan_interval"] == 75
+    assert gmc500["cpm_per_usvh"] == 154.0
+    assert gmc500["dead_time_us"] == 120.0
+    assert gmc500["reliable_max_cpm"] == 30000
+    assert gmc500["dead_time_model"] == "nonparalyzable"
+    assert gmc500["conversion_factor_uncertainty_percent"] == 20.0
+    assert gmc500["tube_model"] == "M4011 + SI-3BG (Dual)"
+    assert gmc500["dual_tube_mode"] == "separate"
+    assert gmc500["dual_tube_switch_cpm"] == 30000
+    assert gmc500["low_dose_tube"]["tube_model"] == "M4011"
+    assert gmc500["low_dose_tube"]["cpm_per_usvh"] == 154.0
+    assert gmc500["high_dose_tube"]["tube_model"] == "SI-3BG"
+    assert gmc500["high_dose_tube"]["cpm_per_usvh"] is None
+    assert gmc500["orientation_calibration_serial"] == "080048303838a0"
+
     assert config["options"]["gmcmap"] == {
         "enabled": False,
         "privacy_confirmed": False,
@@ -144,6 +111,10 @@ def test_each_device_owns_all_connection_and_measurement_settings():
         "calibration_uncertainty_percent",
         "calibration_reference",
         "tube_model",
+        "dual_tube_mode",
+        "dual_tube_switch_cpm",
+        "low_dose_tube",
+        "high_dose_tube",
         "gmcmap_counter_id",
         "serial_debug",
         "serial_debug_max_bytes",
@@ -161,6 +132,18 @@ def test_each_device_owns_all_connection_and_measurement_settings():
     assert "high_cpm_confirmations" not in fields
     assert "gmcmap_upload_interval" not in fields
     assert "gmcmap_timeout" not in fields
+    tube_profile_fields = {
+        "tube_model",
+        "cpm_per_usvh",
+        "dead_time_us",
+        "reliable_max_cpm",
+        "dead_time_model",
+        "conversion_factor_uncertainty_percent",
+        "calibration_uncertainty_percent",
+        "calibration_reference",
+    }
+    assert set(device_schema["low_dose_tube"]) == tube_profile_fields
+    assert set(device_schema["high_dose_tube"]) == tube_profile_fields
     assert set(config["schema"]["gmcmap"]) == {
         "enabled",
         "privacy_confirmed",

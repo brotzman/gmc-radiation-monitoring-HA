@@ -4,12 +4,10 @@ import re
 from pathlib import Path
 
 import yaml
-
 from gmc_bridge.history import HistoryStore
 from gmc_bridge.i18n import CATALOGS, SUPPORTED_UI_LANGUAGES
 from gmc_bridge.report_web import ReportApplication
 from gmc_bridge.translations import resolve_language, validate_catalogs
-
 
 ROOT = Path(__file__).parents[1]
 
