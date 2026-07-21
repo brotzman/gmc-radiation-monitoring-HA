@@ -33,6 +33,7 @@ from .analysis_presentation import (
 from .automation import WorkflowAutomationService, automation_status
 from .backup_manager import ManagedBackupManager
 from .barometric_background import build_barometric_cosmic_hint
+from .calibration_web import render_calibration_panel
 from .device_profiles import normalize_device_version_display
 from .fleet_analytics import build_fleet_snapshot
 from .historical_presentation import trend_symbol
@@ -1344,6 +1345,12 @@ class ReportApplication(WorkflowApplicationMixin):
                         ]
                     )
             device_diagnostics_values = "".join(diagnostics_values)
+
+            calibration_html = render_calibration_panel(
+                item=item,
+                latest_cpm=latest_cpm,
+                t=t,
+            )
             gmcmap_html = ""
             if item.get("gmcmap_enabled"):
                 raw_map_status = str(item.get("gmcmap_upload_status", "not_configured"))
@@ -1461,6 +1468,7 @@ class ReportApplication(WorkflowApplicationMixin):
                 f'<div class="device-field"><strong>{html.escape(t("Stored samples for this device"))}</strong><span>{int(item.get("stored_samples") or 0):,}</span></div>'
                 f'<div class="device-field"><strong>{html.escape(t("Last update"))}</strong><span>{html.escape(last_update)}</span></div>'
                 f"{tube_values}{device_diagnostics_values}</div>"
+                f"{calibration_html}"
                 f"{gmcmap_html}"
                 f'<a class="button device-select{primary_class}" href="{href}">{html.escape(action_label)}</a>'
                 "</article>"

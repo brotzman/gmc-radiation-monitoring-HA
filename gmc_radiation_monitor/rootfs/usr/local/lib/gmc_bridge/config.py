@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import os
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from .gmcmap import parse_device_id_mappings, validate_identifier
@@ -32,6 +32,91 @@ def _mapping_bool(name: str, value: object, default: bool) -> bool:
 
 
 @dataclass(frozen=True)
+class TubeCalibrationConfig:
+    """Calibration values belonging to one physical detector tube."""
+
+    tube_model: str = ""
+    cpm_per_usvh: float | None = None
+    dead_time_us: float | None = None
+    reliable_max_cpm: int | None = None
+    dead_time_model: str = "none"
+    conversion_factor_uncertainty_percent: float | None = None
+    calibration_uncertainty_percent: float | None = None
+    calibration_reference: str = ""
+
+    def validate(self, name: str) -> None:
+        if self.cpm_per_usvh is not None and self.cpm_per_usvh <= 0:
+            raise ValueError(f"{name}.cpm_per_usvh must be greater than zero")
+        if self.dead_time_us is not None and self.dead_time_us <= 0:
+            raise ValueError(f"{name}.dead_time_us must be greater than zero")
+        if self.reliable_max_cpm is not None and self.reliable_max_cpm <= 0:
+            raise ValueError(f"{name}.reliable_max_cpm must be greater than zero")
+        if self.dead_time_model not in {"none", "nonparalyzable"}:
+            raise ValueError(f"{name}.dead_time_model must be none or nonparalyzable")
+        if self.dead_time_model != "none" and self.dead_time_us is None:
+            raise ValueError(f"{name}.dead_time_us is required for dead-time correction")
+        for field_name, value in (
+            ("conversion_factor_uncertainty_percent", self.conversion_factor_uncertainty_percent),
+            ("calibration_uncertainty_percent", self.calibration_uncertainty_percent),
+        ):
+            if value is not None and value < 0:
+                raise ValueError(f"{name}.{field_name} must not be negative")
+
+    @property
+    def dose_calibrated(self) -> bool:
+        return self.cpm_per_usvh is not None and self.cpm_per_usvh > 0
+
+    def as_dict(self) -> dict[str, object]:
+        return asdict(self)
+
+
+_TUBE_PROFILE_FIELDS = {
+    "tube_model",
+    "cpm_per_usvh",
+    "dead_time_us",
+    "reliable_max_cpm",
+    "dead_time_model",
+    "conversion_factor_uncertainty_percent",
+    "calibration_uncertainty_percent",
+    "calibration_reference",
+}
+
+
+def _optional_float(value: object) -> float | None:
+    return None if value in (None, "") else float(value)
+
+
+def _optional_int(value: object) -> int | None:
+    return None if value in (None, "") else int(value)
+
+
+def _parse_tube_calibration(name: str, value: object) -> TubeCalibrationConfig | None:
+    if value in (None, ""):
+        return None
+    if not isinstance(value, dict):
+        raise ValueError(f"{name} must be an object")
+    unknown = sorted(set(value) - _TUBE_PROFILE_FIELDS)
+    if unknown:
+        raise ValueError(f"{name} contains unknown fields: {', '.join(unknown)}")
+    profile = TubeCalibrationConfig(
+        tube_model=str(value.get("tube_model", "")).strip(),
+        cpm_per_usvh=_optional_float(value.get("cpm_per_usvh")),
+        dead_time_us=_optional_float(value.get("dead_time_us")),
+        reliable_max_cpm=_optional_int(value.get("reliable_max_cpm")),
+        dead_time_model=str(value.get("dead_time_model", "none")).strip().lower(),
+        conversion_factor_uncertainty_percent=_optional_float(
+            value.get("conversion_factor_uncertainty_percent")
+        ),
+        calibration_uncertainty_percent=_optional_float(
+            value.get("calibration_uncertainty_percent")
+        ),
+        calibration_reference=str(value.get("calibration_reference", "")).strip(),
+    )
+    profile.validate(name)
+    return profile
+
+
+@dataclass(frozen=True)
 class DeviceConfig:
     """Effective serial and measurement settings for one physical GMC."""
 
@@ -57,6 +142,10 @@ class DeviceConfig:
     calibration_uncertainty_percent: float | None = None
     calibration_reference: str = ""
     tube_model: str = ""
+    dual_tube_mode: str = "single"
+    dual_tube_switch_cpm: int | None = None
+    low_dose_tube: TubeCalibrationConfig | None = None
+    high_dose_tube: TubeCalibrationConfig | None = None
     gmcmap_counter_id: str = ""
     gmcmap_upload_interval: int = 300
     gmcmap_timeout: float = 10.0
@@ -74,6 +163,45 @@ class DeviceConfig:
     orientation_scale_y: float = 1.0
     orientation_scale_z: float = 1.0
     orientation_calibration_name: str = "Custom six-position calibration"
+
+    def legacy_tube_profile(self) -> TubeCalibrationConfig:
+        return TubeCalibrationConfig(
+            tube_model=self.tube_model,
+            cpm_per_usvh=self.cpm_per_usvh,
+            dead_time_us=self.dead_time_us,
+            reliable_max_cpm=self.reliable_max_cpm,
+            dead_time_model=self.dead_time_model,
+            conversion_factor_uncertainty_percent=self.conversion_factor_uncertainty_percent,
+            calibration_uncertainty_percent=self.calibration_uncertainty_percent,
+            calibration_reference=self.calibration_reference,
+        )
+
+    def effective_low_dose_tube(self) -> TubeCalibrationConfig:
+        # Upgrade migration: legacy single-profile GMC-500+ values become the
+        # low-dose tube profile when no explicit nested profile exists.
+        return self.low_dose_tube or self.legacy_tube_profile()
+
+    def calibration_status(self) -> str:
+        if self.dual_tube_mode == "single":
+            return "documented" if self.calibration_reference.strip() else "working_values"
+        low = self.effective_low_dose_tube()
+        high = self.high_dose_tube
+        if not low.dose_calibrated or high is None or not high.dose_calibrated:
+            return "incomplete"
+        if low.calibration_reference.strip() and high.calibration_reference.strip():
+            return "documented"
+        return "working_values"
+
+    def calibration_registry_values(self) -> dict[str, object]:
+        return {
+            "dual_tube_mode": self.dual_tube_mode,
+            "dual_tube_switch_cpm": self.dual_tube_switch_cpm,
+            "low_dose_tube_profile": self.effective_low_dose_tube().as_dict(),
+            "high_dose_tube_profile": (
+                self.high_dose_tube.as_dict() if self.high_dose_tube is not None else None
+            ),
+            "calibration_status": self.calibration_status(),
+        }
 
     def validate(self) -> None:
         if not self.port.startswith("/dev/"):
@@ -125,6 +253,19 @@ class DeviceConfig:
         for field_name, value in (("conversion_factor_uncertainty_percent", self.conversion_factor_uncertainty_percent), ("calibration_uncertainty_percent", self.calibration_uncertainty_percent)):
             if value is not None and value < 0:
                 raise ValueError(f"{field_name} for {self.port} must not be negative")
+        if self.dual_tube_mode not in {"single", "separate", "curve"}:
+            raise ValueError(
+                f"dual_tube_mode for {self.port} must be single, separate or curve"
+            )
+        if self.dual_tube_switch_cpm is not None and self.dual_tube_switch_cpm <= 0:
+            raise ValueError(f"dual_tube_switch_cpm for {self.port} must be greater than zero")
+        if self.dual_tube_mode == "curve" and self.dual_tube_switch_cpm is None:
+            raise ValueError(
+                f"dual_tube_switch_cpm for {self.port} is required for curve mode"
+            )
+        self.effective_low_dose_tube().validate(f"low_dose_tube for {self.port}")
+        if self.high_dose_tube is not None:
+            self.high_dose_tube.validate(f"high_dose_tube for {self.port}")
         if self.cpm_per_usvh <= 0:
             raise ValueError(f"cpm_per_usvh for {self.port} must be greater than zero")
         if not 60 <= self.gmcmap_upload_interval <= 86400:
@@ -274,7 +415,9 @@ class Settings:
             "read_gyro", "read_device_time", "device_clock_warning_seconds",
             "heartbeat_enabled", "cpm_per_usvh", "dead_time_us", "reliable_max_cpm",
             "dead_time_model", "conversion_factor_uncertainty_percent",
-            "calibration_uncertainty_percent", "calibration_reference", "tube_model", "gmcmap_counter_id",
+            "calibration_uncertainty_percent", "calibration_reference", "tube_model",
+            "dual_tube_mode", "dual_tube_switch_cpm", "low_dose_tube", "high_dose_tube",
+            "gmcmap_counter_id",
             "gmcmap_upload_interval", "gmcmap_timeout", "serial_debug", "serial_debug_max_bytes",
             "orientation_calibration_enabled", "orientation_calibration_serial",
             "orientation_offset_x", "orientation_offset_y", "orientation_offset_z",
@@ -335,6 +478,14 @@ class Settings:
                 calibration_uncertainty_percent=None if item.get("calibration_uncertainty_percent") in (None, "") else float(item["calibration_uncertainty_percent"]),
                 calibration_reference=str(item.get("calibration_reference", "")).strip(),
                 tube_model=str(item.get("tube_model", "")).strip(),
+                dual_tube_mode=str(item.get("dual_tube_mode", "single")).strip().lower(),
+                dual_tube_switch_cpm=_optional_int(item.get("dual_tube_switch_cpm")),
+                low_dose_tube=_parse_tube_calibration(
+                    f"devices[{index}].low_dose_tube", item.get("low_dose_tube")
+                ),
+                high_dose_tube=_parse_tube_calibration(
+                    f"devices[{index}].high_dose_tube", item.get("high_dose_tube")
+                ),
                 gmcmap_counter_id=str(item.get("gmcmap_counter_id", "")).strip(),
                 gmcmap_upload_interval=int(
                     item.get("gmcmap_upload_interval", defaults.gmcmap_upload_interval)

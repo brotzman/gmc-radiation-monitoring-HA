@@ -9,6 +9,27 @@ devices:
     read_device_time: false
     heartbeat_enabled: false
     cpm_per_usvh: 154.0
+    dead_time_us: 120
+    reliable_max_cpm: 50000
+    dead_time_model: nonparalyzable
+    conversion_factor_uncertainty_percent: 20
+    tube_model: M4011
+    dual_tube_mode: single
+    low_dose_tube:
+      tube_model: M4011
+      cpm_per_usvh: 154.0
+      dead_time_us: 120
+      reliable_max_cpm: 50000
+      dead_time_model: nonparalyzable
+      conversion_factor_uncertainty_percent: 20
+      calibration_reference: M4011 working values
+    high_dose_tube:
+      tube_model: ""
+      cpm_per_usvh: null
+      dead_time_us: null
+      reliable_max_cpm: null
+      dead_time_model: none
+      calibration_reference: ""
     gmcmap_counter_id: ""
 
   - name: GMC-500+
@@ -21,6 +42,28 @@ devices:
     read_device_time: false
     heartbeat_enabled: false
     cpm_per_usvh: 154.0
+    dead_time_us: 120
+    reliable_max_cpm: 30000
+    dead_time_model: nonparalyzable
+    conversion_factor_uncertainty_percent: 20
+    tube_model: M4011 + SI-3BG (Dual)
+    dual_tube_mode: separate
+    dual_tube_switch_cpm: 30000
+    low_dose_tube:
+      tube_model: M4011
+      cpm_per_usvh: 154.0
+      dead_time_us: 120
+      reliable_max_cpm: 30000
+      dead_time_model: nonparalyzable
+      conversion_factor_uncertainty_percent: 20
+      calibration_reference: M4011 normal-range working values
+    high_dose_tube:
+      tube_model: SI-3BG
+      cpm_per_usvh: null
+      dead_time_us: null
+      reliable_max_cpm: null
+      dead_time_model: none
+      calibration_reference: ""
     gmcmap_counter_id: ""
 
 gmcmap:

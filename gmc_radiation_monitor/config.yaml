@@ -1,7 +1,7 @@
 name: GMC Radiation Monitor
-description: Local GQ GMC monitoring with MQTT Discovery, configurable safety profiles,
-  background anomaly detection, diagnostics, reports, backups and streamed exports
-version: 8.3.2
+description: Local GQ GMC monitoring with MQTT Discovery, configurable safety profiles, background anomaly detection,
+  diagnostics, reports, backups and streamed exports
+version: 8.3.3
 slug: gmc_radiation_monitor
 url: https://github.com/brotzman/gmc-homeassistant/tree/main/gmc_radiation_monitor
 stage: stable
@@ -36,13 +36,33 @@ options:
     device_clock_warning_seconds: 120
     heartbeat_enabled: false
     cpm_per_usvh: 154.0
-    dead_time_us: null
-    reliable_max_cpm: null
-    dead_time_model: none
-    conversion_factor_uncertainty_percent: null
+    dead_time_us: 120.0
+    reliable_max_cpm: 50000
+    dead_time_model: nonparalyzable
+    conversion_factor_uncertainty_percent: 20.0
     calibration_uncertainty_percent: null
-    calibration_reference: ''
-    tube_model: ''
+    calibration_reference: 'M4011 working values: 154 CPM/(µSv/h), 120 µs; not a traceable calibration certificate.'
+    tube_model: M4011
+    dual_tube_mode: single
+    dual_tube_switch_cpm: null
+    low_dose_tube:
+      tube_model: M4011
+      cpm_per_usvh: 154.0
+      dead_time_us: 120.0
+      reliable_max_cpm: 50000
+      dead_time_model: nonparalyzable
+      conversion_factor_uncertainty_percent: 20.0
+      calibration_uncertainty_percent: null
+      calibration_reference: M4011 working values; not a traceable calibration certificate.
+    high_dose_tube:
+      tube_model: ''
+      cpm_per_usvh: null
+      dead_time_us: null
+      reliable_max_cpm: null
+      dead_time_model: none
+      conversion_factor_uncertainty_percent: null
+      calibration_uncertainty_percent: null
+      calibration_reference: ''
     gmcmap_counter_id: ''
     serial_debug: false
     serial_debug_max_bytes: 64
@@ -66,13 +86,34 @@ options:
     device_clock_warning_seconds: 120
     heartbeat_enabled: false
     cpm_per_usvh: 154.0
-    dead_time_us: null
-    reliable_max_cpm: null
-    dead_time_model: none
-    conversion_factor_uncertainty_percent: null
+    dead_time_us: 120.0
+    reliable_max_cpm: 30000
+    dead_time_model: nonparalyzable
+    conversion_factor_uncertainty_percent: 20.0
     calibration_uncertainty_percent: null
-    calibration_reference: ''
-    tube_model: ''
+    calibration_reference: GMC-500+ M4011 normal-range working values; high-dose SI-3BG calibration must be supplied
+      separately.
+    tube_model: M4011 + SI-3BG (Dual)
+    dual_tube_mode: separate
+    dual_tube_switch_cpm: 30000
+    low_dose_tube:
+      tube_model: M4011
+      cpm_per_usvh: 154.0
+      dead_time_us: 120.0
+      reliable_max_cpm: 30000
+      dead_time_model: nonparalyzable
+      conversion_factor_uncertainty_percent: 20.0
+      calibration_uncertainty_percent: null
+      calibration_reference: M4011 normal-range working values; not a traceable calibration certificate.
+    high_dose_tube:
+      tube_model: SI-3BG
+      cpm_per_usvh: null
+      dead_time_us: null
+      reliable_max_cpm: null
+      dead_time_model: none
+      conversion_factor_uncertainty_percent: null
+      calibration_uncertainty_percent: null
+      calibration_reference: ''
     gmcmap_counter_id: ''
     serial_debug: false
     serial_debug_max_bytes: 64
@@ -147,6 +188,26 @@ schema:
     calibration_uncertainty_percent: float(0.0,)?
     calibration_reference: str?
     tube_model: str?
+    dual_tube_mode: list(single|separate|curve)?
+    dual_tube_switch_cpm: int(1,)?
+    low_dose_tube:
+      tube_model: str?
+      cpm_per_usvh: float(0.001,)?
+      dead_time_us: float(0.001,)?
+      reliable_max_cpm: int(1,)?
+      dead_time_model: list(none|nonparalyzable)?
+      conversion_factor_uncertainty_percent: float(0.0,)?
+      calibration_uncertainty_percent: float(0.0,)?
+      calibration_reference: str?
+    high_dose_tube:
+      tube_model: str?
+      cpm_per_usvh: float(0.001,)?
+      dead_time_us: float(0.001,)?
+      reliable_max_cpm: int(1,)?
+      dead_time_model: list(none|nonparalyzable)?
+      conversion_factor_uncertainty_percent: float(0.0,)?
+      calibration_uncertainty_percent: float(0.0,)?
+      calibration_reference: str?
     gmcmap_counter_id: str?
     serial_debug: bool?
     serial_debug_max_bytes: int(16,1024)?

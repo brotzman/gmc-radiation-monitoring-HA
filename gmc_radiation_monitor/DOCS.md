@@ -87,7 +87,7 @@ The workflow area provides configurable Home Assistant notifications, event anno
 
 The internal SQLite schema is migrated automatically to version 8. Existing measurement and device data remain compatible.
 
-Version 8.3.2 makes the selected dashboard detail level easier to understand, adds a visible guide for PDF, ZIP and CSV report formats, and enlarges important touch targets on small displays. The professional PDF report now keeps the assessment clear of the chart, limits active-period time axes to the actual data horizon and renders one-day comparisons with a correct single-date axis. Serial measurement, MQTT Discovery, SQLite history, analysis schemas and existing download formats remain compatible. The dashboard opens the 8.3.2 manual that matches the selected UI language: German, English, Spanish, French, Italian, Dutch, Polish or Croatian.
+Version 8.3.3 shows detector and calibration data directly in every device card and adds independent low-dose and high-dose tube profiles for dual-tube counters such as the GMC-500+. The app can use measured tube channels separately or a configurable piecewise dual-tube curve, and it suppresses derived dose values when the selected tube lacks a conversion factor. Existing single-tube settings are migrated to the low-dose profile automatically. Serial measurement, MQTT Discovery, SQLite history and existing download formats remain compatible. The dashboard opens the 8.3.3 manual that matches the selected UI language: German, English, Spanish, French, Italian, Dutch, Polish or Croatian.
 
 ## Installation
 
@@ -219,6 +219,39 @@ with `history.report_timezone`; `device_clock_warning_seconds` controls the warn
 
 `heartbeat_enabled` is disabled by default. When supported, the add-on publishes live CPS once per second
 between regular stored samples. SQLite history continues to use the device's `scan_interval`.
+
+### Detector calibration and GMC-500+ dual-tube profiles
+
+The dashboard shows these values in the **Detector and calibration** panel. `single` keeps the legacy one-profile behaviour. `separate` selects between the device's low- and high-dose tube channels without adding both counts together. `curve` applies the two profiles as a piecewise calibration to the primary CPM channel at `dual_tube_switch_cpm`.
+
+```yaml
+devices:
+  - name: GMC-500+
+    cpm_per_usvh: 154.0              # legacy/low-dose compatibility value
+    dead_time_us: 120
+    reliable_max_cpm: 30000
+    dead_time_model: nonparalyzable
+    tube_model: M4011 + SI-3BG (Dual)
+    dual_tube_mode: separate          # single | separate | curve
+    dual_tube_switch_cpm: 30000
+    low_dose_tube:
+      tube_model: M4011
+      cpm_per_usvh: 154.0
+      dead_time_us: 120
+      reliable_max_cpm: 30000
+      dead_time_model: nonparalyzable
+      conversion_factor_uncertainty_percent: 20
+      calibration_reference: M4011 working values
+    high_dose_tube:
+      tube_model: SI-3BG
+      cpm_per_usvh: null              # enter only a documented or measured value
+      dead_time_us: null
+      reliable_max_cpm: null
+      dead_time_model: none
+      calibration_reference: ""
+```
+
+When the selected profile has no conversion factor, CPM remains visible but the derived dose rate is deliberately marked unavailable. Existing installations that only contain the legacy fields automatically use them as the low-dose profile.
 
 ### Optional public GMCMap uploads
 

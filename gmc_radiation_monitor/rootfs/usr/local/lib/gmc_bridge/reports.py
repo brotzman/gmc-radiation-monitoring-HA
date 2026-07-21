@@ -23,9 +23,22 @@ from .device_profiles import normalize_device_version_display
 from .events import current_hysteretic_state, detect_events
 from .file_security import secure_file
 from .history import HistoryRow, HistoryStore
+from .metrology import (
+    ALGORITHM_VERSION,
+    DualTubeMetrologyConfig,
+    MetrologyConfig,
+    TubeMetrologyProfile,
+    derived_dose_estimate,
+    derived_dual_tube_dose_estimate,
+    integrated_dose_estimate,
+    integrated_dual_tube_dose_estimate,
+)
 from .quality_pipeline import filter_history_rows, robust_sigma, robust_trimmed_mean
-from .scientific_analysis import counting_uncertainty, detect_persistent_level_shift, recent_change_significance
-from .metrology import ALGORITHM_VERSION, MetrologyConfig, derived_dose_estimate, integrated_dose_estimate
+from .scientific_analysis import (
+    counting_uncertainty,
+    detect_persistent_level_shift,
+    recent_change_significance,
+)
 from .translations import Translator
 from .version import APP_VERSION
 
@@ -495,12 +508,12 @@ def metadata_document(
 
 
 
-def _metadata_int(value: str | None) -> int | None:
-    if value is None:
+def _metadata_int(value: object) -> int | None:
+    if value in (None, ""):
         return None
     try:
         return int(value)
-    except ValueError:
+    except (TypeError, ValueError):
         return None
 
 
@@ -511,6 +524,68 @@ def _metadata_float(value: object) -> float | None:
         return float(value)
     except (TypeError, ValueError):
         return None
+
+
+def _metadata_mapping(value: object) -> dict[str, Any]:
+    if isinstance(value, dict):
+        return dict(value)
+    if isinstance(value, str) and value.strip():
+        try:
+            parsed = json.loads(value)
+        except json.JSONDecodeError:
+            return {}
+        return dict(parsed) if isinstance(parsed, dict) else {}
+    return {}
+
+
+def _tube_profile_from_metadata(value: object) -> TubeMetrologyProfile | None:
+    profile = _metadata_mapping(value)
+    if not profile:
+        return None
+    return TubeMetrologyProfile(
+        tube_model=str(profile.get("tube_model") or ""),
+        cpm_per_usvh=_metadata_float(profile.get("cpm_per_usvh")),
+        dead_time_us=_metadata_float(profile.get("dead_time_us")),
+        reliable_max_cpm=_metadata_int(profile.get("reliable_max_cpm")),
+        dead_time_model=str(profile.get("dead_time_model") or "none"),
+        conversion_factor_uncertainty_percent=_metadata_float(
+            profile.get("conversion_factor_uncertainty_percent")
+        ),
+        calibration_uncertainty_percent=_metadata_float(
+            profile.get("calibration_uncertainty_percent")
+        ),
+        calibration_reference=str(profile.get("calibration_reference") or ""),
+    )
+
+
+def _dual_tube_config_from_metadata(
+    device_metadata: dict[str, Any],
+    *,
+    legacy_cpm_per_usvh: float,
+) -> DualTubeMetrologyConfig:
+    legacy_low = TubeMetrologyProfile(
+        tube_model=str(device_metadata.get("tube_model") or ""),
+        cpm_per_usvh=legacy_cpm_per_usvh,
+        dead_time_us=_metadata_float(device_metadata.get("dead_time_us")),
+        reliable_max_cpm=_metadata_int(device_metadata.get("reliable_max_cpm")),
+        dead_time_model=str(device_metadata.get("dead_time_model") or "none"),
+        conversion_factor_uncertainty_percent=_metadata_float(
+            device_metadata.get("conversion_factor_uncertainty_percent")
+        ),
+        calibration_uncertainty_percent=_metadata_float(
+            device_metadata.get("calibration_uncertainty_percent")
+        ),
+        calibration_reference=str(device_metadata.get("calibration_reference") or ""),
+    )
+    return DualTubeMetrologyConfig(
+        mode=str(device_metadata.get("dual_tube_mode") or "single"),
+        switch_cpm=_metadata_int(device_metadata.get("dual_tube_switch_cpm")),
+        low_dose=(
+            _tube_profile_from_metadata(device_metadata.get("low_dose_tube_profile"))
+            or legacy_low
+        ),
+        high_dose=_tube_profile_from_metadata(device_metadata.get("high_dose_tube_profile")),
+    )
 
 def csv_bytes(rows: Iterable[HistoryRow], tz: ZoneInfo, *, language: str = "en") -> bytes:
     # Keep stable machine-readable field identifiers for backwards compatibility.
@@ -753,26 +828,83 @@ def analysis_document(
         dead_time_us=_metadata_float(device_metadata.get("dead_time_us")),
         reliable_max_cpm=_metadata_int(device_metadata.get("reliable_max_cpm")),
         dead_time_model=str(device_metadata.get("dead_time_model") or "none"),
-        conversion_factor_uncertainty_percent=_metadata_float(device_metadata.get("conversion_factor_uncertainty_percent")),
-        calibration_uncertainty_percent=_metadata_float(device_metadata.get("calibration_uncertainty_percent")),
+        conversion_factor_uncertainty_percent=_metadata_float(
+            device_metadata.get("conversion_factor_uncertainty_percent")
+        ),
+        calibration_uncertainty_percent=_metadata_float(
+            device_metadata.get("calibration_uncertainty_percent")
+        ),
         calibration_reference=str(device_metadata.get("calibration_reference") or ""),
         tube_model=str(device_metadata.get("tube_model") or ""),
     )
+    dual_tube = _dual_tube_config_from_metadata(
+        device_metadata, legacy_cpm_per_usvh=cpm_per_usvh
+    )
     counting = counting_uncertainty(rows)
-    dose_estimate = derived_dose_estimate(
-        cpm=analysis.get("cpm_mean"),
-        cpm_per_usvh=cpm_per_usvh,
-        counting_relative_percent=counting.get("relative_uncertainty_percent"),
-        config=metrology,
-        coverage_percent=analysis.get("completeness_percent"),
-        gap_count=analysis.get("missing_samples"),
-    )
-    integrated_dose = integrated_dose_estimate(
-        samples=[(row.timestamp_utc, row.cpm) for row in rows],
-        cpm_per_usvh=cpm_per_usvh,
-        config=metrology,
-        expected_interval_seconds=scan_interval_seconds,
-    )
+    low_values = [float(row.tube_low_cpm) for row in rows if row.tube_low_cpm is not None]
+    high_values = [float(row.tube_high_cpm) for row in rows if row.tube_high_cpm is not None]
+    low_mean = statistics.fmean(low_values) if low_values else None
+    high_mean = statistics.fmean(high_values) if high_values else None
+
+    if dual_tube.mode == "single":
+        dose_estimate = derived_dose_estimate(
+            cpm=analysis.get("cpm_mean"),
+            cpm_per_usvh=cpm_per_usvh,
+            counting_relative_percent=counting.get("relative_uncertainty_percent"),
+            config=metrology,
+            coverage_percent=analysis.get("completeness_percent"),
+            gap_count=analysis.get("missing_samples"),
+        )
+        integrated_dose = integrated_dose_estimate(
+            samples=[(row.timestamp_utc, row.cpm) for row in rows],
+            cpm_per_usvh=cpm_per_usvh,
+            config=metrology,
+            expected_interval_seconds=scan_interval_seconds,
+        )
+        dose_rate_values = [
+            estimate["value_usvh"]
+            for row in rows
+            if (
+                estimate := derived_dose_estimate(
+                    cpm=row.cpm,
+                    cpm_per_usvh=cpm_per_usvh,
+                    counting_relative_percent=None,
+                    config=metrology,
+                )
+            )["available"]
+        ]
+    else:
+        dose_estimate = derived_dual_tube_dose_estimate(
+            primary_cpm=analysis.get("cpm_mean"),
+            low_cpm=low_mean,
+            high_cpm=high_mean,
+            counting_relative_percent=counting.get("relative_uncertainty_percent"),
+            config=dual_tube,
+        )
+        dose_estimate["coverage_percent"] = analysis.get("completeness_percent")
+        dose_estimate["gap_count"] = analysis.get("missing_samples")
+        integrated_dose = integrated_dual_tube_dose_estimate(
+            samples=[
+                (row.timestamp_utc, row.cpm, row.tube_low_cpm, row.tube_high_cpm)
+                for row in rows
+            ],
+            config=dual_tube,
+            expected_interval_seconds=scan_interval_seconds,
+        )
+        dose_rate_values = [
+            estimate["value_usvh"]
+            for row in rows
+            if (
+                estimate := derived_dual_tube_dose_estimate(
+                    primary_cpm=row.cpm,
+                    low_cpm=row.tube_low_cpm,
+                    high_cpm=row.tube_high_cpm,
+                    counting_relative_percent=None,
+                    config=dual_tube,
+                )
+            )["available"]
+        ]
+    dose_rate_values = [float(value) for value in dose_rate_values if value is not None]
     return {
         "analysis_schema_version": 3,
         "algorithm_version": ALGORITHM_VERSION,
@@ -798,11 +930,12 @@ def analysis_document(
         "derived_dose_estimate": dose_estimate,
         "derived_integrated_dose_estimate": integrated_dose,
         "metrology_configuration": metrology.as_dict(),
+        "dual_tube_configuration": dual_tube.as_dict(),
         "derived_dose_rate_usvh": {
             "qualification": "derived estimate",
-            "mean": dose_estimate.get("value_usvh"),
-            "median": analysis.get("cpm_median") / cpm_per_usvh if dose_estimate.get("available") and analysis.get("cpm_median") is not None else None,
-            "maximum": analysis.get("cpm_max") / cpm_per_usvh if dose_estimate.get("available") and analysis.get("cpm_max") is not None else None,
+            "mean": statistics.fmean(dose_rate_values) if dose_rate_values else None,
+            "median": statistics.median(dose_rate_values) if dose_rate_values else None,
+            "maximum": max(dose_rate_values) if dose_rate_values else None,
         },
         "notes": [
             t("CPM is the primary measurement."),
@@ -1551,7 +1684,7 @@ def pdf_bytes(
         hist_axis = fig.add_axes([0.09, 0.365, 0.84, 0.205])
         if values:
             bin_count = min(30, max(5, round(math.sqrt(len(values)))))
-            counts, edges, _patches = hist_axis.hist(values, bins=bin_count, alpha=0.68, label=_report_phrase(language, "Beobachtete Verteilung", "Observed distribution"))
+            _counts, edges, _patches = hist_axis.hist(values, bins=bin_count, alpha=0.68, label=_report_phrase(language, "Beobachtete Verteilung", "Observed distribution"))
             mean = statistics.fmean(values)
             if mean > 0 and len(set(values)) > 1:
                 centers = (edges[:-1] + edges[1:]) / 2.0
@@ -1879,6 +2012,23 @@ def _prepare_report(
                         )
                     )
                 ),
+                "cpm_per_usvh": device.get("cpm_per_usvh", cpm_per_usvh),
+                "dead_time_us": device.get("dead_time_us"),
+                "reliable_max_cpm": device.get("reliable_max_cpm"),
+                "dead_time_model": device.get("dead_time_model", "none"),
+                "conversion_factor_uncertainty_percent": device.get(
+                    "conversion_factor_uncertainty_percent"
+                ),
+                "calibration_uncertainty_percent": device.get(
+                    "calibration_uncertainty_percent"
+                ),
+                "calibration_reference": device.get("calibration_reference", ""),
+                "tube_model": device.get("tube_model", ""),
+                "dual_tube_mode": device.get("dual_tube_mode", "single"),
+                "dual_tube_switch_cpm": device.get("dual_tube_switch_cpm"),
+                "low_dose_tube_profile": device.get("low_dose_tube_profile"),
+                "high_dose_tube_profile": device.get("high_dose_tube_profile"),
+                "calibration_status": device.get("calibration_status", "working_values"),
             }
     annotations = store.list_event_annotations(
         start_utc=start_ts,

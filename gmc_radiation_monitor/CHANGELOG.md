@@ -1,5 +1,16 @@
 # Changelog
 
+## 8.3.3
+
+- Added a responsive detector-and-calibration panel to every main dashboard device card.
+- Added summary, analysis and expert detail tiers for tube model, conversion factor, dead time, reliable CPM limit, uncertainties and calibration references.
+- Added independent low-dose and high-dose tube profiles for GMC-500+ and other dual-tube counters.
+- Added separate-channel and piecewise dual-tube calibration modes with an explicit switch threshold.
+- Migrated legacy single-profile values automatically to the low-dose profile when no nested profile is configured.
+- Prevented the M4011 conversion factor from being applied to an uncalibrated SI-3BG high-dose channel.
+- Added dual-tube derived-dose and integrated-dose processing to analysis exports, including gap and profile-switch accounting.
+- Added responsive mobile layouts and regression tests for the new calibration display and metrology logic.
+
 ## 8.3.2
 
 - Added visible, dynamically updated explanations for Summary, Analysis and Expert view.
