@@ -22,7 +22,7 @@ def test_official_home_assistant_repository_layout() -> None:
 
 def test_app_metadata_uses_official_source_build_distribution() -> None:
     config = yaml.safe_load((APP_ROOT / "config.yaml").read_text(encoding="utf-8"))
-    assert config["version"] == "8.3.5"
+    assert config["version"] == "8.4.0"
     assert config["slug"] == "gmc_radiation_monitor"
     assert config["url"] == (
         "https://github.com/brotzman/gmc-homeassistant/tree/main/gmc_radiation_monitor"
@@ -41,7 +41,7 @@ def test_home_assistant_app_files_are_complete() -> None:
         "DOCS.md",
         "Dockerfile",
         "README.md",
-        "RELEASE_NOTES_8.3.5.md",
+        "RELEASE_NOTES_8.4.0.md",
         "apparmor.txt",
         "config.yaml",
         "icon.png",
