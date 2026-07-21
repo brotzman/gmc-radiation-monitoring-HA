@@ -367,6 +367,12 @@ configuration:
   interface:
     description: Shared dashboard language, view mode and MQTT presentation settings.
     fields:
+      custom_value_font_size_px:
+        description: "Font size in pixels (20–64). Used only when Custom is selected."
+        name: "Custom font size"
+      main_value_size:
+        description: "Sets the default main-value size: small, medium, large or custom."
+        name: "Main measurement font size"
       publish_advanced_sensors:
         description: Expose statistics, baseline and alert values through MQTT Discovery.
         name: Publish advanced MQTT sensors

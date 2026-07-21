@@ -372,6 +372,12 @@ configuration:
   interface:
     description: Wspólny język, tryb widoku i prezentacja MQTT.
     fields:
+      custom_value_font_size_px:
+        description: "Rozmiar w pikselach (20–64), używany tylko dla opcji Własny."
+        name: "Własny rozmiar"
+      main_value_size:
+        description: "Ustawia domyślny rozmiar: mały, średni, duży lub własny."
+        name: "Rozmiar głównej wartości"
       publish_advanced_sensors:
         description: Publikuje statystyki, poziom bazowy i alarmy przez MQTT Discovery.
         name: Publikuj zaawansowane sensory MQTT

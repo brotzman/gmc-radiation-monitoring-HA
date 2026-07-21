@@ -375,6 +375,12 @@ configuration:
   interface:
     description: Gedeelde taal, weergavemodus en MQTT-presentatie.
     fields:
+      custom_value_font_size_px:
+        description: "Grootte in pixels (20–64), alleen gebruikt bij Aangepast."
+        name: "Aangepaste tekengrootte"
+      main_value_size:
+        description: "Stelt de standaardgrootte in: klein, middel, groot of aangepast."
+        name: "Tekengrootte hoofdmeetwaarde"
       publish_advanced_sensors:
         description: Publiceert statistieken, basislijn en alarmwaarden via MQTT Discovery.
         name: Geavanceerde MQTT-sensoren publiceren

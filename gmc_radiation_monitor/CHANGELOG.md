@@ -1,5 +1,14 @@
 # Changelog
 
+## 8.4.6
+
+- Redesigned the connected-device cards with clearer identity, status and live-measurement hierarchy.
+- Added magnitude-aware, locale-aware dose-rate formatting with a separate value and unit.
+- Added latest-measurement age beside the online/offline badge.
+- Added configurable main-value sizing: small, medium, large or a custom 20–64 px value.
+- Added an in-dashboard display control backed by browser-local preferences and matching Home Assistant add-on options.
+- Improved mobile spacing, wrapping and touch targets without removing Expert diagnostics.
+
 ## 8.4.5
 
 - Moved the CPM-to-dose conversion factor from general device data into each physical tube card.

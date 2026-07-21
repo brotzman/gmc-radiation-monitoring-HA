@@ -89,7 +89,7 @@ The internal SQLite schema is migrated automatically to version 8. Existing meas
 
 Version 8.4.3 is a compatibility patch for the 8.4.2 device-option migration. Existing split GMC-500+ settings are still merged losslessly, but the cleaned options are now sent to the Home Assistant Supervisor as one structured JSON document instead of embedding arrays and calibration text in a jq expression. This prevents startup failures with quotes, plus signs, percentages and Unicode units such as `µSv/h`. The detector profiles, database schema and measurement algorithms are unchanged from 8.4.2.
 
-Version 8.4.5 moves the CPM-to-dose conversion factor from the general device-information grid into the profile card of the physical tube to which it applies. Dual-tube devices with a calibrated M4011 and an uncalibrated SI-3BG are shown as partially calibrated; the SI-3BG explicitly displays that no conversion factor is configured.
+Version 8.4.6 moves the CPM-to-dose conversion factor from the general device-information grid into the profile card of the physical tube to which it applies. Dual-tube devices with a calibrated M4011 and an uncalibrated SI-3BG are shown as partially calibrated; the SI-3BG explicitly displays that no conversion factor is configured.
 
 ## Installation
 
@@ -244,7 +244,7 @@ The `gmc_320_plus_v4` preset represents exactly one M4011 tube and supplies 154 
 
 The `gmc_500_plus` preset represents two physical tubes: M4011 as the primary/normal-range tube and SI-3BG as the second/high-dose tube. The M4011 profile uses 154 CPM/(µSv/h), 120 µs and a 30,000 CPM working limit. The SI-3BG conversion factor remains intentionally empty until a verified value is entered; CPM stays visible, but an unsupported derived dose is not produced.
 
-The normal calibration fields under `devices` override the only tube of a single-tube counter. A `dual_tube_devices` entry is a complete physical device configuration: it includes common serial/measurement settings, the primary profile, the operating mode and exactly one set of `high_dose_*` values for the second tube. An optional `device_serial` verifies the physical counter at connection time and prevents a profile from following the wrong device after port changes. Version 8.4.5 merges legacy split GMC-500+ entries losslessly at startup. This keeps the GMC-320 form free of dual-tube controls and removes duplicate SI-3BG fields.
+The normal calibration fields under `devices` override the only tube of a single-tube counter. A `dual_tube_devices` entry is a complete physical device configuration: it includes common serial/measurement settings, the primary profile, the operating mode and exactly one set of `high_dose_*` values for the second tube. An optional `device_serial` verifies the physical counter at connection time and prevents a profile from following the wrong device after port changes. Version 8.4.6 merges legacy split GMC-500+ entries losslessly at startup. This keeps the GMC-320 form free of dual-tube controls and removes duplicate SI-3BG fields.
 
 Device-specific orientation calibration is never shipped with public defaults. It must be enabled explicitly with the matching serial number and the six-position values measured for that individual counter.
 
@@ -585,3 +585,9 @@ The analysis compares the most recent quality-filtered one-hour count rate with 
 - an approximate “once in N historical hours” rarity value.
 
 These values describe statistical evidence only. They do not determine the physical cause of a change and are not a radiation-safety classification.
+
+### Connected-device card and live-value sizing (8.4.6)
+
+The **Connected GMC devices** card now presents device identity, connection state and the latest accepted measurement in that order. The derived dose value is split into a dominant number and a smaller unit; CPM, active detector and quality remain compact context values. The age of the latest measurement appears beside the connection badge.
+
+Under the add-on **Interface** options, `main_value_size` accepts `small`, `medium`, `large` or `custom`. When `custom` is selected, `custom_value_font_size_px` accepts 20–64 px. The same choices are available inside the dashboard under **Measurement display** and are stored locally in the current browser, allowing an immediate per-browser override of the add-on default.
