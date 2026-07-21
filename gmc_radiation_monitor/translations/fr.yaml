@@ -1,18 +1,19 @@
 All GMC history was deleted: Tout l'historique GMC a été supprimé
-Another report or maintenance job is running: Un autre travail de rapport ou de maintenance est en cours d'exécution
+Another report or maintenance job is running: Un autre travail de rapport ou de maintenance est en cours 
+  d'exécution
 Complete history deletion failed: La suppression complète de l'historique a échoué
 Danger zone: Zone dangereuse
 Delete all GMC history: Supprimer tout l'historique GMC
-Deletion confirmation text must be exactly DELETE ALL GMC HISTORY: Le texte de confirmation de suppression
+Deletion confirmation text must be exactly DELETE ALL GMC HISTORY: Le texte de confirmation de suppression 
   doit être exactement DELETE ALL GMC HISTORY
 History deleted: Historique supprimé
 Invalid deletion confirmation: Confirmation de suppression invalide
-? Permanently delete all GMC history from this app and Home Assistant Recorder. This includes CPM, temperature,
-  voltage, gyro and tube measurements for every known GMC and all time periods.
-: Supprimez définitivement tout l'historique GMC de cette application et de l'enregistreur Home Assistant.
-  Cela inclut les mesures du CPM, de la température, de la tension, du gyroscope et du tube pour chaque GMC
+? Permanently delete all GMC history from this app and Home Assistant Recorder. This includes CPM, 
+  temperature, voltage, gyro and tube measurements for every known GMC and all time periods.
+: Supprimez définitivement tout l'historique GMC de cette application et de l'enregistreur Home Assistant. 
+  Cela inclut les mesures du CPM, de la température, de la tension, du gyroscope et du tube pour chaque GMC 
   connu et toutes les périodes.
-This cannot be undone. Delete all GMC history?: Cela ne peut pas être annulé. Supprimer tout l'historique GMC
+This cannot be undone. Delete all GMC history?: Cela ne peut pas être annulé. Supprimer tout l'historique GMC 
   ?
 Type DELETE ALL GMC HISTORY to confirm: Saisissez DELETE ALL GMC HISTORY pour confirmer
 configuration:
@@ -23,19 +24,19 @@ configuration:
         description: Nombre de jours d’historique utilisés pour le niveau de fond local.
         name: Période d’apprentissage de la référence
       external_temperature_entity:
-        description: Capteur Home Assistant utilisé pour la corrélation CPM-température lorsque le GMC ne possède
-          pas de capteur de température interne. L’identifiant de l’entité reste modifiable.
+        description: Capteur Home Assistant utilisé pour la corrélation CPM-température lorsque le GMC ne 
+          possède pas de capteur de température interne. L’identifiant de l’entité reste modifiable.
         name: Entité de température extérieure
       external_temperature_max_age_seconds:
         description: Les anciens états de température Home Assistant ne sont pas utilisés pour la corrélation.
         name: Âge maximal de la température extérieure
       external_temperature_name:
-        description: Nom convivial de secours utilisé pour localiser le capteur de température lorsque l’identifiant
-          d’entité configuré diffère ou a été renommé.
+        description: Nom convivial de secours utilisé pour localiser le capteur de température lorsque 
+          l’identifiant d’entité configuré diffère ou a été renommé.
         name: Nom de recherche de la température extérieure
       cosmic_hint_enabled:
-        description: Apprend une signature de fond prudente liée à la pression. Indication statistique uniquement,
-          sans suppression des alertes.
+        description: Apprend une signature de fond prudente liée à la pression. Indication statistique 
+          uniquement, sans suppression des alertes.
         name: Indication statistique d’influence cosmique
       pressure_weather_entity_primary:
         description: Entité météo Home Assistant principale pour la pression actuelle.
@@ -68,23 +69,24 @@ configuration:
         description: Seuil rouge d’écart; doit être supérieur au jaune. Ce n’est pas une limite de sécurité.
         name: 'Voyant relatif : rouge'
       traffic_light_yellow_percent:
-        description: Écart en pourcentage de la moyenne sur une heure par rapport à la référence apprise. Ce
+        description: Écart en pourcentage de la moyenne sur une heure par rapport à la référence apprise. Ce 
           n’est pas une limite de sécurité.
         name: 'Voyant relatif : jaune'
     name: Analyse du bruit de fond
   devices:
-    description: Configurez chaque compteur GMC connecté séparément. Ajoutez une entrée par appareil physique.
+    description: Configuration complète des GMC-300, GMC-320, GMC-600/600+ et autres compteurs dotés d’un seul
+      tube physique. Les réglages à deux tubes ne sont pas affichés ici.
     fields:
       auxiliary_read_interval:
-        description: Secondes entre les lectures de température, tension, double tube, horloge de l’appareil
-          et gyroscope. Le CPM continue d’utiliser l’intervalle de mesure ; 0 lit les valeurs auxiliaires à
+        description: Secondes entre les lectures de température, tension, double tube, horloge de l’appareil 
+          et gyroscope. Le CPM continue d’utiliser l’intervalle de mesure ; 0 lit les valeurs auxiliaires à 
           chaque cycle.
         name: Intervalle de lecture auxiliaire
       command_timeout:
         description: Attente maximale d’une réponse en secondes.
         name: Délai de réponse
       cpm_per_usvh:
-        description: Prédéfini par le profil du détecteur. Saisissez une valeur uniquement pour remplacer le
+        description: Prédéfini par le profil du détecteur. Saisissez une valeur uniquement pour remplacer le 
           préréglage de cet appareil.
         name: 'Tube unique/principal : facteur de conversion'
       device_clock_warning_seconds:
@@ -112,20 +114,21 @@ configuration:
         description: Secondes entre les mesures enregistrées.
         name: Intervalle de mesure
       serial_debug:
-        description: Consigner des aperçus hexadécimaux et ASCII limités des trames TX/RX pour cet appareil.
-          À activer uniquement pour le diagnostic.
+        description: Consigner des aperçus hexadécimaux et ASCII limités des trames TX/RX pour cet appareil. À
+          activer uniquement pour le diagnostic.
         name: Débogage des trames série
       serial_debug_max_bytes:
         description: Nombre maximal d’octets affichés pour chaque trame TX/RX.
         name: Limite d’octets des trames de débogage
       serial_startup_delay:
-        description: Décalage de démarrage en secondes avant l’initialisation de cet appareil. Les valeurs
-          configurées plus grandes sont conservées et au moins 15 secondes séparent toujours deux appareils
+        description: Décalage de démarrage en secondes avant l’initialisation de cet appareil. Les valeurs 
+          configurées plus grandes sont conservées et au moins 15 secondes séparent toujours deux appareils 
           consécutifs.
         name: Délai de démarrage série
       orientation_calibration_enabled:
         name: Étalonnage de l’orientation
-        description: Utiliser les décalages et échelles configurés pour le roulis, le tangage et l’inclinaison.
+        description: Utiliser les décalages et échelles configurés pour le roulis, le tangage et 
+          l’inclinaison.
       orientation_calibration_serial:
         name: Numéro de série de l’appareil étalonné
         description: Numéro de série auquel appartient cet étalonnage.
@@ -151,101 +154,214 @@ configuration:
         name: Nom du profil d’étalonnage
         description: Nom affiché avec les valeurs d’orientation calculées.
       dead_time_us:
-        description: Prédéfini par le profil du détecteur. Saisissez une valeur uniquement pour remplacer le
+        description: Prédéfini par le profil du détecteur. Saisissez une valeur uniquement pour remplacer le 
           préréglage de cet appareil.
         name: 'Tube unique/principal : temps mort du détecteur'
       reliable_max_cpm:
-        description: Prédéfini par le profil du détecteur. Saisissez une valeur uniquement pour remplacer le
+        description: Prédéfini par le profil du détecteur. Saisissez une valeur uniquement pour remplacer le 
           préréglage de cet appareil.
         name: 'Tube unique/principal : CPM fiable maximal'
       dead_time_model:
-        description: Prédéfini par le profil du détecteur. Saisissez une valeur uniquement pour remplacer le
+        description: Prédéfini par le profil du détecteur. Saisissez une valeur uniquement pour remplacer le 
           préréglage de cet appareil.
         name: 'Tube unique/principal : modèle de temps mort'
       conversion_factor_uncertainty_percent:
-        description: Prédéfini par le profil du détecteur. Saisissez une valeur uniquement pour remplacer le
+        description: Prédéfini par le profil du détecteur. Saisissez une valeur uniquement pour remplacer le 
           préréglage de cet appareil.
         name: 'Tube unique/principal : incertitude du facteur de conversion'
       calibration_uncertainty_percent:
-        description: Prédéfini par le profil du détecteur. Saisissez une valeur uniquement pour remplacer le
+        description: Prédéfini par le profil du détecteur. Saisissez une valeur uniquement pour remplacer le 
           préréglage de cet appareil.
         name: 'Tube unique/principal : incertitude d’étalonnage'
       calibration_reference:
-        description: Prédéfini par le profil du détecteur. Saisissez une valeur uniquement pour remplacer le
+        description: Prédéfini par le profil du détecteur. Saisissez une valeur uniquement pour remplacer le 
           préréglage de cet appareil.
         name: 'Tube unique/principal : référence d’étalonnage'
       tube_model:
-        description: Prédéfini par le profil du détecteur. Saisissez une valeur uniquement pour remplacer le
+        description: Prédéfini par le profil du détecteur. Saisissez une valeur uniquement pour remplacer le 
           préréglage de cet appareil.
         name: 'Tube unique/principal : modèle de tube'
       detector_profile:
-        name: Profil du détecteur (préréglage)
-        description: Détecte automatiquement les GMC-300, GMC-320, GMC-500+ et GMC-600+ et charge le modèle
-          de tube, le temps mort, le facteur de conversion, les seuils d’avertissement et l’état d’étalonnage.
-          Choisir une autre valeur uniquement pour un profil personnalisé volontaire.
-    name: Appareils
+        name: Profil d’appareil (automatique/préréglé)
+        description: Sélectionne un profil d’application pour l’appareil. Le mode automatique reconnaît la 
+          famille GMC à partir de l’identité de l’appareil ou du nom configuré et charge des valeurs de 
+          travail pour le tube, le temps mort, le facteur de conversion et les seuils. Il ne vérifie pas 
+          physiquement un tube remplacé.
+    name: Appareils à un tube
   dual_tube_devices:
-    name: Appareils à deux tubes (avancé)
-    description: Réglages avancés du mode de fonctionnement et du second tube. Le nom doit correspondre exactement
-      à une entrée sous Appareils. Réservé au GMC-500+ et aux modèles à deux tubes pris en charge.
+    name: Appareils à deux tubes
+    description: Configuration complète du GMC-500+ et des autres compteurs à deux tubes pris en charge. Les 
+      paramètres généraux, le tube principal, le mode de fonctionnement et le second tube sont regroupés dans 
+      une seule entrée.
     fields:
+      auxiliary_read_interval:
+        description: Secondes entre les lectures de température, tension, double tube, horloge de l’appareil 
+          et gyroscope. Le CPM continue d’utiliser l’intervalle de mesure ; 0 lit les valeurs auxiliaires à 
+          chaque cycle.
+        name: Intervalle de lecture auxiliaire
+      command_timeout:
+        description: Attente maximale d’une réponse en secondes.
+        name: Délai de réponse
+      cpm_per_usvh:
+        description: Prédéfini par le profil du détecteur. Saisissez une valeur uniquement pour remplacer le 
+          préréglage de cet appareil.
+        name: 'Tube principal : facteur de conversion'
+      device_clock_warning_seconds:
+        description: Écart horaire autorisé en secondes.
+        name: Seuil d’alerte de l’horloge
+      gmcmap_counter_id:
+        description: Identifiant GMCMap public propre à cet appareil.
+        name: Identifiant de compteur GMCMap
+      heartbeat_enabled:
+        description: Activer les CPS en direct si pris en charge.
+        name: Activer le heartbeat 1 Hz
+      inter_command_delay_ms:
+        description: Pause entre les commandes en millisecondes.
+        name: Espacement des commandes
       name:
-        name: Nom de l’appareil
-        description: Nom exact de l’entrée correspondante sous Appareils.
+        description: Nom unique dans Home Assistant et le tableau de bord.
+        name: Nom d’affichage
+      read_device_time:
+        description: Lire l’horloge de cet appareil si elle est prise en charge.
+        name: Lire l’horloge
+      read_gyro:
+        description: Lire les données gyroscopiques facultatives.
+        name: Lire le gyroscope
+      scan_interval:
+        description: Secondes entre les mesures enregistrées.
+        name: Intervalle de mesure
+      serial_debug:
+        description: Consigner des aperçus hexadécimaux et ASCII limités des trames TX/RX pour cet appareil. À
+          activer uniquement pour le diagnostic.
+        name: Débogage des trames série
+      serial_debug_max_bytes:
+        description: Nombre maximal d’octets affichés pour chaque trame TX/RX.
+        name: Limite d’octets des trames de débogage
+      serial_startup_delay:
+        description: Décalage de démarrage en secondes avant l’initialisation de cet appareil. Les valeurs 
+          configurées plus grandes sont conservées et au moins 15 secondes séparent toujours deux appareils 
+          consécutifs.
+        name: Délai de démarrage série
+      orientation_calibration_enabled:
+        name: Étalonnage de l’orientation
+        description: Utiliser les décalages et échelles configurés pour le roulis, le tangage et 
+          l’inclinaison.
+      orientation_calibration_serial:
+        name: Numéro de série de l’appareil étalonné
+        description: Numéro de série auquel appartient cet étalonnage.
+      orientation_offset_x:
+        name: Décalage X de l’orientation
+        description: Décalage brut du zéro de l’axe X issu de l’étalonnage en six positions.
+      orientation_offset_y:
+        name: Décalage Y de l’orientation
+        description: Décalage brut du zéro de l’axe Y issu de l’étalonnage en six positions.
+      orientation_offset_z:
+        name: Décalage Z de l’orientation
+        description: Décalage brut du zéro de l’axe Z issu de l’étalonnage en six positions.
+      orientation_scale_x:
+        name: Échelle X de l’orientation
+        description: Comptage brut de l’axe X correspondant à 1 g.
+      orientation_scale_y:
+        name: Échelle Y de l’orientation
+        description: Comptage brut de l’axe Y correspondant à 1 g.
+      orientation_scale_z:
+        name: Échelle Z de l’orientation
+        description: Comptage brut de l’axe Z correspondant à 1 g.
+      orientation_calibration_name:
+        name: Nom du profil d’étalonnage
+        description: Nom affiché avec les valeurs d’orientation calculées.
+      dead_time_us:
+        description: Prédéfini par le profil du détecteur. Saisissez une valeur uniquement pour remplacer le 
+          préréglage de cet appareil.
+        name: 'Tube principal : temps mort du détecteur'
+      reliable_max_cpm:
+        description: Prédéfini par le profil du détecteur. Saisissez une valeur uniquement pour remplacer le 
+          préréglage de cet appareil.
+        name: 'Tube principal : CPM fiable maximal'
+      dead_time_model:
+        description: Prédéfini par le profil du détecteur. Saisissez une valeur uniquement pour remplacer le 
+          préréglage de cet appareil.
+        name: 'Tube principal : modèle de temps mort'
+      conversion_factor_uncertainty_percent:
+        description: Prédéfini par le profil du détecteur. Saisissez une valeur uniquement pour remplacer le 
+          préréglage de cet appareil.
+        name: 'Tube principal : incertitude du facteur de conversion'
+      calibration_uncertainty_percent:
+        description: Prédéfini par le profil du détecteur. Saisissez une valeur uniquement pour remplacer le 
+          préréglage de cet appareil.
+        name: 'Tube principal : incertitude d’étalonnage'
+      calibration_reference:
+        description: Prédéfini par le profil du détecteur. Saisissez une valeur uniquement pour remplacer le 
+          préréglage de cet appareil.
+        name: 'Tube principal : référence d’étalonnage'
+      tube_model:
+        description: Prédéfini par le profil du détecteur. Saisissez une valeur uniquement pour remplacer le 
+          préréglage de cet appareil.
+        name: 'Tube principal : modèle de tube'
+      detector_profile:
+        name: Profil d’appareil (automatique/préréglé)
+        description: Sélectionne un profil d’application pour l’appareil. Le mode automatique reconnaît la 
+          famille GMC à partir de l’identité de l’appareil ou du nom configuré et charge des valeurs de 
+          travail pour le tube, le temps mort, le facteur de conversion et les seuils. Il ne vérifie pas 
+          physiquement un tube remplacé.
+      device_serial:
+        name: Numéro de série physique (facultatif)
+        description: Contrôle d’identité facultatif. S’il est renseigné, le compteur connecté doit fournir 
+          exactement ce numéro de série, sinon la configuration à deux tubes est désactivée par sécurité.
       dual_tube_mode:
         name: Mode des tubes (avancé)
-        description: « separate » évalue les deux canaux séparément ; « curve » utilise le seuil de commutation
-          configuré.
+        description: « separate » évalue les deux canaux séparément ; « curve » utilise le seuil de 
+          commutation configuré.
       dual_tube_switch_cpm:
         name: CPM de commutation du second tube
-        description: Seuil de travail du second tube. Ne le modifier qu’avec des données vérifiées propres
-          à l’appareil.
+        description: Seuil de travail du second tube. Ne le modifier qu’avec des données vérifiées propres à 
+          l’appareil.
       high_dose_tube_model:
-        name: 'Second tube: Modèle de tube'
+        name: 'Second tube : Modèle de tube'
         description: Modèle du second tube haute dose.
       high_dose_cpm_per_usvh:
-        name: 'Second tube: Facteur de conversion'
+        name: 'Second tube : Facteur de conversion'
         description: Facteur de conversion CPM-dose du second tube. Laisser vide sans étalonnage vérifié.
       high_dose_dead_time_us:
-        name: 'Second tube: Temps mort du détecteur'
+        name: 'Second tube : Temps mort du détecteur'
         description: Temps mort du second tube en microsecondes.
       high_dose_reliable_max_cpm:
-        name: 'Second tube: CPM fiables maximaux'
+        name: 'Second tube : CPM fiables maximaux'
         description: Taux de comptage maximal considéré fiable pour le second tube.
       high_dose_dead_time_model:
-        name: 'Second tube: Modèle de temps mort'
+        name: 'Second tube : Modèle de temps mort'
         description: Modèle de temps mort du second tube.
       high_dose_conversion_factor_uncertainty_percent:
-        name: 'Second tube: Incertitude du facteur de conversion'
+        name: 'Second tube : Incertitude du facteur de conversion'
         description: Incertitude-type relative du facteur de conversion du second tube, en pourcentage.
       high_dose_calibration_uncertainty_percent:
-        name: 'Second tube: Incertitude d’étalonnage'
+        name: 'Second tube : Incertitude d’étalonnage'
         description: Incertitude-type relative de l’étalonnage du second tube, en pourcentage.
       high_dose_calibration_reference:
-        name: 'Second tube: Référence d’étalonnage'
+        name: 'Second tube : Référence d’étalonnage'
         description: Certificat, laboratoire ou autre référence de l’étalonnage du second tube.
   gmcmap:
-    description: Compte et paramètres réseau communs pour les envois publics. L’identifiant du compteur reste
+    description: Compte et paramètres réseau communs pour les envois publics. L’identifiant du compteur reste 
       propre à chaque appareil.
     fields:
       account_id:
-        description: Identifiant utilisateur du compte GMCMap enregistré. Il n’est ni journalisé ni stocké
+        description: Identifiant utilisateur du compte GMCMap enregistré. Il n’est ni journalisé ni stocké 
           dans les exports de diagnostic.
         name: Identifiant utilisateur (AID)
       enabled:
-        description: Envoie facultativement les mesures vers la carte mondiale publique GMCMap. Désactivé par
+        description: Envoie facultativement les mesures vers la carte mondiale publique GMCMap. Désactivé par 
           défaut.
         name: Activer les envois publics
       privacy_confirmed:
-        description: Doit être activé avant tout envoi. L’emplacement et les informations de station sont gérés
-          dans le compte GMCMap et peuvent être publics.
+        description: Doit être activé avant tout envoi. L’emplacement et les informations de station sont 
+          gérés dans le compte GMCMap et peuvent être publics.
         name: Confirmer le transfert public des données
       timeout:
-        description: Attente maximale par requête GMCMap en secondes. Les échecs sont réessayés en arrière-plan
-          avec temporisation progressive.
+        description: Attente maximale par requête GMCMap en secondes. Les échecs sont réessayés en 
+          arrière-plan avec temporisation progressive.
         name: Délai d’attente réseau
       upload_interval:
-        description: Secondes entre les envois publics pour chaque appareil. Un intervalle d’au moins 120 à
+        description: Secondes entre les envois publics pour chaque appareil. Un intervalle d’au moins 120 à 
           300 secondes est recommandé.
         name: Intervalle d’envoi
     name: GMCMap (partagé)
@@ -253,8 +369,8 @@ configuration:
     description: Conservation locale, fuseau horaire des rapports et gestion protégée de l'historique.
     fields:
       history_management_enabled:
-        description: Active les outils protégés de restauration et de suppression complète. Laissez cette option
-          désactivée en fonctionnement normal.
+        description: Active les outils protégés de restauration et de suppression complète. Laissez cette 
+          option désactivée en fonctionnement normal.
         name: Gestion de l'historique
       report_timezone:
         description: Fuseau IANA pour les limites journalières et les horodatages, par exemple Europe/Paris.
@@ -286,12 +402,12 @@ configuration:
         description: Début de la zone rouge pour le débit dérivé.
         name: Danger µSv/h personnalisé
       profile:
-        description: GQ utilise les bandes du fabricant. Les références BfS et ICRP convertissent mathématiquement
-          1 et 20 mSv/an en débit continu; ce ne sont pas des seuils instantanés officiels. Personnalisé utilise
-          les champs ci-dessous.
+        description: GQ utilise les bandes du fabricant. Les références BfS et ICRP convertissent 
+          mathématiquement 1 et 20 mSv/an en débit continu; ce ne sont pas des seuils instantanés officiels. 
+          Personnalisé utilise les champs ci-dessous.
         name: Profil de seuils
       threshold_basis:
-        description: Utilise les CPM, le débit dérivé ou le résultat le plus strict. Actif uniquement avec
+        description: Utilise les CPM, le débit dérivé ou le résultat le plus strict. Actif uniquement avec 
           Personnalisé.
         name: Évaluation du profil personnalisé
       warning_cpm:
@@ -314,11 +430,11 @@ configuration:
         description: Temps de silence en secondes entre les fenêtres de commande de compteurs différents.
         name: Intervalle silencieux du planificateur
     name: Système
-'{count} measurements and {events} events were removed.': Les mesures {count} et les événements {events} ont
+'{count} measurements and {events} events were removed.': Les mesures {count} et les événements {events} ont 
   été supprimés.
-? All downloads below automatically use the GMC device currently shown in Analysis. Select another connected
+? All downloads below automatically use the GMC device currently shown in Analysis. Select another connected 
   device above to change the report source.
-: Tous les téléchargements ci-dessous utilisent automatiquement l’appareil GMC actuellement affiché dans l’analyse.
-  Sélectionnez un autre appareil connecté ci-dessus pour modifier la source du rapport.
+: Tous les téléchargements ci-dessous utilisent automatiquement l’appareil GMC actuellement affiché dans 
+  l’analyse. Sélectionnez un autre appareil connecté ci-dessus pour modifier la source du rapport.
 No connected GMC device: Aucun appareil GMC connecté
 Reports for the displayed analysis: Rapports pour l'analyse affichée

@@ -191,8 +191,8 @@ def test_rfc1801_options_are_packaged_and_disabled_safely_by_default():
 
     root = Path(__file__).parents[1]
     config = yaml.safe_load((root / "config.yaml").read_text())
-    assert config["version"] == "8.4.1"
-    devices = config["options"]["devices"]
+    assert config["version"] == "8.4.2"
+    devices = config["options"]["devices"] + config["options"]["dual_tube_devices"]
     assert [device["name"] for device in devices] == ["GMC-320", "GMC-500+"]
     assert all(device["read_gyro"] is False for device in devices)
     assert all(device["heartbeat_enabled"] is False for device in devices)

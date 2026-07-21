@@ -8,10 +8,10 @@ ROOT = Path(__file__).parents[1]
 
 def test_current_version_and_store_description():
     config = yaml.safe_load((ROOT / "config.yaml").read_text())
-    assert config["version"] == "8.4.1"
+    assert config["version"] == "8.4.2"
     assert "background anomaly detection" in config["description"]
     assert config["homeassistant_api"] is True
-    assert "hassio_api" not in config
+    assert config["hassio_api"] is True
     assert "hassio_role" not in config
     assert not (ROOT / "rootfs/usr/local/lib/gmc_bridge/supervisor_addon.py").exists()
 

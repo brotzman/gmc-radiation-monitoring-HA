@@ -33,10 +33,11 @@ def _detected(
 
 def test_config_exposes_automatic_only_serial_profiles() -> None:
     config = yaml.safe_load((ROOT / "config.yaml").read_text())
-    assert config["version"] == "8.4.1"
+    assert config["version"] == "8.4.2"
     assert "automatic_serial_detection" not in config["options"]["system"]
     assert "automatic_serial_detection" not in config["schema"]["system"]
-    for device in config["options"]["devices"]:
+    devices = config["options"]["devices"] + config["options"]["dual_tube_devices"]
+    for device in devices:
         assert "port" not in device
         assert "baudrate" not in device
 

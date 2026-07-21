@@ -11,7 +11,7 @@ REPORT_RUN = ROOT / "rootfs/etc/services.d/gmc-reports/run"
 
 def test_visible_configuration_has_only_devices_and_shared_sections():
     config = yaml.safe_load((ROOT / "config.yaml").read_text())
-    assert config["version"] == "8.4.1"
+    assert config["version"] == "8.4.2"
     assert list(config["options"]) == [
         "devices",
         "dual_tube_devices",
@@ -24,7 +24,9 @@ def test_visible_configuration_has_only_devices_and_shared_sections():
     ]
     assert list(config["schema"]) == list(config["options"])
     devices = config["options"]["devices"]
-    assert [device["name"] for device in devices] == ["GMC-320", "GMC-500+"]
+    dual_devices = config["options"]["dual_tube_devices"]
+    assert [device["name"] for device in devices] == ["GMC-320"]
+    assert [device["name"] for device in dual_devices] == ["GMC-500+"]
     gmc320 = devices[0]
     assert gmc320["scan_interval"] == 60
     assert gmc320["detector_profile"] == "gmc_320_plus_v4"
@@ -36,20 +38,25 @@ def test_visible_configuration_has_only_devices_and_shared_sections():
         assert redundant not in gmc320
     assert "low_dose_tube" not in gmc320
     assert "high_dose_tube" not in gmc320
-    assert gmc320["orientation_calibration_serial"] == "f488c59b0031f0"
+    assert gmc320["orientation_calibration_enabled"] is False
+    assert "orientation_calibration_serial" not in gmc320
 
-    gmc500 = devices[1]
+    gmc500 = dual_devices[0]
     assert gmc500["scan_interval"] == 75
     assert gmc500["detector_profile"] == "gmc_500_plus"
     for redundant in (
         "cpm_per_usvh", "dead_time_us", "reliable_max_cpm", "dead_time_model",
         "conversion_factor_uncertainty_percent", "calibration_uncertainty_percent",
-        "calibration_reference", "tube_model", "dual_tube_mode", "dual_tube_switch_cpm",
+        "calibration_reference", "tube_model",
     ):
         assert redundant not in gmc500
+    assert gmc500["dual_tube_mode"] == "separate"
+    assert gmc500["dual_tube_switch_cpm"] == 30000
+    assert gmc500["high_dose_tube_model"] == "SI-3BG"
     assert "low_dose_tube" not in gmc500
     assert "high_dose_tube" not in gmc500
-    assert gmc500["orientation_calibration_serial"] == "080048303838a0"
+    assert gmc500["orientation_calibration_enabled"] is False
+    assert "orientation_calibration_serial" not in gmc500
 
     assert config["options"]["gmcmap"] == {
         "enabled": False,

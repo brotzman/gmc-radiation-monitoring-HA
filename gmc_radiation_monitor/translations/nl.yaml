@@ -3,14 +3,14 @@ Another report or maintenance job is running: Er wordt nog een rapport of onderh
 Complete history deletion failed: Het volledig verwijderen van de geschiedenis is mislukt
 Danger zone: Gevarenzone
 Delete all GMC history: Verwijder de hele GMC geschiedenis
-Deletion confirmation text must be exactly DELETE ALL GMC HISTORY: De bevestigingstekst voor verwijderen moet
+Deletion confirmation text must be exactly DELETE ALL GMC HISTORY: De bevestigingstekst voor verwijderen moet 
   exact DELETE ALL GMC HISTORY zijn
 History deleted: Geschiedenis verwijderd
 Invalid deletion confirmation: Ongeldige verwijderingsbevestiging
-? Permanently delete all GMC history from this app and Home Assistant Recorder. This includes CPM, temperature,
-  voltage, gyro and tube measurements for every known GMC and all time periods.
-: Verwijder permanent alle GMC-geschiedenis van deze app en Home Assistant Recorder. Dit omvat CPM, temperatuur-,
-  spannings-, gyro- en buismetingen voor elke bekende GMC en alle tijdsperioden.
+? Permanently delete all GMC history from this app and Home Assistant Recorder. This includes CPM, 
+  temperature, voltage, gyro and tube measurements for every known GMC and all time periods.
+: Verwijder permanent alle GMC-geschiedenis van deze app en Home Assistant Recorder. Dit omvat CPM, 
+  temperatuur-, spannings-, gyro- en buismetingen voor elke bekende GMC en alle tijdsperioden.
 This cannot be undone. Delete all GMC history?: Dit kan niet ongedaan worden gemaakt. De hele GMC geschiedenis
   verwijderen?
 Type DELETE ALL GMC HISTORY to confirm: Typ DELETE ALL GMC HISTORY om te bevestigen
@@ -22,19 +22,19 @@ configuration:
         description: Aantal historische dagen voor de lokale achtergrondbasis.
         name: Leerperiode basislijn
       external_temperature_entity:
-        description: Home Assistant-sensor voor de correlatie tussen CPM en temperatuur wanneer de GMC geen
+        description: Home Assistant-sensor voor de correlatie tussen CPM en temperatuur wanneer de GMC geen 
           interne temperatuursensor heeft. De entiteits-ID blijft bewerkbaar.
         name: Entiteit voor buitentemperatuur
       external_temperature_max_age_seconds:
         description: Oudere temperatuurstatussen van Home Assistant worden niet voor correlatie gebruikt.
         name: Maximale leeftijd van de buitentemperatuur
       external_temperature_name:
-        description: Terugval op een gebruiksvriendelijke naam om de temperatuursensor te vinden wanneer de
+        description: Terugval op een gebruiksvriendelijke naam om de temperatuursensor te vinden wanneer de 
           ingestelde entiteits-ID afwijkt of is hernoemd.
         name: Zoeknaam voor buitentemperatuur
       cosmic_hint_enabled:
-        description: Leert een voorzichtige luchtdrukgerelateerde achtergrondsignatuur. Alleen een statistische
-          aanwijzing; waarschuwingen blijven actief.
+        description: Leert een voorzichtige luchtdrukgerelateerde achtergrondsignatuur. Alleen een 
+          statistische aanwijzing; waarschuwingen blijven actief.
         name: Statistische aanwijzing voor kosmische invloed
       pressure_weather_entity_primary:
         description: Primaire Home Assistant-weerentiteit voor de actuele luchtdruk.
@@ -67,22 +67,23 @@ configuration:
         description: Rode afwijkingsdrempel; moet hoger zijn dan geel. Geen veiligheidsgrens.
         name: 'Relatieve lamp: rood'
       traffic_light_yellow_percent:
-        description: Procentuele afwijking van het uurgemiddelde ten opzichte van de geleerde basislijn. Geen
+        description: Procentuele afwijking van het uurgemiddelde ten opzichte van de geleerde basislijn. Geen 
           veiligheidsgrens.
         name: 'Relatieve lamp: geel'
     name: Achtergrondanalyse
   devices:
-    description: Configureer elke aangesloten GMC-teller afzonderlijk. Voeg één item per fysiek apparaat toe.
+    description: Volledige configuratie voor GMC-300, GMC-320, GMC-600/600+ en andere tellers met precies één 
+      fysieke buis. Instellingen voor twee buizen worden hier niet getoond.
     fields:
       auxiliary_read_interval:
-        description: Seconden tussen metingen van temperatuur, spanning, dubbele buis, apparaattijd en gyroscoop.
-          CPM blijft het meetinterval gebruiken; 0 leest de hulpwaarden bij elke cyclus.
+        description: Seconden tussen metingen van temperatuur, spanning, dubbele buis, apparaattijd en 
+          gyroscoop. CPM blijft het meetinterval gebruiken; 0 leest de hulpwaarden bij elke cyclus.
         name: Interval voor hulpmetingen
       command_timeout:
         description: Maximale wachttijd in seconden.
         name: Antwoordtime-out
       cpm_per_usvh:
-        description: Vooraf ingesteld door het detectorprofiel. Vul alleen een waarde in om de voorinstelling
+        description: Vooraf ingesteld door het detectorprofiel. Vul alleen een waarde in om de voorinstelling 
           voor dit apparaat te vervangen.
         name: 'Enige/primaire buis: Conversiefactor'
       device_clock_warning_seconds:
@@ -110,15 +111,16 @@ configuration:
         description: Seconden tussen opgeslagen metingen.
         name: Meetinterval
       serial_debug:
-        description: Log begrensde hexadecimale en ASCII-voorbeelden van TX/RX-frames voor dit apparaat. Alleen
-          inschakelen tijdens diagnose.
+        description: Log begrensde hexadecimale en ASCII-voorbeelden van TX/RX-frames voor dit apparaat. 
+          Alleen inschakelen tijdens diagnose.
         name: Foutopsporing van seriële frames
       serial_debug_max_bytes:
         description: Maximaal aantal bytes dat voor elk TX/RX-frame wordt weergegeven.
         name: Bytegrens voor debugframe
       serial_startup_delay:
-        description: Startverschuiving in seconden voordat dit apparaat wordt geïnitialiseerd. Grotere ingestelde
-          waarden blijven behouden en opeenvolgende apparaten worden altijd met minimaal 15 seconden gestart.
+        description: Startverschuiving in seconden voordat dit apparaat wordt geïnitialiseerd. Grotere 
+          ingestelde waarden blijven behouden en opeenvolgende apparaten worden altijd met minimaal 15 
+          seconden gestart.
         name: Opstartvertraging seriële verbinding
       orientation_calibration_enabled:
         name: Oriëntatiekalibratie
@@ -148,59 +150,172 @@ configuration:
         name: Naam van kalibratieprofiel
         description: Naam die bij de berekende oriëntatiewaarden wordt weergegeven.
       dead_time_us:
-        description: Vooraf ingesteld door het detectorprofiel. Vul alleen een waarde in om de voorinstelling
+        description: Vooraf ingesteld door het detectorprofiel. Vul alleen een waarde in om de voorinstelling 
           voor dit apparaat te vervangen.
         name: 'Enige/primaire buis: Dode tijd van detector'
       reliable_max_cpm:
-        description: Vooraf ingesteld door het detectorprofiel. Vul alleen een waarde in om de voorinstelling
+        description: Vooraf ingesteld door het detectorprofiel. Vul alleen een waarde in om de voorinstelling 
           voor dit apparaat te vervangen.
         name: 'Enige/primaire buis: Maximaal betrouwbare CPM'
       dead_time_model:
-        description: Vooraf ingesteld door het detectorprofiel. Vul alleen een waarde in om de voorinstelling
+        description: Vooraf ingesteld door het detectorprofiel. Vul alleen een waarde in om de voorinstelling 
           voor dit apparaat te vervangen.
         name: 'Enige/primaire buis: Dode-tijdmodel'
       conversion_factor_uncertainty_percent:
-        description: Vooraf ingesteld door het detectorprofiel. Vul alleen een waarde in om de voorinstelling
+        description: Vooraf ingesteld door het detectorprofiel. Vul alleen een waarde in om de voorinstelling 
           voor dit apparaat te vervangen.
         name: 'Enige/primaire buis: Onzekerheid conversiefactor'
       calibration_uncertainty_percent:
-        description: Vooraf ingesteld door het detectorprofiel. Vul alleen een waarde in om de voorinstelling
+        description: Vooraf ingesteld door het detectorprofiel. Vul alleen een waarde in om de voorinstelling 
           voor dit apparaat te vervangen.
         name: 'Enige/primaire buis: Kalibratieonzekerheid'
       calibration_reference:
-        description: Vooraf ingesteld door het detectorprofiel. Vul alleen een waarde in om de voorinstelling
+        description: Vooraf ingesteld door het detectorprofiel. Vul alleen een waarde in om de voorinstelling 
           voor dit apparaat te vervangen.
         name: 'Enige/primaire buis: Kalibratiereferentie'
       tube_model:
-        description: Vooraf ingesteld door het detectorprofiel. Vul alleen een waarde in om de voorinstelling
+        description: Vooraf ingesteld door het detectorprofiel. Vul alleen een waarde in om de voorinstelling 
           voor dit apparaat te vervangen.
         name: 'Enige/primaire buis: Buismodel'
       detector_profile:
-        name: Detectorprofiel (voorinstelling)
-        description: Detecteert GMC-300, GMC-320, GMC-500+ en GMC-600+ automatisch en laadt buismodel, dode
-          tijd, omrekenfactor, waarschuwingsdrempels en kalibratiestatus. Kies alleen bewust een andere waarde
-          voor een eigen profiel.
-    name: Apparaten
+        name: Apparaatprofiel (automatisch/voorinstelling)
+        description: Selecteert een toepassingsprofiel voor het apparaat. Automatisch herkent de 
+          GMC-modelfamilie via de apparaatidentiteit of de ingestelde naam en laadt werkwaarden voor 
+          buismodel, dode tijd, omrekenfactor en waarschuwingsdrempels. Een vervangen buis wordt niet fysiek 
+          geverifieerd.
+    name: Apparaten met één buis
   dual_tube_devices:
-    name: Apparaten met twee buizen (geavanceerd)
-    description: Geavanceerde instellingen voor de buismodus en de tweede buis. De naam moet exact overeenkomen
-      met een item onder Apparaten. Alleen voor de GMC-500+ en andere ondersteunde modellen met twee buizen.
+    name: Apparaten met twee buizen
+    description: Volledige configuratie voor GMC-500+ en andere ondersteunde tellers met twee buizen. Algemene
+      apparaatwaarden, primaire buis, bedrijfsmodus en tweede buis staan in één item.
     fields:
+      auxiliary_read_interval:
+        description: Seconden tussen metingen van temperatuur, spanning, dubbele buis, apparaattijd en 
+          gyroscoop. CPM blijft het meetinterval gebruiken; 0 leest de hulpwaarden bij elke cyclus.
+        name: Interval voor hulpmetingen
+      command_timeout:
+        description: Maximale wachttijd in seconden.
+        name: Antwoordtime-out
+      cpm_per_usvh:
+        description: Vooraf ingesteld door het detectorprofiel. Vul alleen een waarde in om de voorinstelling 
+          voor dit apparaat te vervangen.
+        name: 'Primaire buis: Conversiefactor'
+      device_clock_warning_seconds:
+        description: Toegestane afwijking in seconden.
+        name: Waarschuwingsdrempel klok
+      gmcmap_counter_id:
+        description: Eigen openbare GMCMap-ID voor dit apparaat.
+        name: GMCMap-teller-ID
+      heartbeat_enabled:
+        description: Schakel live CPS in indien ondersteund.
+        name: 1 Hz-heartbeat inschakelen
+      inter_command_delay_ms:
+        description: Pauze in milliseconden.
+        name: Pauze tussen opdrachten
       name:
-        name: Apparaatnaam
-        description: Exacte naam van het bijbehorende item onder Apparaten.
+        description: Unieke naam voor Home Assistant en het dashboard.
+        name: Weergavenaam
+      read_device_time:
+        description: Lees de GMC-klok indien ondersteund.
+        name: Apparaatklok uitlezen
+      read_gyro:
+        description: Vraag optionele gyroscoopgegevens op.
+        name: Gyroscoop uitlezen
+      scan_interval:
+        description: Seconden tussen opgeslagen metingen.
+        name: Meetinterval
+      serial_debug:
+        description: Log begrensde hexadecimale en ASCII-voorbeelden van TX/RX-frames voor dit apparaat. 
+          Alleen inschakelen tijdens diagnose.
+        name: Foutopsporing van seriële frames
+      serial_debug_max_bytes:
+        description: Maximaal aantal bytes dat voor elk TX/RX-frame wordt weergegeven.
+        name: Bytegrens voor debugframe
+      serial_startup_delay:
+        description: Startverschuiving in seconden voordat dit apparaat wordt geïnitialiseerd. Grotere 
+          ingestelde waarden blijven behouden en opeenvolgende apparaten worden altijd met minimaal 15 
+          seconden gestart.
+        name: Opstartvertraging seriële verbinding
+      orientation_calibration_enabled:
+        name: Oriëntatiekalibratie
+        description: Gebruik de ingestelde offsets en schalen voor rollen, stampen en helling.
+      orientation_calibration_serial:
+        name: Serienummer van kalibratieapparaat
+        description: Serienummer waartoe deze kalibratie behoort.
+      orientation_offset_x:
+        name: X-offset voor oriëntatie
+        description: Ruwe nuloffset van de X-as uit de kalibratie met zes posities.
+      orientation_offset_y:
+        name: Y-offset voor oriëntatie
+        description: Ruwe nuloffset van de Y-as uit de kalibratie met zes posities.
+      orientation_offset_z:
+        name: Z-offset voor oriëntatie
+        description: Ruwe nuloffset van de Z-as uit de kalibratie met zes posities.
+      orientation_scale_x:
+        name: X-schaal voor oriëntatie
+        description: Ruwe tellingen van de X-as die overeenkomen met 1 g.
+      orientation_scale_y:
+        name: Y-schaal voor oriëntatie
+        description: Ruwe tellingen van de Y-as die overeenkomen met 1 g.
+      orientation_scale_z:
+        name: Z-schaal voor oriëntatie
+        description: Ruwe tellingen van de Z-as die overeenkomen met 1 g.
+      orientation_calibration_name:
+        name: Naam van kalibratieprofiel
+        description: Naam die bij de berekende oriëntatiewaarden wordt weergegeven.
+      dead_time_us:
+        description: Vooraf ingesteld door het detectorprofiel. Vul alleen een waarde in om de voorinstelling 
+          voor dit apparaat te vervangen.
+        name: 'Primaire buis: Dode tijd van detector'
+      reliable_max_cpm:
+        description: Vooraf ingesteld door het detectorprofiel. Vul alleen een waarde in om de voorinstelling 
+          voor dit apparaat te vervangen.
+        name: 'Primaire buis: Maximaal betrouwbare CPM'
+      dead_time_model:
+        description: Vooraf ingesteld door het detectorprofiel. Vul alleen een waarde in om de voorinstelling 
+          voor dit apparaat te vervangen.
+        name: 'Primaire buis: Dode-tijdmodel'
+      conversion_factor_uncertainty_percent:
+        description: Vooraf ingesteld door het detectorprofiel. Vul alleen een waarde in om de voorinstelling 
+          voor dit apparaat te vervangen.
+        name: 'Primaire buis: Onzekerheid conversiefactor'
+      calibration_uncertainty_percent:
+        description: Vooraf ingesteld door het detectorprofiel. Vul alleen een waarde in om de voorinstelling 
+          voor dit apparaat te vervangen.
+        name: 'Primaire buis: Kalibratieonzekerheid'
+      calibration_reference:
+        description: Vooraf ingesteld door het detectorprofiel. Vul alleen een waarde in om de voorinstelling 
+          voor dit apparaat te vervangen.
+        name: 'Primaire buis: Kalibratiereferentie'
+      tube_model:
+        description: Vooraf ingesteld door het detectorprofiel. Vul alleen een waarde in om de voorinstelling 
+          voor dit apparaat te vervangen.
+        name: 'Primaire buis: Buismodel'
+      detector_profile:
+        name: Apparaatprofiel (automatisch/voorinstelling)
+        description: Selecteert een toepassingsprofiel voor het apparaat. Automatisch herkent de 
+          GMC-modelfamilie via de apparaatidentiteit of de ingestelde naam en laadt werkwaarden voor 
+          buismodel, dode tijd, omrekenfactor en waarschuwingsdrempels. Een vervangen buis wordt niet fysiek 
+          geverifieerd.
+      device_serial:
+        name: Fysiek serienummer (optioneel)
+        description: Optionele identiteitscontrole. Wanneer ingesteld moet de verbonden teller exact dit 
+          serienummer melden; anders wordt de tweebuisconfiguratie om veiligheidsredenen uitgeschakeld.
       dual_tube_mode:
         name: Buismodus (geavanceerd)
-        description: «separate» beoordeelt beide kanalen afzonderlijk; «curve» gebruikt het ingestelde omschakelpunt.
+        description: «separate» beoordeelt beide kanalen afzonderlijk; «curve» gebruikt het ingestelde 
+          omschakelpunt.
       dual_tube_switch_cpm:
         name: Omschakel-CPM van tweede buis
-        description: Werkpunt voor de tweede buis. Alleen wijzigen met geverifieerde apparaatspecifieke gegevens.
+        description: Werkpunt voor de tweede buis. Alleen wijzigen met geverifieerde apparaatspecifieke 
+          gegevens.
       high_dose_tube_model:
         name: 'Tweede buis: Buismodel'
         description: Model van de tweede hogedosisbuis.
       high_dose_cpm_per_usvh:
         name: 'Tweede buis: Omrekenfactor'
-        description: CPM-naar-dosisomrekenfactor van de tweede buis. Leeg laten zonder geverifieerde kalibratie.
+        description: CPM-naar-dosisomrekenfactor van de tweede buis. Leeg laten zonder geverifieerde 
+          kalibratie.
       high_dose_dead_time_us:
         name: 'Tweede buis: Dode tijd detector'
         description: Dode tijd van de tweede buis in microseconden.
@@ -220,33 +335,35 @@ configuration:
         name: 'Tweede buis: Kalibratiereferentie'
         description: Certificaat, laboratorium of andere referentie voor de kalibratie van de tweede buis.
   gmcmap:
-    description: Gedeelde account- en netwerkinstellingen voor openbare uploads. De teller-ID blijft apparaatspecifiek.
+    description: Gedeelde account- en netwerkinstellingen voor openbare uploads. De teller-ID blijft 
+      apparaatspecifiek.
     fields:
       account_id:
-        description: GMCMap-gebruikers-ID van het geregistreerde account. Deze wordt niet gelogd of in diagnose-exporten
-          opgeslagen.
+        description: GMCMap-gebruikers-ID van het geregistreerde account. Deze wordt niet gelogd of in 
+          diagnose-exporten opgeslagen.
         name: Gebruikers-ID (AID)
       enabled:
         description: Stuur metingen optioneel naar de openbare GMCMap-wereldkaart. Standaard uitgeschakeld.
         name: Openbare uploads inschakelen
       privacy_confirmed:
-        description: Moet zijn ingeschakeld voordat gegevens worden verzonden. Locatie- en stationsgegevens
+        description: Moet zijn ingeschakeld voordat gegevens worden verzonden. Locatie- en stationsgegevens 
           worden in het GMCMap-account beheerd en kunnen openbaar zichtbaar zijn.
         name: Openbare gegevensoverdracht bevestigen
       timeout:
-        description: Maximale wachttijd per GMCMap-verzoek in seconden. Fouten worden op de achtergrond met
+        description: Maximale wachttijd per GMCMap-verzoek in seconden. Fouten worden op de achtergrond met 
           oplopende wachttijd opnieuw geprobeerd.
         name: Netwerktime-out
       upload_interval:
-        description: Seconden tussen openbare uploads per apparaat. Minimaal 120 tot 300 seconden wordt aanbevolen.
+        description: Seconden tussen openbare uploads per apparaat. Minimaal 120 tot 300 seconden wordt 
+          aanbevolen.
         name: Uploadinterval
     name: GMCMap (gedeeld)
   history:
     description: Lokale bewaartermijn, rapporttijdzone en beveiligd historiebeheer.
     fields:
       history_management_enabled:
-        description: Schakelt de beveiligde functies voor herstel en volledige verwijdering in. Laat dit tijdens
-          normaal gebruik uitgeschakeld.
+        description: Schakelt de beveiligde functies voor herstel en volledige verwijdering in. Laat dit 
+          tijdens normaal gebruik uitgeschakeld.
         name: Historiebeheer
       report_timezone:
         description: IANA-tijdzone voor daggrenzen en tijdstempels, bijvoorbeeld Europe/Amsterdam.
@@ -278,12 +395,13 @@ configuration:
         description: Begin van rood voor het afgeleide dosistempo.
         name: Aangepast gevaar µSv/h
       profile:
-        description: GQ gebruikt fabrikantbanden. BfS- en ICRP-referenties rekenen 1 en 20 mSv/jaar wiskundig
-          om naar een continu dosistempo; dit zijn geen officiële directe alarmgrenzen. Aangepast gebruikt
-          de velden hieronder.
+        description: GQ gebruikt fabrikantbanden. BfS- en ICRP-referenties rekenen 1 en 20 mSv/jaar wiskundig 
+          om naar een continu dosistempo; dit zijn geen officiële directe alarmgrenzen. Aangepast gebruikt de 
+          velden hieronder.
         name: Drempelprofiel
       threshold_basis:
-        description: Gebruikt CPM, afgeleid dosistempo of het strengste resultaat. Alleen actief bij Aangepast.
+        description: Gebruikt CPM, afgeleid dosistempo of het strengste resultaat. Alleen actief bij 
+          Aangepast.
         name: Evaluatie aangepast profiel
       warning_cpm:
         description: Begin van geel. Alleen actief bij Aangepast.
@@ -305,11 +423,10 @@ configuration:
         description: Rusttijd in seconden tussen opdrachtvensters van verschillende tellers.
         name: Rustpauze van planner
     name: Systeem
-'{count} measurements and {events} events were removed.': '{count} metingen en {events} gebeurtenissen zijn
-  verwijderd.'
-? All downloads below automatically use the GMC device currently shown in Analysis. Select another connected
+'{count} measurements and {events} events were removed.': '{count} metingen en {events} gebeurtenissen zijn verwijderd.'
+? All downloads below automatically use the GMC device currently shown in Analysis. Select another connected 
   device above to change the report source.
-: Alle onderstaande downloads gebruiken automatisch het GMC-apparaat dat momenteel in de analyse wordt weergegeven.
-  Selecteer hierboven een ander verbonden apparaat om de rapportbron te wijzigen.
+: Alle onderstaande downloads gebruiken automatisch het GMC-apparaat dat momenteel in de analyse wordt 
+  weergegeven. Selecteer hierboven een ander verbonden apparaat om de rapportbron te wijzigen.
 No connected GMC device: Geen verbonden GMC-apparaat
 Reports for the displayed analysis: Rapporten voor de weergegeven analyse

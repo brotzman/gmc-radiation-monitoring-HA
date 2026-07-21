@@ -1,9 +1,42 @@
 from __future__ import annotations
 
+import json
+
 from gmc_bridge.orientation import calculate_orientation, orientation_status
 
 
-def test_gmc500_reference_positions_are_reconstructed():
+def _calibration(serial: str) -> dict[str, object]:
+    if serial == "080048303838a0":
+        return {
+            "orientation_calibration_enabled": True,
+            "orientation_calibration_serial": serial,
+            "orientation_offset_x": 84.000,
+            "orientation_offset_y": -112.500,
+            "orientation_offset_z": -193.905,
+            "orientation_scale_x": 16380.000,
+            "orientation_scale_y": 15951.500,
+            "orientation_scale_z": 15879.235,
+            "orientation_calibration_name": "Test GMC-500+ calibration",
+        }
+    return {
+        "orientation_calibration_enabled": True,
+        "orientation_calibration_serial": serial,
+        "orientation_offset_x": 25.385,
+        "orientation_offset_y": 0.430,
+        "orientation_offset_z": 18.430,
+        "orientation_scale_x": 263.285,
+        "orientation_scale_y": 261.430,
+        "orientation_scale_z": 254.570,
+        "orientation_calibration_name": "Test GMC-320 calibration",
+    }
+
+
+def _enable(monkeypatch, *serials: str) -> None:
+    monkeypatch.setenv("DEVICES_JSON", json.dumps([_calibration(serial) for serial in serials]))
+
+
+def test_gmc500_reference_positions_are_reconstructed(monkeypatch):
+    _enable(monkeypatch, "080048303838a0")
     right = calculate_orientation("080048303838a0", 16480, 96, -96)
     assert right is not None
     assert right.position_key == "USB right"
@@ -18,7 +51,8 @@ def test_gmc500_reference_positions_are_reconstructed():
     assert 0.97 <= display_up.gravity_magnitude <= 1.03
 
 
-def test_gmc320_reference_positions_are_reconstructed():
+def test_gmc320_reference_positions_are_reconstructed(monkeypatch):
+    _enable(monkeypatch, "f488c59b0031f0")
     usb_down = calculate_orientation("f488c59b0031f0", 24, -261, 17)
     assert usb_down is not None
     assert usb_down.position_key == "USB down"
@@ -35,7 +69,8 @@ def test_unknown_serial_has_no_calibration():
     assert calculate_orientation("unknown", 1, 2, 3) is None
 
 
-def test_connected_device_card_shows_calibrated_angles(tmp_path):
+def test_connected_device_card_shows_calibrated_angles(tmp_path, monkeypatch):
+    _enable(monkeypatch, "080048303838a0")
     from gmc_bridge.history import HistoryStore
     from gmc_bridge.report_web import ReportApplication
 
@@ -77,8 +112,7 @@ def test_connected_device_card_shows_calibrated_angles(tmp_path):
     assert "Kalibrierprofil" not in page
 
 
-def test_configured_calibration_overrides_builtin(monkeypatch):
-    import json
+def test_configured_calibration_overrides_defaults(monkeypatch):
 
     monkeypatch.setenv(
         "DEVICES_JSON",
@@ -104,8 +138,7 @@ def test_configured_calibration_overrides_builtin(monkeypatch):
     assert 0.99 <= result.gravity_magnitude <= 1.01
 
 
-def test_configured_calibration_can_disable_builtin(monkeypatch):
-    import json
+def test_configured_calibration_can_be_disabled(monkeypatch):
 
     monkeypatch.setenv(
         "DEVICES_JSON",
@@ -121,7 +154,8 @@ def test_configured_calibration_can_disable_builtin(monkeypatch):
     assert calculate_orientation("080048303838a0", 16480, 96, -96) is None
 
 
-def test_orientation_status_colors():
+def test_orientation_status_colors(monkeypatch):
+    _enable(monkeypatch, "080048303838a0")
     display_up = calculate_orientation("080048303838a0", 64, -144, -16096)
     upright = calculate_orientation("080048303838a0", 16480, 96, -96)
     display_down = calculate_orientation("080048303838a0", 144, -16, 15696)

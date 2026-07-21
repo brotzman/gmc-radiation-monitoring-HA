@@ -109,7 +109,7 @@ def test_supervisor_form_removes_duplicate_low_dose_fields() -> None:
     assert schema["detector_profile"].startswith("list(")
     assert not any(key.startswith("low_dose_") for key in schema)
     assert config["options"]["devices"][0]["detector_profile"] == "gmc_320_plus_v4"
-    assert config["options"]["devices"][1]["detector_profile"] == "gmc_500_plus"
+    assert config["options"]["dual_tube_devices"][0]["detector_profile"] == "gmc_500_plus"
 
     for path in (ROOT / "translations").glob("*.yaml"):
         fields = yaml.safe_load(path.read_text(encoding="utf-8"))["configuration"]["devices"]["fields"]
@@ -146,4 +146,4 @@ def test_single_tube_panel_does_not_render_dual_tube_details() -> None:
     assert panel.count("M4011") == 1
     assert "Aktuelle CPM" not in panel
     assert "154 CPM/(µSv/h)" not in panel
-    assert "Detektor Profil" in panel
+    assert "Detektorprofil" in panel
