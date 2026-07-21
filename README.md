@@ -39,7 +39,7 @@ This app requires a Home Assistant installation with the Supervisor app store, s
 
 ## Installation troubleshooting
 
-Version 8.3.2 intentionally has no `image:` entry in the app configuration. If Home Assistant still tries to pull `ghcr.io/brotzman/gmc-radiation-monitor`, refresh the app repository metadata and verify that GitHub contains the 8.3.2 commit. Removing and re-adding the custom repository can clear stale metadata; existing app data should be backed up before uninstalling an installed instance.
+Version 8.3.3 intentionally has no `image:` entry in the app configuration. If Home Assistant still tries to pull `ghcr.io/brotzman/gmc-radiation-monitor`, refresh the app repository metadata and verify that GitHub contains the 8.3.3 commit. Removing and re-adding the custom repository can clear stale metadata; existing app data should be backed up before uninstalling an installed instance.
 
 ## Home Assistant architecture
 
@@ -52,7 +52,7 @@ A separate custom integration would duplicate the device and entity model and wo
 - [App overview](gmc_radiation_monitor/README.md)
 - [Full documentation](gmc_radiation_monitor/DOCS.md)
 - [Changelog](gmc_radiation_monitor/CHANGELOG.md)
-- [Release notes 8.3.2](gmc_radiation_monitor/RELEASE_NOTES_8.3.2.md)
+- [Release notes 8.3.3](gmc_radiation_monitor/RELEASE_NOTES_8.3.3.md)
 
 ## Development and publishing
 
@@ -62,9 +62,10 @@ Pull requests and pushes run the Home Assistant app linter, the project quality 
 
 This software is intended for monitoring and home automation. It is not a calibrated radiation-protection instrument and does not replace official measurements, professional advice or emergency instructions.
 
-## Version 8.3.2 highlights
+## Version 8.3.3 highlights
 
-- Clear explanations for Summary, Analysis and Expert view plus a visible PDF/ZIP/CSV format guide.
-- Improved touch targets and narrow-phone header behavior without page-level horizontal overflow.
-- Corrected professional PDF layout with a protected assessment panel below the primary chart.
-- Active daily and weekly charts stop at the current data horizon, and one-day comparisons use a correct single-date axis.
+- Detector and calibration details are visible directly in each main-dashboard device card.
+- Summary, Analysis and Expert levels progressively expose tube model, conversion factor, dead time, reliable CPM limit, uncertainty and calibration reference.
+- GMC-500+ supports independent M4011 and SI-3BG profiles through separate-channel or piecewise-curve modes.
+- Missing high-dose calibration is reported as incomplete, and the M4011 factor is never silently applied to SI-3BG counts.
+- Analysis JSON, integrated-dose processing and the eight bundled manuals are updated for version 8.3.3.
