@@ -218,7 +218,7 @@ def test_analysis_json_records_dual_tube_configuration_and_selected_profile() ->
         language="de",
     )
 
-    assert document["app_version"] == "8.4.4"
+    assert document["app_version"] == "8.4.5"
     assert document["dual_tube_configuration"]["mode"] == "separate"
     assert document["dual_tube_configuration"]["low_dose"]["tube_model"] == "M4011"
     assert document["derived_dose_estimate"]["selected_tube"] == "low"
