@@ -101,6 +101,53 @@ for _language, _catalogue in _stability_card_overrides.items():
     CATALOGS[_language].update(_catalogue)
 
 
+# Version 8.3.2 usability wording for the visible report-format guide.
+_report_format_guide_overrides = {
+    "en": {
+        "Best for reading, printing and sharing": "Best for reading, printing and sharing",
+        "Includes raw data, checksums and reproducibility metadata": "Includes raw data, checksums and reproducibility metadata",
+        "For spreadsheets and further analysis": "For spreadsheets and further analysis",
+    },
+    "de": {
+        "Best for reading, printing and sharing": "Am besten zum Lesen, Drucken und Weitergeben",
+        "Includes raw data, checksums and reproducibility metadata": "Enthält Rohdaten, Prüfsummen und Angaben zur Reproduzierbarkeit",
+        "For spreadsheets and further analysis": "Für Tabellenprogramme und weiterführende Auswertungen",
+    },
+    "fr": {
+        "Best for reading, printing and sharing": "Idéal pour la lecture, l’impression et le partage",
+        "Includes raw data, checksums and reproducibility metadata": "Inclut les données brutes, les sommes de contrôle et les métadonnées de reproductibilité",
+        "For spreadsheets and further analysis": "Pour les tableurs et les analyses complémentaires",
+    },
+    "es": {
+        "Best for reading, printing and sharing": "Ideal para leer, imprimir y compartir",
+        "Includes raw data, checksums and reproducibility metadata": "Incluye datos sin procesar, sumas de comprobación y metadatos de reproducibilidad",
+        "For spreadsheets and further analysis": "Para hojas de cálculo y análisis posteriores",
+    },
+    "it": {
+        "Best for reading, printing and sharing": "Ideale per lettura, stampa e condivisione",
+        "Includes raw data, checksums and reproducibility metadata": "Include dati grezzi, checksum e metadati di riproducibilità",
+        "For spreadsheets and further analysis": "Per fogli di calcolo e ulteriori analisi",
+    },
+    "nl": {
+        "Best for reading, printing and sharing": "Geschikt voor lezen, afdrukken en delen",
+        "Includes raw data, checksums and reproducibility metadata": "Bevat ruwe gegevens, controlesommen en reproduceerbaarheidsmetadata",
+        "For spreadsheets and further analysis": "Voor spreadsheets en verdere analyse",
+    },
+    "pl": {
+        "Best for reading, printing and sharing": "Najlepszy do czytania, drukowania i udostępniania",
+        "Includes raw data, checksums and reproducibility metadata": "Zawiera dane surowe, sumy kontrolne i metadane odtwarzalności",
+        "For spreadsheets and further analysis": "Do arkuszy kalkulacyjnych i dalszej analizy",
+    },
+    "hr": {
+        "Best for reading, printing and sharing": "Najbolje za čitanje, ispis i dijeljenje",
+        "Includes raw data, checksums and reproducibility metadata": "Uključuje sirove podatke, kontrolne zbrojeve i metapodatke ponovljivosti",
+        "For spreadsheets and further analysis": "Za proračunske tablice i daljnju analizu",
+    },
+}
+for _language, _catalogue in _report_format_guide_overrides.items():
+    CATALOGS[_language].update(_catalogue)
+
+
 # Two legacy indirection labels intentionally carry format fields only in their
 # translated template. Callers resolve them to the real source sentence before
 # formatting.

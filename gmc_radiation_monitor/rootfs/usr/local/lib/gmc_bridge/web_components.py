@@ -129,15 +129,19 @@ def render_analysis_level_controls(*, default_level: str, translator: Translator
     )
     buttons = "".join(
         f'<button type="button" class="analysis-level-button" data-analysis-level="{name.value}" '
+        f'data-analysis-description="{html.escape(help_text, quote=True)}" '
+        f'aria-controls="primary-dashboard analysis history workflow reports maintenance" '
         f'aria-pressed="{str(name == level).lower()}" title="{html.escape(help_text, quote=True)}">'
         f'<span class="analysis-level-symbol" aria-hidden="true">{symbol}</span>'
         f'<span>{html.escape(label)}</span></button>'
         for name, symbol, label, help_text in labels
     )
+    selected_description = next(help_text for name, _symbol, _label, help_text in labels if name == level)
     return (
         f'<section class="analysis-level-panel" id="analysis-level-panel" data-default-level="{level.value}">'
-        f'<div><strong>{html.escape(translator("View"))}</strong>'
-        f'<small>{html.escape(translator("Choose how many details and tools this page shows. The selection is stored in this browser."))}</small></div>'
+        f'<div class="analysis-level-copy"><strong>{html.escape(translator("View"))}</strong>'
+        f'<small id="analysis-level-description" aria-live="polite">{html.escape(selected_description)}</small>'
+        f'<span>{html.escape(translator("Choose how many details and tools this page shows. The selection is stored in this browser."))}</span></div>'
         f'<div class="analysis-level-buttons" role="group" aria-label="{html.escape(translator("View"), quote=True)}">{buttons}</div>'
         '</section>'
     )

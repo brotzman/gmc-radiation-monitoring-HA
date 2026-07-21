@@ -87,7 +87,7 @@ The workflow area provides configurable Home Assistant notifications, event anno
 
 The internal SQLite schema is migrated automatically to version 8. Existing measurement and device data remain compatible.
 
-Version 8.3.1 adds a directly accessible language switcher to the dashboard header, including automatic browser/system-language selection. It completes the runtime translation audit, localizes the GMCMap world-map link and improves keyboard focus plus compact mobile navigation. Serial measurement, MQTT Discovery, SQLite history and existing download formats remain compatible. The dashboard opens the 8.3.1 manual that matches the selected UI language: German, English, Spanish, French, Italian, Dutch, Polish or Croatian.
+Version 8.3.2 makes the selected dashboard detail level easier to understand, adds a visible guide for PDF, ZIP and CSV report formats, and enlarges important touch targets on small displays. The professional PDF report now keeps the assessment clear of the chart, limits active-period time axes to the actual data horizon and renders one-day comparisons with a correct single-date axis. Serial measurement, MQTT Discovery, SQLite history, analysis schemas and existing download formats remain compatible. The dashboard opens the 8.3.2 manual that matches the selected UI language: German, English, Spanish, French, Italian, Dutch, Polish or Croatian.
 
 ## Installation
 

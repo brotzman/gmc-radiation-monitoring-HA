@@ -363,7 +363,9 @@ table { width: 100%; border-collapse: collapse; margin-top: .5rem; min-width: 52
 th, td { text-align: left; padding: .55rem .6rem; border-bottom: 1px solid color-mix(in srgb, CanvasText 16%, transparent); font-variant-numeric: tabular-nums; }
 .analysis-level-panel { display:flex; align-items:center; justify-content:space-between; gap:1.15rem; padding:.9rem 1rem; margin-bottom:1rem; border:1px solid var(--border); border-radius:12px; background:var(--panel); }
 .analysis-level-panel > div:first-child { display:grid; gap:.18rem; min-width:0; flex:1 1 22rem; }
-.analysis-level-panel small { color:var(--muted); line-height:1.4; }
+.analysis-level-copy { display:grid; gap:.18rem; min-width:0; flex:1 1 22rem; }
+.analysis-level-copy small { color:CanvasText; line-height:1.4; font-size:.88rem; }
+.analysis-level-copy > span { color:var(--muted); line-height:1.35; font-size:.76rem; }
 .analysis-level-buttons { display:flex; align-items:center; gap:.5rem; flex:0 0 auto; flex-wrap:nowrap; }
 .analysis-level-button { width:auto; min-height:2.4rem; padding:.48rem .78rem; border-radius:999px; display:inline-flex; align-items:center; gap:.42rem; white-space:nowrap; background:Canvas; color:CanvasText; box-shadow:none; }
 .analysis-level-button[aria-pressed="true"] { border-color:color-mix(in srgb,CanvasText 65%,transparent); background:var(--panel-strong); font-weight:760; box-shadow:inset 0 0 0 1px color-mix(in srgb,CanvasText 12%,transparent); }
@@ -386,6 +388,7 @@ body[data-analysis-level="analysis"] [data-analysis-tier="expert"] { display:non
   .page-scroll { padding: calc(.75rem + env(safe-area-inset-top)) calc(.75rem + env(safe-area-inset-right)) calc(.75rem + env(safe-area-inset-bottom)) calc(.75rem + env(safe-area-inset-left)); }
   .analysis-level-panel { align-items:stretch; flex-direction:column; }
   .analysis-level-panel > div:first-child { flex:0 0 auto; }
+  .analysis-level-copy { flex:0 0 auto; }
   .analysis-level-buttons { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); }
   .analysis-level-button { justify-content:center; min-width:0; }
   .status-summary { grid-template-columns: repeat(2,minmax(0,1fr)); }
@@ -406,8 +409,11 @@ body[data-analysis-level="analysis"] [data-analysis-tier="expert"] { display:non
   .form-actions { align-items:stretch; }
 }
 @media (max-width: 620px) {
+  .report-format-guide { grid-template-columns:1fr; }
+  .header-intro { overflow-x:hidden; }
+  .analysis-level-button, a.button, button { min-height:2.75rem; }
   .header-resource-links { grid-template-columns:1fr; }
-  .language-switcher { flex-wrap:nowrap; overflow-x:auto; padding:.08rem 0 .3rem; scrollbar-width:thin; -webkit-overflow-scrolling:touch; }
+  .language-switcher { width:100%; min-width:0; flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden; padding:.08rem 0 .3rem; scrollbar-width:thin; -webkit-overflow-scrolling:touch; }
   .language-switcher a { flex:0 0 auto; min-height:2.5rem; }
 }
 @media (max-width: 520px) {
@@ -458,12 +464,18 @@ body[data-analysis-level="analysis"] [data-analysis-tier="expert"] { display:non
     min-width:0; max-width:100%;
   }
   h1, h2, h3, p, strong, small, summary { overflow-wrap:anywhere; word-break:break-word; }
+  .header-intro h1 { font-size:1.5rem; overflow-wrap:normal; word-break:normal; hyphens:auto; }
   .assessment-header > div, .assessment-primary > div { min-width:0; max-width:100%; }
   .assessment-title, .assessment-subtitle, .assessment-state { overflow-wrap:anywhere; word-break:break-word; }
   .actions { grid-template-columns:1fr; }
 }
+.report-format-guide { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.65rem; margin:.7rem 0 1rem; }
+.report-format-item { display:grid; gap:.18rem; min-width:0; padding:.72rem .78rem; border:1px solid var(--border); border-radius:10px; background:color-mix(in srgb,CanvasText 3%,transparent); }
+.report-format-item strong { font-size:.84rem; }
+.report-format-item small { color:var(--muted); line-height:1.35; }
 .report-target-card{display:grid;gap:.45rem;padding:.85rem 1rem;margin:.85rem 0 1rem;border:1px solid var(--border);border-radius:11px;background:var(--panel)}
 .report-target-card label{display:grid;gap:.4rem}.report-target-card select{max-width:32rem}
+@media (max-width:620px) { .report-format-guide { grid-template-columns:1fr; } }
 .history-management-status { display:grid; grid-template-columns:auto minmax(0,1fr); gap:.7rem; align-items:start; margin:.75rem 0 1rem; padding:.8rem .9rem; border:1px solid var(--border); border-radius:10px; background:var(--panel); }
 .history-management-status strong,.history-management-status small { display:block; }
 .history-management-status small { margin-top:.18rem; color:var(--muted); }
@@ -520,9 +532,14 @@ def render_dashboard_script(*, selected_serial: str, language: str, translator: 
     const fallback = analysisLevelPanel?.dataset.defaultLevel || 'analysis';
     const level = allowedAnalysisLevels.has(requestedLevel) ? requestedLevel : fallback;
     document.body.dataset.analysisLevel = level;
+    let selectedDescription = '';
     document.querySelectorAll('.analysis-level-button').forEach((button) => {{
-      button.setAttribute('aria-pressed', String(button.dataset.analysisLevel === level));
+      const selected = button.dataset.analysisLevel === level;
+      button.setAttribute('aria-pressed', String(selected));
+      if (selected) selectedDescription = button.dataset.analysisDescription || '';
     }});
+    const description = document.getElementById('analysis-level-description');
+    if (description && selectedDescription) description.textContent = selectedDescription;
     if (persist) {{ preferences.analysisLevel = level; writeJson(uiStorageKey, preferences); }}
   }}
   setAnalysisLevel(preferences.analysisLevel || analysisLevelPanel?.dataset.defaultLevel || 'analysis', false);

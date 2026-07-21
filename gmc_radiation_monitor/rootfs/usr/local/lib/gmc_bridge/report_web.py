@@ -941,6 +941,11 @@ class ReportApplication(WorkflowApplicationMixin):
 <small>{html.escape(t("All downloads below automatically use the GMC device currently shown in Analysis. Select another connected device above to change the report source."))}</small>
 </div>
 <h3>{html.escape(t("Quick downloads"))}</h3>
+<div class="report-format-guide" aria-label="{html.escape(t("Format"), quote=True)}">
+<div class="report-format-item"><strong>{html.escape(t("PDF report"))}</strong><small>{html.escape(t("Best for reading, printing and sharing"))}</small></div>
+<div class="report-format-item"><strong>{html.escape(t("Complete ZIP bundle"))}</strong><small>{html.escape(t("Includes raw data, checksums and reproducibility metadata"))}</small></div>
+<div class="report-format-item"><strong>{html.escape(t("Measurement CSV"))}</strong><small>{html.escape(t("For spreadsheets and further analysis"))}</small></div>
+</div>
 <div class="download-columns">
 <div class="download-card">
 <h3>{html.escape(t("Previous day"))}</h3>

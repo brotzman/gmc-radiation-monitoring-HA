@@ -1,5 +1,16 @@
 # Changelog
 
+## 8.3.2
+
+- Added visible, dynamically updated explanations for Summary, Analysis and Expert view.
+- Added a report-format guide for PDF, reproducible ZIP and CSV downloads.
+- Increased mobile touch targets for primary controls and report actions.
+- Improved the narrow-phone header title and contained the horizontally scrollable language chooser without causing page-level overflow.
+- Fixed the page-1 report overlap by separating the chart and assessment into protected layout regions.
+- Limited active-period charts to the actual report generation time and added a data-through timestamp.
+- Fixed the single-day comparison chart so it no longer renders a misleading multi-year x-axis.
+- Added usability and report-layout regression tests.
+
 ## 8.3.1
 
 - Promoted the validated Stable R2 device-stability display corrections to a patch release.

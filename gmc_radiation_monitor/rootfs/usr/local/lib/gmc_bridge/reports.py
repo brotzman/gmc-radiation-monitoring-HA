@@ -1295,6 +1295,67 @@ def _report_calendar_matrix(
     return matrix, weeks
 
 
+# Normalized figure coordinates for page 1.  Keeping these values in one
+# place makes the executive-summary layout testable and prevents the chart
+# x-axis label from colliding with the assessment heading below it.
+_PAGE1_CHART_RECT = (0.09, 0.535, 0.84, 0.205)
+_PAGE1_ASSESSMENT_RECT = (0.065, 0.345, 0.87, 0.135)
+_PAGE1_STATS_HEADING_Y = 0.315
+
+
+def _report_display_end(period: ReportPeriod, generated_at: datetime) -> datetime:
+    """Return the visible end of a report chart.
+
+    Completed periods retain their full calendar range.  A report for the
+    currently running day or week ends at generation time instead of showing
+    a large, misleading area of future time with no measurements.
+    """
+    generated_local = generated_at.astimezone(period.start_local.tzinfo)
+    if period.start_local <= generated_local < period.end_local:
+        return generated_local
+    return period.end_local
+
+
+def _draw_assessment_panel(
+    fig: Any,
+    *,
+    title: str,
+    explanation: str,
+    recommendation: str,
+) -> None:
+    from matplotlib.patches import FancyBboxPatch
+
+    x, y, width, height = _PAGE1_ASSESSMENT_RECT
+    panel = FancyBboxPatch(
+        (x, y),
+        width,
+        height,
+        boxstyle="round,pad=0.008,rounding_size=0.008",
+        transform=fig.transFigure,
+        linewidth=0.7,
+        edgecolor="#d7dee8",
+        facecolor="#f8fafc",
+    )
+    fig.patches.append(panel)
+    fig.text(x + 0.012, y + height - 0.018, title, fontsize=12.0, fontweight="bold", va="top")
+    fig.text(
+        x + 0.012,
+        y + height - 0.052,
+        textwrap.fill(explanation, width=112),
+        fontsize=8.25,
+        va="top",
+        linespacing=1.25,
+    )
+    fig.text(
+        x + 0.012,
+        y + 0.020,
+        textwrap.fill(recommendation, width=112),
+        fontsize=8.25,
+        va="bottom",
+        linespacing=1.25,
+    )
+
+
 def pdf_bytes(
     rows: list[HistoryRow],
     *,
@@ -1317,6 +1378,7 @@ def pdf_bytes(
     from matplotlib.backends.backend_pdf import PdfPages
 
     generated_at = datetime.now(UTC)
+    display_end_local = _report_display_end(period, generated_at)
     report_id = f"RM-{generated_at.strftime('%Y%m%d-%H%M%S')}"
     page_count = 5
     output = io.BytesIO()
@@ -1413,7 +1475,7 @@ def pdf_bytes(
             value_font_size=8.8,
             wrap_value=True,
         )
-        chart_axis = fig.add_axes([0.09, 0.49, 0.84, 0.255])
+        chart_axis = fig.add_axes(_PAGE1_CHART_RECT)
         if values:
             chart_axis.plot(local_times, values, linewidth=0.8, alpha=0.55, label=_report_phrase(language, "Messwert", "Measurement"))
             chart_axis.plot(local_times, rolling_values, linewidth=1.8, label=_report_phrase(language, "Gleitendes 1-h-Mittel", "Rolling 1 h mean"))
@@ -1421,21 +1483,42 @@ def pdf_bytes(
                 chart_axis.axhline(float(baseline), linewidth=1.0, linestyle="--", label=_report_phrase(language, "Lokale Basislinie", "Local baseline"))
                 chart_axis.axhline(float(baseline) * yellow_percent / 100.0, linewidth=0.9, linestyle=":", label=_report_phrase(language, "Relative Warnschwelle", "Relative warning threshold"))
                 chart_axis.axhline(float(baseline) * red_percent / 100.0, linewidth=0.9, linestyle=":", label=_report_phrase(language, "Relative Alarmgrenze", "Relative alarm threshold"))
-            chart_axis.set_xlim(period.start_local, period.end_local)
+            chart_axis.set_xlim(period.start_local, display_end_local)
             _format_report_time_axis(chart_axis, tz)
             chart_axis.legend(loc="upper left", fontsize=6.8, ncol=2, frameon=False)
         else:
             chart_axis.text(0.5, 0.5, _report_phrase(language, "Keine akzeptierten Messwerte im Zeitraum", "No accepted measurements in period"), ha="center", va="center", transform=chart_axis.transAxes)
         chart_axis.set_title(_report_phrase(language, "Verlauf der kombinierten Beta-/Gamma-Zählrate", "Combined beta/gamma count-rate trend"), fontsize=10.5, fontweight="bold", pad=8)
         chart_axis.set_ylabel(_report_phrase(language, "Zählrate [CPM]", "Count rate [CPM]"), fontsize=8.5)
-        chart_axis.set_xlabel(_report_phrase(language, f"Lokale Zeit [{timezone_name}]", f"Local date and time [{timezone_name}]"), fontsize=8.5)
+        chart_axis.set_xlabel(
+            _report_phrase(language, f"Lokale Zeit [{timezone_name}]", f"Local date and time [{timezone_name}]"),
+            fontsize=8.5,
+            labelpad=4,
+        )
+        chart_axis.text(
+            1.0,
+            1.015,
+            _report_phrase(
+                language,
+                f"Datenstand {display_end_local.strftime('%d.%m.%Y %H:%M')}",
+                f"Data through {display_end_local.strftime('%Y-%m-%d %H:%M')}",
+            ),
+            transform=chart_axis.transAxes,
+            ha="right",
+            va="bottom",
+            fontsize=6.8,
+            color="#64748b",
+        )
         _configure_report_axis(chart_axis)
 
-        fig.text(0.065, 0.445, _report_phrase(language, "Bewertung des Berichtszeitraums", "Assessment of the reporting period"), fontsize=12.5, fontweight="bold")
-        fig.text(0.065, 0.414, textwrap.fill(explanation, width=115), fontsize=8.5, va="top")
         recommendation_text = _report_phrase(language, "Empfehlung: ", "Recommendation: ") + recommendation
-        fig.text(0.065, 0.368, textwrap.fill(recommendation_text, width=115), fontsize=8.5, va="top")
-        fig.text(0.065, 0.317, _report_phrase(language, "Messwertstatistik des Berichtszeitraums", "Measurement statistics for the reporting period"), fontsize=12.5, fontweight="bold")
+        _draw_assessment_panel(
+            fig,
+            title=_report_phrase(language, "Bewertung des Berichtszeitraums", "Assessment of the reporting period"),
+            explanation=explanation,
+            recommendation=recommendation_text,
+        )
+        fig.text(0.065, _PAGE1_STATS_HEADING_Y, _report_phrase(language, "Messwertstatistik des Berichtszeitraums", "Measurement statistics for the reporting period"), fontsize=12.5, fontweight="bold")
         stats_rows = [
             [_report_phrase(language, "Messwerte", "Measurements"), f"{int(analysis.get('samples') or 0):,}", _report_phrase(language, "Datenabdeckung", "Data coverage"), f"{float(analysis.get('completeness_percent') or 0.0):.1f}%"],
             [_report_phrase(language, "Minimum", "Minimum"), _format_number(analysis.get("cpm_min")) + " CPM", _report_phrase(language, "Maximum", "Maximum"), _format_number(analysis.get("cpm_max")) + " CPM"],
@@ -1444,7 +1527,7 @@ def pdf_bytes(
             [_report_phrase(language, "Lokale Basislinie", "Local baseline"), _format_number(baseline) + " CPM", _report_phrase(language, "Abweichung", "Deviation"), _format_signed(analysis.get("baseline_deviation_percent")) + "%"],
             [_report_phrase(language, "Datenqualität", "Data quality"), _report_state_label(language, quality.get("label") or "—"), _report_phrase(language, "Anomalieereignisse", "Anomaly events"), str(int(analysis.get("event_count") or 0))],
         ]
-        stats_axis = fig.add_axes([0.065, 0.075, 0.87, 0.22])
+        stats_axis = fig.add_axes([0.065, 0.075, 0.87, 0.215])
         _draw_table(stats_axis, stats_rows, font_size=7.8, column_widths=[0.22, 0.23, 0.27, 0.28])
         fig.text(0.065, 0.052, _report_phrase(language, "* Aus CPM und dem konfigurierten Umrechnungsfaktor abgeleitete Dosisleistung; keine unabhängige Dosimetrie.", "* Dose rate derived from CPM and the configured conversion factor; not independent dosimetry."), fontsize=6.8, color="#64748b")
         pdf.savefig(fig)
@@ -1457,7 +1540,7 @@ def pdf_bytes(
         if values:
             time_axis.plot(local_times, values, linewidth=0.75, alpha=0.55, label=_report_phrase(language, "Messwert", "Measurement"))
             time_axis.plot(local_times, rolling_values, linewidth=1.65, label=_report_phrase(language, "Gleitendes 1-h-Mittel", "Rolling 1 h mean"))
-            time_axis.set_xlim(period.start_local, period.end_local)
+            time_axis.set_xlim(period.start_local, display_end_local)
             _format_report_time_axis(time_axis, tz)
             time_axis.legend(loc="upper left", fontsize=7, frameon=False)
         time_axis.set_title(_report_phrase(language, "Zählratenverlauf", "Count-rate trend"), fontsize=10.5, fontweight="bold")
@@ -1489,9 +1572,17 @@ def pdf_bytes(
             minima = [item[1] for item in daily]
             medians = [item[2] for item in daily]
             maxima = [item[3] for item in daily]
-            daily_axis.vlines(days, minima, maxima, linewidth=1.2, alpha=0.7, label=_report_phrase(language, "Minimum bis Maximum", "Minimum to maximum"))
-            daily_axis.scatter(days, medians, s=13, zorder=3, label=_report_phrase(language, "Median", "Median"))
-            _format_report_time_axis(daily_axis, tz)
+            if len(days) == 1:
+                center = datetime.combine(days[0], dt_time(hour=12), tzinfo=tz)
+                plotted_days = [center]
+                daily_axis.set_xlim(center - timedelta(hours=12), center + timedelta(hours=12))
+                daily_axis.set_xticks([center])
+                daily_axis.set_xticklabels([days[0].strftime("%d.%m.%Y")])
+            else:
+                plotted_days = [datetime.combine(day, dt_time(hour=12), tzinfo=tz) for day in days]
+                _format_report_time_axis(daily_axis, tz)
+            daily_axis.vlines(plotted_days, minima, maxima, linewidth=1.2, alpha=0.7, label=_report_phrase(language, "Minimum bis Maximum", "Minimum to maximum"))
+            daily_axis.scatter(plotted_days, medians, s=13, zorder=3, label=_report_phrase(language, "Median", "Median"))
             daily_axis.legend(loc="upper left", fontsize=7, frameon=False)
         daily_axis.set_title(_report_phrase(language, "Tagesvergleich: Minimum, Median und Maximum", "Daily comparison: minimum, median and maximum"), fontsize=10.5, fontweight="bold")
         daily_axis.set_xlabel(_report_phrase(language, f"Lokales Datum [{timezone_name}]", f"Local date [{timezone_name}]"), fontsize=8.5)
