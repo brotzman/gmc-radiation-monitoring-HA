@@ -3,14 +3,14 @@ Another report or maintenance job is running: Se está ejecutando otro informe o
 Complete history deletion failed: Error al eliminar el historial completo
 Danger zone: Zona de peligro
 Delete all GMC history: Eliminar todo el historial de GMC
-Deletion confirmation text must be exactly DELETE ALL GMC HISTORY: El texto de confirmación de eliminación debe ser exactamente DELETE ALL GMC
-  HISTORY
+Deletion confirmation text must be exactly DELETE ALL GMC HISTORY: El texto de confirmación de eliminación debe ser exactamente
+  DELETE ALL GMC HISTORY
 History deleted: Historial eliminado
 Invalid deletion confirmation: Confirmación de eliminación no válida
-? Permanently delete all GMC history from this app and Home Assistant Recorder. This includes CPM, temperature, voltage, gyro and tube measurements
-  for every known GMC and all time periods.
-: Elimina permanentemente todo el historial de GMC de esta aplicación y de la grabadora Home Assistant. Esto incluye mediciones de CPM, temperatura,
-  voltaje, giroscopio y tubo para cada GMC conocido y todos los períodos de tiempo.
+? Permanently delete all GMC history from this app and Home Assistant Recorder. This includes CPM, temperature, voltage, gyro
+  and tube measurements for every known GMC and all time periods.
+: Elimina permanentemente todo el historial de GMC de esta aplicación y de la grabadora Home Assistant. Esto incluye mediciones
+  de CPM, temperatura, voltaje, giroscopio y tubo para cada GMC conocido y todos los períodos de tiempo.
 This cannot be undone. Delete all GMC history?: Esto no se puede deshacer. ¿Eliminar todo el historial de GMC?
 Type DELETE ALL GMC HISTORY to confirm: Escriba DELETE ALL GMC HISTORY para confirmar
 configuration:
@@ -21,18 +21,19 @@ configuration:
         description: Días de historial usados para la base de fondo local.
         name: Periodo de aprendizaje de referencia
       external_temperature_entity:
-        description: Sensor de Home Assistant utilizado para correlacionar CPM y temperatura cuando el GMC no dispone de sensor de temperatura
-          interno. El ID de la entidad sigue siendo editable.
+        description: Sensor de Home Assistant utilizado para correlacionar CPM y temperatura cuando el GMC no dispone de sensor
+          de temperatura interno. El ID de la entidad sigue siendo editable.
         name: Entidad de temperatura externa
       external_temperature_max_age_seconds:
         description: Los estados de temperatura antiguos de Home Assistant no se utilizan para la correlación.
         name: Antigüedad máxima de la temperatura externa
       external_temperature_name:
-        description: Nombre descriptivo alternativo utilizado para localizar el sensor de temperatura cuando el ID de entidad configurado es distinto
-          o se ha cambiado.
+        description: Nombre descriptivo alternativo utilizado para localizar el sensor de temperatura cuando el ID de entidad
+          configurado es distinto o se ha cambiado.
         name: Nombre de búsqueda de temperatura externa
       cosmic_hint_enabled:
-        description: Aprende una firma de fondo prudente relacionada con la presión. Es solo una indicación estadística y no suprime alertas.
+        description: Aprende una firma de fondo prudente relacionada con la presión. Es solo una indicación estadística y
+          no suprime alertas.
         name: Indicación estadística de influencia cósmica
       pressure_weather_entity_primary:
         description: Entidad meteorológica principal de Home Assistant para la presión actual.
@@ -72,15 +73,16 @@ configuration:
     description: Configure cada contador GMC conectado de forma independiente. Añada una entrada por dispositivo físico.
     fields:
       auxiliary_read_interval:
-        description: Segundos entre lecturas de temperatura, tensión, tubos dobles, hora del dispositivo y giroscopio. CPM sigue usando el intervalo
-          de medición; 0 lee los valores auxiliares en cada ciclo.
+        description: Segundos entre lecturas de temperatura, tensión, tubos dobles, hora del dispositivo y giroscopio. CPM
+          sigue usando el intervalo de medición; 0 lee los valores auxiliares en cada ciclo.
         name: Intervalo de lectura auxiliar
       command_timeout:
         description: Espera máxima de respuesta en segundos.
         name: Tiempo de espera de respuesta
       cpm_per_usvh:
-        description: Factor de conversión específico del tubo.
-        name: CPM por µSv/h
+        description: Predefinido por el perfil del detector. Introduzca un valor solo para sustituir el preajuste de este
+          dispositivo.
+        name: 'Tubo único/principal: Factor de conversión'
       device_clock_warning_seconds:
         description: Desviación permitida en segundos.
         name: Umbral de aviso del reloj
@@ -106,15 +108,15 @@ configuration:
         description: Segundos entre mediciones almacenadas.
         name: Intervalo de medición
       serial_debug:
-        description: Registra vistas previas hexadecimales y ASCII de tamaño limitado de las tramas TX/RX de este dispositivo. Actívelo solo durante
-          el diagnóstico.
+        description: Registra vistas previas hexadecimales y ASCII de tamaño limitado de las tramas TX/RX de este dispositivo.
+          Actívelo solo durante el diagnóstico.
         name: Depuración de tramas serie
       serial_debug_max_bytes:
         description: Número máximo de bytes mostrados para cada trama TX/RX.
         name: Límite de bytes de trama de depuración
       serial_startup_delay:
-        description: Desfase de inicio en segundos antes de inicializar este dispositivo. Se conservan los valores configurados mayores y siempre
-          hay al menos 15 segundos entre dispositivos consecutivos.
+        description: Desfase de inicio en segundos antes de inicializar este dispositivo. Se conservan los valores configurados
+          mayores y siempre hay al menos 15 segundos entre dispositivos consecutivos.
         name: Retardo de inicio serie
       orientation_calibration_enabled:
         name: Calibración de orientación
@@ -144,30 +146,82 @@ configuration:
         name: Nombre del perfil de calibración
         description: Nombre mostrado con los valores de orientación calculados.
       dead_time_us:
-        description: Tiempo muerto específico del detector en microsegundos. Déjelo vacío sin datos fiables del dispositivo.
-        name: Tiempo muerto del detector
+        description: Predefinido por el perfil del detector. Introduzca un valor solo para sustituir el preajuste de este
+          dispositivo.
+        name: 'Tubo único/principal: Tiempo muerto del detector'
       reliable_max_cpm:
-        description: Tasa máxima considerada fiable para este dispositivo. Los valores superiores se marcan como posible saturación o pérdida
-          de cuentas.
-        name: CPM máximos fiables
+        description: Predefinido por el perfil del detector. Introduzca un valor solo para sustituir el preajuste de este
+          dispositivo.
+        name: 'Tubo único/principal: CPM fiable máximo'
       dead_time_model:
-        description: Modelo de corrección documentado para este dispositivo. Solo se corrige cuando se configura el tiempo muerto.
-        name: Modelo de tiempo muerto
+        description: Predefinido por el perfil del detector. Introduzca un valor solo para sustituir el preajuste de este
+          dispositivo.
+        name: 'Tubo único/principal: Modelo de tiempo muerto'
       conversion_factor_uncertainty_percent:
-        description: Incertidumbre estándar relativa del factor CPM a µSv/h en porcentaje.
-        name: Incertidumbre del factor de conversión
+        description: Predefinido por el perfil del detector. Introduzca un valor solo para sustituir el preajuste de este
+          dispositivo.
+        name: 'Tubo único/principal: Incertidumbre del factor de conversión'
       calibration_uncertainty_percent:
-        description: Incertidumbre estándar relativa de calibración en porcentaje. Déjelo vacío si se desconoce.
-        name: Incertidumbre de calibración
+        description: Predefinido por el perfil del detector. Introduzca un valor solo para sustituir el preajuste de este
+          dispositivo.
+        name: 'Tubo único/principal: Incertidumbre de calibración'
       calibration_reference:
-        description: Certificado, laboratorio u otra referencia que documenta la calibración.
-        name: Referencia de calibración
+        description: Predefinido por el perfil del detector. Introduzca un valor solo para sustituir el preajuste de este
+          dispositivo.
+        name: 'Tubo único/principal: Referencia de calibración'
       tube_model:
-        description: Modelo de tubo Geiger-Müller utilizado por este dispositivo.
-        name: Modelo de tubo
+        description: Predefinido por el perfil del detector. Introduzca un valor solo para sustituir el preajuste de este
+          dispositivo.
+        name: 'Tubo único/principal: Modelo de tubo'
+      dual_tube_mode:
+        name: Modo de funcionamiento de tubos (avanzado)
+        description: Normalmente lo establece el perfil del detector. Use single para un tubo físico y separate o curve solo
+          para dispositivos de dos tubos compatibles.
+      dual_tube_switch_cpm:
+        name: Umbral CPM del segundo tubo
+        description: Solo para dispositivos de dos tubos. El valor del GMC-500+ está predefinido y solo debe cambiarse con
+          una calibración verificada.
+      high_dose_tube_model:
+        description: Solo para el segundo tubo/de alta dosis de un dispositivo de dos tubos. Déjelo vacío para el GMC-320
+          y otros modelos de un tubo.
+        name: 'Segundo tubo (solo dispositivos de dos tubos): Modelo de tubo'
+      high_dose_cpm_per_usvh:
+        description: Solo para el segundo tubo/de alta dosis de un dispositivo de dos tubos. Déjelo vacío para el GMC-320
+          y otros modelos de un tubo.
+        name: 'Segundo tubo (solo dispositivos de dos tubos): Factor de conversión'
+      high_dose_dead_time_us:
+        description: Solo para el segundo tubo/de alta dosis de un dispositivo de dos tubos. Déjelo vacío para el GMC-320
+          y otros modelos de un tubo.
+        name: 'Segundo tubo (solo dispositivos de dos tubos): Tiempo muerto del detector'
+      high_dose_reliable_max_cpm:
+        description: Solo para el segundo tubo/de alta dosis de un dispositivo de dos tubos. Déjelo vacío para el GMC-320
+          y otros modelos de un tubo.
+        name: 'Segundo tubo (solo dispositivos de dos tubos): CPM fiable máximo'
+      high_dose_dead_time_model:
+        description: Solo para el segundo tubo/de alta dosis de un dispositivo de dos tubos. Déjelo vacío para el GMC-320
+          y otros modelos de un tubo.
+        name: 'Segundo tubo (solo dispositivos de dos tubos): Modelo de tiempo muerto'
+      high_dose_conversion_factor_uncertainty_percent:
+        description: Solo para el segundo tubo/de alta dosis de un dispositivo de dos tubos. Déjelo vacío para el GMC-320
+          y otros modelos de un tubo.
+        name: 'Segundo tubo (solo dispositivos de dos tubos): Incertidumbre del factor de conversión'
+      high_dose_calibration_uncertainty_percent:
+        description: Solo para el segundo tubo/de alta dosis de un dispositivo de dos tubos. Déjelo vacío para el GMC-320
+          y otros modelos de un tubo.
+        name: 'Segundo tubo (solo dispositivos de dos tubos): Incertidumbre de calibración'
+      high_dose_calibration_reference:
+        description: Solo para el segundo tubo/de alta dosis de un dispositivo de dos tubos. Déjelo vacío para el GMC-320
+          y otros modelos de un tubo.
+        name: 'Segundo tubo (solo dispositivos de dos tubos): Referencia de calibración'
+      detector_profile:
+        name: Perfil del detector (preajuste)
+        description: Selecciona la disposición física del detector y aplica valores de trabajo predefinidos. El GMC-320 Plus
+          V4 usa un tubo M4011; el GMC-500+ usa M4011 + SI-3BG. Los campos de calibración siguientes son solo sustituciones
+          opcionales.
     name: Dispositivos
   gmcmap:
-    description: Cuenta y ajustes de red comunes para cargas públicas. El ID del contador sigue siendo específico de cada dispositivo.
+    description: Cuenta y ajustes de red comunes para cargas públicas. El ID del contador sigue siendo específico de cada
+      dispositivo.
     fields:
       account_id:
         description: ID de usuario de la cuenta registrada en GMCMap. No se registra ni se guarda en exportaciones de diagnóstico.
@@ -176,11 +230,12 @@ configuration:
         description: Envía opcionalmente las mediciones al mapa mundial público GMCMap. Desactivado de forma predeterminada.
         name: Activar envíos públicos
       privacy_confirmed:
-        description: Debe activarse antes de enviar datos. La ubicación y los datos de la estación se gestionan en la cuenta de GMCMap y pueden
-          ser públicos.
+        description: Debe activarse antes de enviar datos. La ubicación y los datos de la estación se gestionan en la cuenta
+          de GMCMap y pueden ser públicos.
         name: Confirmar transferencia pública de datos
       timeout:
-        description: Espera máxima por solicitud a GMCMap en segundos. Los errores se reintentan en segundo plano con espera progresiva.
+        description: Espera máxima por solicitud a GMCMap en segundos. Los errores se reintentan en segundo plano con espera
+          progresiva.
         name: Tiempo de espera de red
       upload_interval:
         description: Segundos entre envíos públicos por dispositivo. Se recomiendan al menos 120 a 300 segundos.
@@ -190,8 +245,8 @@ configuration:
     description: Retención local, zona horaria de informes y controles protegidos de gestión del historial.
     fields:
       history_management_enabled:
-        description: Activa las herramientas protegidas para restaurar y eliminar completamente el historial. Manténgalo desactivado durante el
-          funcionamiento normal.
+        description: Activa las herramientas protegidas para restaurar y eliminar completamente el historial. Manténgalo desactivado
+          durante el funcionamiento normal.
         name: Gestión del historial
       report_timezone:
         description: Zona IANA para límites diarios y marcas de tiempo, por ejemplo Europe/Madrid.
@@ -223,8 +278,8 @@ configuration:
         description: Inicio de la zona roja para la tasa derivada.
         name: Peligro µSv/h personalizado
       profile:
-        description: GQ usa las bandas del fabricante. Las referencias BfS e ICRP convierten matemáticamente 1 y 20 mSv/año en una tasa continua;
-          no son umbrales oficiales instantáneos. Personalizado usa los campos siguientes.
+        description: GQ usa las bandas del fabricante. Las referencias BfS e ICRP convierten matemáticamente 1 y 20 mSv/año
+          en una tasa continua; no son umbrales oficiales instantáneos. Personalizado usa los campos siguientes.
         name: Perfil de umbrales
       threshold_basis:
         description: Usa CPM, tasa derivada o el resultado más estricto. Solo funciona con Personalizado.
@@ -250,9 +305,9 @@ configuration:
         name: Pausa del planificador
     name: Sistema
 '{count} measurements and {events} events were removed.': Se eliminaron {count} mediciones y {events} eventos.
-? All downloads below automatically use the GMC device currently shown in Analysis. Select another connected device above to change the report
-  source.
-: Todas las descargas siguientes utilizan automáticamente el dispositivo GMC que se muestra actualmente en Análisis. Seleccione otro dispositivo
-  conectado arriba para cambiar la fuente del informe.
+? All downloads below automatically use the GMC device currently shown in Analysis. Select another connected device above
+  to change the report source.
+: Todas las descargas siguientes utilizan automáticamente el dispositivo GMC que se muestra actualmente en Análisis. Seleccione
+  otro dispositivo conectado arriba para cambiar la fuente del informe.
 No connected GMC device: No hay ningún dispositivo GMC conectado
 Reports for the displayed analysis: Informes para el análisis mostrado.

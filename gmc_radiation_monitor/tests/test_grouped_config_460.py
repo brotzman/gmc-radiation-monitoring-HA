@@ -11,7 +11,7 @@ REPORT_RUN = ROOT / "rootfs/etc/services.d/gmc-reports/run"
 
 def test_visible_configuration_has_only_devices_and_shared_sections():
     config = yaml.safe_load((ROOT / "config.yaml").read_text())
-    assert config["version"] == "8.3.3"
+    assert config["version"] == "8.3.5"
     assert list(config["options"]) == [
         "devices",
         "gmcmap",
@@ -26,33 +26,28 @@ def test_visible_configuration_has_only_devices_and_shared_sections():
     assert [device["name"] for device in devices] == ["GMC-320", "GMC-500+"]
     gmc320 = devices[0]
     assert gmc320["scan_interval"] == 60
-    assert gmc320["cpm_per_usvh"] == 154.0
-    assert gmc320["dead_time_us"] == 120.0
-    assert gmc320["reliable_max_cpm"] == 50000
-    assert gmc320["dead_time_model"] == "nonparalyzable"
-    assert gmc320["conversion_factor_uncertainty_percent"] == 20.0
-    assert gmc320["tube_model"] == "M4011"
-    assert gmc320["dual_tube_mode"] == "single"
-    assert gmc320["dual_tube_switch_cpm"] is None
-    assert gmc320["low_dose_tube"]["tube_model"] == "M4011"
-    assert gmc320["low_dose_tube"]["cpm_per_usvh"] == 154.0
-    assert gmc320["high_dose_tube"]["cpm_per_usvh"] is None
+    assert gmc320["detector_profile"] == "gmc_320_plus_v4"
+    for redundant in (
+        "cpm_per_usvh", "dead_time_us", "reliable_max_cpm", "dead_time_model",
+        "conversion_factor_uncertainty_percent", "calibration_uncertainty_percent",
+        "calibration_reference", "tube_model", "dual_tube_mode", "dual_tube_switch_cpm",
+    ):
+        assert redundant not in gmc320
+    assert "low_dose_tube" not in gmc320
+    assert "high_dose_tube" not in gmc320
     assert gmc320["orientation_calibration_serial"] == "f488c59b0031f0"
 
     gmc500 = devices[1]
     assert gmc500["scan_interval"] == 75
-    assert gmc500["cpm_per_usvh"] == 154.0
-    assert gmc500["dead_time_us"] == 120.0
-    assert gmc500["reliable_max_cpm"] == 30000
-    assert gmc500["dead_time_model"] == "nonparalyzable"
-    assert gmc500["conversion_factor_uncertainty_percent"] == 20.0
-    assert gmc500["tube_model"] == "M4011 + SI-3BG (Dual)"
-    assert gmc500["dual_tube_mode"] == "separate"
-    assert gmc500["dual_tube_switch_cpm"] == 30000
-    assert gmc500["low_dose_tube"]["tube_model"] == "M4011"
-    assert gmc500["low_dose_tube"]["cpm_per_usvh"] == 154.0
-    assert gmc500["high_dose_tube"]["tube_model"] == "SI-3BG"
-    assert gmc500["high_dose_tube"]["cpm_per_usvh"] is None
+    assert gmc500["detector_profile"] == "gmc_500_plus"
+    for redundant in (
+        "cpm_per_usvh", "dead_time_us", "reliable_max_cpm", "dead_time_model",
+        "conversion_factor_uncertainty_percent", "calibration_uncertainty_percent",
+        "calibration_reference", "tube_model", "dual_tube_mode", "dual_tube_switch_cpm",
+    ):
+        assert redundant not in gmc500
+    assert "low_dose_tube" not in gmc500
+    assert "high_dose_tube" not in gmc500
     assert gmc500["orientation_calibration_serial"] == "080048303838a0"
 
     assert config["options"]["gmcmap"] == {
@@ -76,6 +71,7 @@ def test_visible_configuration_has_only_devices_and_shared_sections():
         "read_device_time",
         "device_clock_warning_seconds",
         "heartbeat_enabled",
+        "detector_profile",
         "cpm_per_usvh",
         "gmcmap_enabled",
         "gmcmap_account_id",
@@ -103,6 +99,7 @@ def test_each_device_owns_all_connection_and_measurement_settings():
         "read_device_time",
         "device_clock_warning_seconds",
         "heartbeat_enabled",
+        "detector_profile",
         "cpm_per_usvh",
         "dead_time_us",
         "reliable_max_cpm",
@@ -113,8 +110,14 @@ def test_each_device_owns_all_connection_and_measurement_settings():
         "tube_model",
         "dual_tube_mode",
         "dual_tube_switch_cpm",
-        "low_dose_tube",
-        "high_dose_tube",
+        "high_dose_tube_model",
+        "high_dose_cpm_per_usvh",
+        "high_dose_dead_time_us",
+        "high_dose_reliable_max_cpm",
+        "high_dose_dead_time_model",
+        "high_dose_conversion_factor_uncertainty_percent",
+        "high_dose_calibration_uncertainty_percent",
+        "high_dose_calibration_reference",
         "gmcmap_counter_id",
         "serial_debug",
         "serial_debug_max_bytes",
@@ -132,18 +135,12 @@ def test_each_device_owns_all_connection_and_measurement_settings():
     assert "high_cpm_confirmations" not in fields
     assert "gmcmap_upload_interval" not in fields
     assert "gmcmap_timeout" not in fields
-    tube_profile_fields = {
-        "tube_model",
-        "cpm_per_usvh",
-        "dead_time_us",
-        "reliable_max_cpm",
-        "dead_time_model",
-        "conversion_factor_uncertainty_percent",
-        "calibration_uncertainty_percent",
-        "calibration_reference",
-    }
-    assert set(device_schema["low_dose_tube"]) == tube_profile_fields
-    assert set(device_schema["high_dose_tube"]) == tube_profile_fields
+    for prefix in ("high_dose",):
+        assert device_schema[f"{prefix}_tube_model"] == "str?"
+        assert device_schema[f"{prefix}_cpm_per_usvh"] == "float(0.001,)?"
+        assert device_schema[f"{prefix}_dead_time_us"] == "float(0.001,)?"
+        assert device_schema[f"{prefix}_reliable_max_cpm"] == "int(1,)?"
+        assert device_schema[f"{prefix}_dead_time_model"] == "list(none|nonparalyzable)?"
     assert set(config["schema"]["gmcmap"]) == {
         "enabled",
         "privacy_confirmed",
@@ -170,8 +167,10 @@ def test_service_scripts_use_one_python_grouped_options_loader():
 
 def test_readme_documents_mixed_gmc_320_and_500_plus_configuration():
     readme = (ROOT / "README.md").read_text()
-    assert "Keller GMC-320Re" in readme
+    assert "Keller GMC-320" in readme
     assert "Wohnzimmer GMC-500+" in readme
+    assert "detector_profile: gmc_320_plus_v4" in readme
+    assert "detector_profile: gmc_500_plus" in readme
     assert "Serial ports and baud rates are discovered automatically" in readme
     assert "gmcmap:\n  enabled:" in readme
     assert "history:\n  retention_days:" in readme

@@ -3,13 +3,14 @@ Another report or maintenance job is running: Ein anderer Bericht- oder Wartungs
 Complete history deletion failed: Vollständiges Löschen des Verlaufs fehlgeschlagen
 Danger zone: Gefahrenbereich
 Delete all GMC history: Gesamten GMC-Verlauf löschen
-Deletion confirmation text must be exactly DELETE ALL GMC HISTORY: Der Bestätigungstext muss exakt DELETE ALL GMC HISTORY lauten
+Deletion confirmation text must be exactly DELETE ALL GMC HISTORY: Der Bestätigungstext muss exakt DELETE ALL GMC HISTORY
+  lauten
 History deleted: Verlauf gelöscht
 Invalid deletion confirmation: Ungültige Löschbestätigung
-? Permanently delete all GMC history from this app and Home Assistant Recorder. This includes CPM, temperature, voltage, gyro and tube measurements
-  for every known GMC and all time periods.
-: Löscht dauerhaft den gesamten GMC-Verlauf aus dieser App und dem Home-Assistant-Recorder. Dies umfasst CPM, Temperatur, Spannung, Gyro- und
-  Röhrenmesswerte aller bekannten GMCs über alle Zeiträume.
+? Permanently delete all GMC history from this app and Home Assistant Recorder. This includes CPM, temperature, voltage, gyro
+  and tube measurements for every known GMC and all time periods.
+: Löscht dauerhaft den gesamten GMC-Verlauf aus dieser App und dem Home-Assistant-Recorder. Dies umfasst CPM, Temperatur,
+  Spannung, Gyro- und Röhrenmesswerte aller bekannten GMCs über alle Zeiträume.
 This cannot be undone. Delete all GMC history?: Dies kann nicht rückgängig gemacht werden. Gesamten GMC-Verlauf löschen?
 Type DELETE ALL GMC HISTORY to confirm: Zur Bestätigung DELETE ALL GMC HISTORY eingeben
 configuration:
@@ -20,18 +21,19 @@ configuration:
         description: Historientage für die lokale Hintergrundbasis.
         name: Lernzeitraum der Basis
       external_temperature_entity:
-        description: Home-Assistant-Sensor für die CPM–Temperatur-Korrelation, wenn das GMC keine eigene Temperatur liefert. Voreingestellt auf
-          das Arbeitszimmer; die Entity-ID bleibt editierbar.
+        description: Home-Assistant-Sensor für die CPM–Temperatur-Korrelation, wenn das GMC keine eigene Temperatur liefert.
+          Voreingestellt auf das Arbeitszimmer; die Entity-ID bleibt editierbar.
         name: Externe Temperatur-Entität
       external_temperature_max_age_seconds:
         description: Ältere Home-Assistant-Temperaturwerte werden nicht für die Korrelation verwendet.
         name: Maximales Alter der externen Temperatur
       external_temperature_name:
-        description: Alternativer Anzeigename zur automatischen Suche, falls sich die voreingestellte Entity-ID unterscheidet oder geändert wurde.
+        description: Alternativer Anzeigename zur automatischen Suche, falls sich die voreingestellte Entity-ID unterscheidet
+          oder geändert wurde.
         name: Suchname der externen Temperatur
       cosmic_hint_enabled:
-        description: Lernt eine vorsichtige luftdruckbezogene Hintergrundsignatur. Dies ist nur ein statistischer Hinweis und unterdrückt niemals
-          Strahlungswarnungen.
+        description: Lernt eine vorsichtige luftdruckbezogene Hintergrundsignatur. Dies ist nur ein statistischer Hinweis
+          und unterdrückt niemals Strahlungswarnungen.
         name: Statistischer Hinweis auf kosmischen Einfluss
       pressure_weather_entity_primary:
         description: Primäre Home-Assistant-Wetterentität für den aktuellen Luftdruck.
@@ -68,18 +70,20 @@ configuration:
         name: 'Relative Ampel: Gelb'
     name: Hintergrundanalyse
   devices:
-    description: Jedes angeschlossene GMC wird hier vollständig und unabhängig konfiguriert. Pro physischem Zähler einen Eintrag anlegen.
+    description: Jedes angeschlossene GMC wird hier vollständig und unabhängig konfiguriert. Pro physischem Zähler einen Eintrag
+      anlegen.
     fields:
       auxiliary_read_interval:
-        description: Sekunden zwischen Abfragen von Temperatur, Spannung, Dual-Tube, Gerätezeit und Gyro. CPM wird weiterhin im Messintervall
-          gelesen; 0 liest Zusatzwerte in jedem Zyklus.
+        description: Sekunden zwischen Abfragen von Temperatur, Spannung, Dual-Tube, Gerätezeit und Gyro. CPM wird weiterhin
+          im Messintervall gelesen; 0 liest Zusatzwerte in jedem Zyklus.
         name: Intervall der Zusatzwerte
       command_timeout:
         description: Maximale Wartezeit auf eine Geräteantwort in Sekunden.
         name: Antwort-Timeout
       cpm_per_usvh:
-        description: Röhrenspezifischer Umrechnungsfaktor dieses Geräts.
-        name: CPM je µSv/h
+        description: Wird durch das Detektorprofil vordefiniert. Nur eintragen, wenn der Standardwert für dieses Gerät ersetzt
+          werden soll.
+        name: 'Einziges/primäres Zählrohr: Umrechnungsfaktor'
       device_clock_warning_seconds:
         description: Zulässige Zeitabweichung in Sekunden.
         name: Warnschwelle der Geräteuhr
@@ -111,8 +115,8 @@ configuration:
         description: Maximale Anzahl angezeigter Bytes je TX/RX-Frame.
         name: Byte-Limit der Frame-Diagnose
       serial_startup_delay:
-        description: Startversatz in Sekunden vor der Initialisierung dieses Geräts. Konfigurierte größere Werte bleiben erhalten; zwischen zwei
-          Geräten werden immer mindestens 15 Sekunden eingehalten.
+        description: Startversatz in Sekunden vor der Initialisierung dieses Geräts. Konfigurierte größere Werte bleiben erhalten;
+          zwischen zwei Geräten werden immer mindestens 15 Sekunden eingehalten.
         name: Serieller Startversatz
       orientation_calibration_enabled:
         name: Lagekalibrierung aktivieren
@@ -142,40 +146,91 @@ configuration:
         name: Name des Kalibrierprofils
         description: Name, der bei den berechneten Lagewerten angezeigt wird.
       dead_time_us:
-        description: Gerätespezifische Detektor-Totzeit in Mikrosekunden. Nur bei belastbaren Gerätedaten eintragen.
-        name: Detektor-Totzeit
+        description: Wird durch das Detektorprofil vordefiniert. Nur eintragen, wenn der Standardwert für dieses Gerät ersetzt
+          werden soll.
+        name: 'Einziges/primäres Zählrohr: Detektor-Totzeit'
       reliable_max_cpm:
-        description: Höchste für dieses Gerät als zuverlässig geltende Zählrate. Höhere Werte werden als mögliche Sättigung oder Zählverluste
-          markiert.
-        name: Maximal zuverlässige CPM
+        description: Wird durch das Detektorprofil vordefiniert. Nur eintragen, wenn der Standardwert für dieses Gerät ersetzt
+          werden soll.
+        name: 'Einziges/primäres Zählrohr: Maximal zuverlässige CPM'
       dead_time_model:
-        description: Für dieses Gerät dokumentiertes Totzeit-Korrekturmodell. Eine Korrektur erfolgt nur bei eingetragener Totzeit.
-        name: Totzeitmodell
+        description: Wird durch das Detektorprofil vordefiniert. Nur eintragen, wenn der Standardwert für dieses Gerät ersetzt
+          werden soll.
+        name: 'Einziges/primäres Zählrohr: Totzeitmodell'
       conversion_factor_uncertainty_percent:
-        description: Relative Standardunsicherheit des CPM-zu-µSv/h-Umrechnungsfaktors in Prozent.
-        name: Unsicherheit des Umrechnungsfaktors
+        description: Wird durch das Detektorprofil vordefiniert. Nur eintragen, wenn der Standardwert für dieses Gerät ersetzt
+          werden soll.
+        name: 'Einziges/primäres Zählrohr: Unsicherheit des Umrechnungsfaktors'
       calibration_uncertainty_percent:
-        description: Relative Standardunsicherheit der Kalibrierung in Prozent. Bei unbekanntem Wert leer lassen.
-        name: Kalibrierungsunsicherheit
+        description: Wird durch das Detektorprofil vordefiniert. Nur eintragen, wenn der Standardwert für dieses Gerät ersetzt
+          werden soll.
+        name: 'Einziges/primäres Zählrohr: Kalibrierungsunsicherheit'
       calibration_reference:
-        description: Zertifikat, Labor oder andere Referenz zur Dokumentation der Kalibrierung.
-        name: Kalibrierungsreferenz
+        description: Wird durch das Detektorprofil vordefiniert. Nur eintragen, wenn der Standardwert für dieses Gerät ersetzt
+          werden soll.
+        name: 'Einziges/primäres Zählrohr: Kalibrierungsreferenz'
       tube_model:
-        description: Im Gerät verwendetes Geiger-Müller-Zählrohrmodell.
-        name: Röhrenmodell
+        description: Wird durch das Detektorprofil vordefiniert. Nur eintragen, wenn der Standardwert für dieses Gerät ersetzt
+          werden soll.
+        name: 'Einziges/primäres Zählrohr: Zählrohrmodell'
+      dual_tube_mode:
+        name: Zählrohrbetrieb (erweitert)
+        description: Wird normalerweise durch das Detektorprofil festgelegt. „single“ gilt für ein physisches Zählrohr; „separate“
+          oder „curve“ nur für unterstützte Zwei-Zählrohr-Geräte.
+      dual_tube_switch_cpm:
+        name: Umschaltwert des zweiten Zählrohrs
+        description: Nur für Zwei-Zählrohr-Geräte. Beim GMC-500+ ist der Arbeitswert vordefiniert und sollte nur mit einer
+          verifizierten Gerätekalibrierung geändert werden.
+      high_dose_tube_model:
+        description: Nur für das zweite Hochdosis-Zählrohr eines Zwei-Zählrohr-Geräts. Beim GMC-320 und anderen Ein-Zählrohr-Modellen
+          leer lassen.
+        name: 'Zweites Zählrohr (nur Zwei-Zählrohr-Geräte): Zählrohrmodell'
+      high_dose_cpm_per_usvh:
+        description: Nur für das zweite Hochdosis-Zählrohr eines Zwei-Zählrohr-Geräts. Beim GMC-320 und anderen Ein-Zählrohr-Modellen
+          leer lassen.
+        name: 'Zweites Zählrohr (nur Zwei-Zählrohr-Geräte): Umrechnungsfaktor'
+      high_dose_dead_time_us:
+        description: Nur für das zweite Hochdosis-Zählrohr eines Zwei-Zählrohr-Geräts. Beim GMC-320 und anderen Ein-Zählrohr-Modellen
+          leer lassen.
+        name: 'Zweites Zählrohr (nur Zwei-Zählrohr-Geräte): Detektor-Totzeit'
+      high_dose_reliable_max_cpm:
+        description: Nur für das zweite Hochdosis-Zählrohr eines Zwei-Zählrohr-Geräts. Beim GMC-320 und anderen Ein-Zählrohr-Modellen
+          leer lassen.
+        name: 'Zweites Zählrohr (nur Zwei-Zählrohr-Geräte): Maximal zuverlässige CPM'
+      high_dose_dead_time_model:
+        description: Nur für das zweite Hochdosis-Zählrohr eines Zwei-Zählrohr-Geräts. Beim GMC-320 und anderen Ein-Zählrohr-Modellen
+          leer lassen.
+        name: 'Zweites Zählrohr (nur Zwei-Zählrohr-Geräte): Totzeitmodell'
+      high_dose_conversion_factor_uncertainty_percent:
+        description: Nur für das zweite Hochdosis-Zählrohr eines Zwei-Zählrohr-Geräts. Beim GMC-320 und anderen Ein-Zählrohr-Modellen
+          leer lassen.
+        name: 'Zweites Zählrohr (nur Zwei-Zählrohr-Geräte): Unsicherheit des Umrechnungsfaktors'
+      high_dose_calibration_uncertainty_percent:
+        description: Nur für das zweite Hochdosis-Zählrohr eines Zwei-Zählrohr-Geräts. Beim GMC-320 und anderen Ein-Zählrohr-Modellen
+          leer lassen.
+        name: 'Zweites Zählrohr (nur Zwei-Zählrohr-Geräte): Kalibrierungsunsicherheit'
+      high_dose_calibration_reference:
+        description: Nur für das zweite Hochdosis-Zählrohr eines Zwei-Zählrohr-Geräts. Beim GMC-320 und anderen Ein-Zählrohr-Modellen
+          leer lassen.
+        name: 'Zweites Zählrohr (nur Zwei-Zählrohr-Geräte): Kalibrierungsreferenz'
+      detector_profile:
+        name: Detektorprofil (Voreinstellung)
+        description: Wählt den physischen Detektoraufbau und setzt vordefinierte Arbeitswerte. Der GMC-320 Plus V4 besitzt
+          ein M4011-Zählrohr; der GMC-500+ besitzt M4011 + SI-3BG. Die nachfolgenden Kalibrierfelder sind nur optionale Abweichungen.
     name: Geräte
   gmcmap:
     description: Gemeinsame Konto- und Netzwerkeinstellungen für öffentliche Uploads. Die Zähler-ID bleibt gerätespezifisch.
     fields:
       account_id:
-        description: GMCMap-Benutzer-ID aus dem registrierten GMCMap-Konto. Wird weder protokolliert noch in Diagnoseexporten gespeichert.
+        description: GMCMap-Benutzer-ID aus dem registrierten GMCMap-Konto. Wird weder protokolliert noch in Diagnoseexporten
+          gespeichert.
         name: Benutzer-ID (AID)
       enabled:
         description: Sendet Messwerte optional an die öffentliche GMCMap-Weltkarte. Standardmäßig deaktiviert.
         name: Öffentliche Übertragung aktivieren
       privacy_confirmed:
-        description: Muss aktiviert sein, bevor Daten gesendet werden. Standort und Stationsangaben werden im GMCMap-Konto verwaltet und können
-          öffentlich sichtbar sein.
+        description: Muss aktiviert sein, bevor Daten gesendet werden. Standort und Stationsangaben werden im GMCMap-Konto
+          verwaltet und können öffentlich sichtbar sein.
         name: Öffentliche Datenübertragung bestätigen
       timeout:
         description: Maximale Wartezeit pro GMCMap-Anfrage in Sekunden. Fehler werden im Hintergrund mit Rückoff wiederholt.
@@ -188,8 +243,8 @@ configuration:
     description: Gemeinsame Aufbewahrung, Berichtszeitzone und geschützte Historienverwaltung.
     fields:
       history_management_enabled:
-        description: Aktiviert die geschützten Funktionen zum Wiederherstellen und vollständigen Löschen in der App. Im Normalbetrieb deaktiviert
-          lassen und nur für geplante Arbeiten an der Historie einschalten.
+        description: Aktiviert die geschützten Funktionen zum Wiederherstellen und vollständigen Löschen in der App. Im Normalbetrieb
+          deaktiviert lassen und nur für geplante Arbeiten an der Historie einschalten.
         name: Historienverwaltung
       report_timezone:
         description: IANA-Zeitzone für Tagesgrenzen und Zeitstempel, z. B. Europe/Berlin.
@@ -221,8 +276,8 @@ configuration:
         description: Beginn der roten Stufe für die abgeleitete Dosisleistung.
         name: 'Benutzerdefiniert: Gefahr in µSv/h'
       profile:
-        description: GQ nutzt Herstellerbänder. BfS- und ICRP-Referenz projizieren 1 bzw. 20 mSv/Jahr mathematisch auf kontinuierliche Dosisleistung;
-          sie sind keine amtlichen Sofort-Alarmgrenzen. Benutzerdefiniert nutzt die Felder darunter.
+        description: GQ nutzt Herstellerbänder. BfS- und ICRP-Referenz projizieren 1 bzw. 20 mSv/Jahr mathematisch auf kontinuierliche
+          Dosisleistung; sie sind keine amtlichen Sofort-Alarmgrenzen. Benutzerdefiniert nutzt die Felder darunter.
         name: Grenzwertprofil
       threshold_basis:
         description: CPM, abgeleitete Dosisleistung oder der jeweils strengere Status. Nur bei Benutzerdefiniert wirksam.
@@ -249,8 +304,8 @@ configuration:
     name: System
 '{count} measurements and {events} events were removed.': '{count} Messwerte und {events} Ereignisse wurden entfernt.'
 Reports for the displayed analysis: Berichte für die angezeigte Analyse
-? All downloads below automatically use the GMC device currently shown in Analysis. Select another connected device above to change the report
-  source.
-: Alle Downloads verwenden automatisch das GMC-Gerät, das aktuell in der Analyse angezeigt wird. Wähle oben ein anderes verbundenes Gerät aus,
-  um die Berichtsquelle zu wechseln.
+? All downloads below automatically use the GMC device currently shown in Analysis. Select another connected device above
+  to change the report source.
+: Alle Downloads verwenden automatisch das GMC-Gerät, das aktuell in der Analyse angezeigt wird. Wähle oben ein anderes verbundenes
+  Gerät aus, um die Berichtsquelle zu wechseln.
 No connected GMC device: Kein verbundenes GMC-Gerät
