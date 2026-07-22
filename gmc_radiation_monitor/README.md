@@ -580,6 +580,12 @@ The **Connected GMC devices** card now presents device identity, connection stat
 Under the add-on **Interface** options, `main_value_size` accepts `small`, `medium`, `large` or `custom`. When `custom` is selected, `custom_value_font_size_px` accepts 20–64 px. The same choices are available inside the dashboard under **Measurement display** and are stored locally in the current browser, allowing an immediate per-browser override of the add-on default.
 
 
+### Report layout maintenance and release cleanup (8.4.11)
+
+Version 8.4.11 separates the PDF report-layout correction from the bridge-heartbeat and configurable health-limit work that remains documented as version 8.4.10. On the first page of analysis reports, the main chart, x-axis caption, measurement-quality summary and assessment panel now have enforced vertical spacing so they cannot overlap.
+
+This maintenance release also aligns the current release notes and regression tests, verifies the historical 8.4.3 Supervisor migration against its changelog entry, identifies the bridge-heartbeat test module as an 8.4.10 feature, updates the bundled manual package to 8.4.11 and excludes generated Python and pytest cache files from the distributed archive. Database schema 8, detector calibration, dose conversion, bridge-health behavior and measurement algorithms are unchanged.
+
 ### Bridge heartbeat and configurable health limits (8.4.10)
 
 Version 8.4.10 adds an independent liveness record for the acquisition bridge. The automatic bridge supervisor writes an atomic JSON heartbeat to `/data/gmc_bridge_heartbeat.json` while it discovers devices, runs the measurement child, reconfigures assignments or restarts after a child exit. The `/health` endpoint evaluates this heartbeat separately from device connectivity and measurement freshness, so it can distinguish a crashed acquisition service from a live bridge with an unplugged counter.

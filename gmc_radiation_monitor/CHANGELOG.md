@@ -1,5 +1,16 @@
 # Changelog
 
+## 8.4.11
+
+- Separated the report-layout maintenance work from the bridge-heartbeat and health-limit changes released in 8.4.10.
+- Fixed the first analysis-report page so the chart x-axis caption, measurement-quality summary and assessment panel no longer overlap.
+- Added and retained regression checks for minimum spacing between the three report regions.
+- Corrected the historical Supervisor-migration regression test to validate the 8.4.3 changelog section instead of the current release notes.
+- Renamed the bridge-heartbeat regression module to identify version 8.4.10 correctly.
+- Removed Python bytecode, `__pycache__` directories and pytest caches from the distributed source archive.
+- Updated bundled manual filenames, cover-page version labels and PDF metadata to 8.4.11.
+- Kept database schema 8, detector calibration, dose conversion, bridge-health behavior and measurement algorithms unchanged.
+
 ## 8.4.10
 
 - Added an independent atomic bridge heartbeat for the acquisition supervisor.
