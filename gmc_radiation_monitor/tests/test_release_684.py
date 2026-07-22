@@ -49,4 +49,4 @@ def test_disabled_history_management_notice_uses_localized_configuration_label(t
 
 
 def test_release_version_is_820() -> None:
-    assert APP_VERSION == "8.4.10"
+    assert APP_VERSION == "8.4.11"

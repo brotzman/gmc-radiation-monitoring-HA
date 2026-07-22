@@ -47,9 +47,10 @@ def test_history_explorer_contains_explicit_axes_quick_ranges_and_responsive_cha
     assert "overflow-x:auto" in css.replace(" ", "")
 
 
-def test_release_notes_describe_structured_supervisor_migration_fix() -> None:
-    notes = Path("RELEASE_NOTES_8.4.10.md").read_text()
-    assert "structured JSON request" in notes
-    assert "jq: syntax error" in notes
-    assert "µSv/h" in notes
-    assert "No database schema or measurement algorithm changed" in notes
+def test_843_changelog_describes_structured_supervisor_migration_fix() -> None:
+    changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
+    section = changelog.split("## 8.4.3", 1)[1].split("\n## ", 1)[0]
+    assert "structured Supervisor API request" in section
+    assert "embedded JSON inside a jq string" in section
+    assert "µSv/h" in section
+    assert "runtime compatibility remains active" in section
