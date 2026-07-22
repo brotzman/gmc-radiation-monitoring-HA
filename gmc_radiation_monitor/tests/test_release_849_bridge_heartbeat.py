@@ -238,9 +238,9 @@ def test_849_health_limits_are_validated_and_exported_to_bridge(tmp_path: Path) 
 
 def test_849_release_metadata_and_public_defaults() -> None:
     config = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
-    assert APP_VERSION == "8.4.9"
-    assert config["version"] == "8.4.9"
-    assert (ROOT / "RELEASE_NOTES_8.4.9.md").is_file()
+    assert APP_VERSION == "8.4.10"
+    assert config["version"] == "8.4.10"
+    assert (ROOT / "RELEASE_NOTES_8.4.10.md").is_file()
     system = config["options"]["system"]
     assert system["bridge_heartbeat_interval_seconds"] == 15
     assert system["health_startup_grace_seconds"] == 900

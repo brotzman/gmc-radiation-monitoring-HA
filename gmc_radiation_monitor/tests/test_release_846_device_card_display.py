@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def test_846_configuration_and_runtime_environment() -> None:
     config = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
-    assert config["version"] == "8.4.9"
+    assert config["version"] == "8.4.10"
     assert config["options"]["interface"]["main_value_size"] == "large"
     assert config["options"]["interface"]["custom_value_font_size_px"] == 36
     assert config["schema"]["interface"]["main_value_size"] == "list(small|medium|large|custom)"

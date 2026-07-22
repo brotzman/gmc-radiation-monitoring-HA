@@ -8,6 +8,7 @@ from gmc_bridge.report_web import ReportApplication
 from gmc_bridge.reports import (
     _PAGE1_ASSESSMENT_RECT,
     _PAGE1_CHART_RECT,
+    _PAGE1_METROLOGY_Y,
     _PAGE1_STATS_HEADING_Y,
     _report_display_end,
     load_timezone,
@@ -50,7 +51,9 @@ def test_page_one_layout_reserves_a_clear_gap_between_chart_and_assessment() -> 
 
     # The chart's bottom is above the assessment panel, leaving enough room
     # for tick labels and the x-axis label instead of overlapping the heading.
-    assert chart_bottom - panel_top >= 0.05
+    assert chart_bottom - _PAGE1_METROLOGY_Y >= 0.055
+    assert _PAGE1_METROLOGY_Y - panel_top >= 0.02
+    assert chart_bottom - panel_top >= 0.08
     assert panel_bottom > _PAGE1_STATS_HEADING_Y
 
 
