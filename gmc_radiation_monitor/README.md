@@ -580,9 +580,9 @@ The **Connected GMC devices** card now presents device identity, connection stat
 Under the add-on **Interface** options, `main_value_size` accepts `small`, `medium`, `large` or `custom`. When `custom` is selected, `custom_value_font_size_px` accepts 20–64 px. The same choices are available inside the dashboard under **Measurement display** and are stored locally in the current browser, allowing an immediate per-browser override of the add-on default.
 
 
-### Bridge heartbeat and configurable health limits (8.4.9)
+### Bridge heartbeat and configurable health limits (8.4.10)
 
-Version 8.4.9 adds an independent liveness record for the acquisition bridge. The automatic bridge supervisor writes an atomic JSON heartbeat to `/data/gmc_bridge_heartbeat.json` while it discovers devices, runs the measurement child, reconfigures assignments or restarts after a child exit. The `/health` endpoint evaluates this heartbeat separately from device connectivity and measurement freshness, so it can distinguish a crashed acquisition service from a live bridge with an unplugged counter.
+Version 8.4.10 adds an independent liveness record for the acquisition bridge. The automatic bridge supervisor writes an atomic JSON heartbeat to `/data/gmc_bridge_heartbeat.json` while it discovers devices, runs the measurement child, reconfigures assignments or restarts after a child exit. The `/health` endpoint evaluates this heartbeat separately from device connectivity and measurement freshness, so it can distinguish a crashed acquisition service from a live bridge with an unplugged counter.
 
 The **System** options now include the bridge heartbeat interval, startup grace period, bridge warning/error limits and measurement-age warning/error limits. Defaults remain conservative: 15 seconds heartbeat, 900 seconds startup grace, 45/120 seconds for bridge warning/error and 600/1200 seconds for measurement warning/error. Invalid ordering is rejected and unusually short limits produce a configuration warning. Existing installations that do not yet contain the new fields automatically use the defaults.
 

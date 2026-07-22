@@ -1,6 +1,6 @@
 # Changelog
 
-## 8.4.9
+## 8.4.10
 
 - Added an independent atomic bridge heartbeat for the acquisition supervisor.
 - Added a dedicated bridge-liveness check to `/health`, separate from device connectivity and measurement freshness.
