@@ -1431,8 +1431,12 @@ def _report_calendar_matrix(
 # Normalized figure coordinates for page 1.  Keeping these values in one
 # place makes the executive-summary layout testable and prevents the chart
 # x-axis label from colliding with the assessment heading below it.
-_PAGE1_CHART_RECT = (0.09, 0.535, 0.84, 0.205)
-_PAGE1_ASSESSMENT_RECT = (0.065, 0.345, 0.87, 0.135)
+_PAGE1_CHART_RECT = (0.09, 0.555, 0.84, 0.19)
+# Dedicated baseline for the metrology summary.  It sits below the complete
+# x-axis label area and above the assessment panel so neither element can
+# overlap, even with long localized labels.
+_PAGE1_METROLOGY_Y = 0.495
+_PAGE1_ASSESSMENT_RECT = (0.065, 0.345, 0.87, 0.125)
 _PAGE1_STATS_HEADING_Y = 0.315
 
 
@@ -1704,7 +1708,7 @@ def pdf_bytes(
         }
         fig.text(
             0.065,
-            0.493,
+            _PAGE1_METROLOGY_Y,
             _report_phrase(language, "Messqualität", "Measurement quality") + ": "
             + str(metrology_summary["stars"]) + " · "
             + _report_phrase(language, "Totzeit", "Dead time") + " "
