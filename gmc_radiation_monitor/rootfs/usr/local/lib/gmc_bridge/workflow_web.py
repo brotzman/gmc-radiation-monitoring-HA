@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import html
 import json
+import statistics
 from collections.abc import Mapping
 from datetime import UTC, datetime, timedelta
 from typing import Any, Protocol
@@ -90,24 +91,53 @@ def _history_chart(
     def y_for(value: float) -> float:
         return 42.0 - 35.0 * max(0.0, min(1.0, (value - y_min) / y_span))
 
-    coords = [
-        f"{x_for(int(point['timestamp_utc'])):.2f},{y_for(value):.2f}"
-        for point, value in zip(points, values, strict=True)
-    ]
-    corrected_coords = [
-        f"{x_for(int(point['timestamp_utc'])):.2f},{y_for(value):.2f}"
-        for point, value in zip(points, corrected_values, strict=True)
-    ]
+    timestamps = [int(point["timestamp_utc"]) for point in points]
+    intervals = [right - left for left, right in zip(timestamps, timestamps[1:]) if right > left]
+    nominal_interval = statistics.median(intervals) if intervals else 60.0
+    gap_threshold = max(300.0, nominal_interval * 3.0)
+    segment_ranges: list[tuple[int, int]] = []
+    gap_bands: list[str] = []
+    segment_start = 0
+    for index in range(1, len(points)):
+        gap = timestamps[index] - timestamps[index - 1]
+        if gap <= gap_threshold:
+            continue
+        segment_ranges.append((segment_start, index))
+        left_x = x_for(timestamps[index - 1])
+        right_x = x_for(timestamps[index])
+        start_label = datetime.fromtimestamp(timestamps[index - 1], UTC).astimezone(timezone).strftime("%d.%m.%Y %H:%M")
+        end_label = datetime.fromtimestamp(timestamps[index], UTC).astimezone(timezone).strftime("%d.%m.%Y %H:%M")
+        gap_bands.append(
+            f'<rect x="{left_x:.2f}" y="7" width="{max(0.35, right_x-left_x):.2f}" height="35" class="history-gap-band">'
+            f'<title>{html.escape(t("No measurement data between {start} and {end}", start=start_label, end=end_label))}</title></rect>'
+        )
+        segment_start = index
+    segment_ranges.append((segment_start, len(points)))
+
+    def segmented_polylines(series: list[float], css_class: str) -> str:
+        fragments: list[str] = []
+        for first, last in segment_ranges:
+            if last - first < 2:
+                continue
+            coords = [
+                f"{x_for(timestamps[index]):.2f},{y_for(series[index]):.2f}"
+                for index in range(first, last)
+            ]
+            fragments.append(
+                '<polyline points="' + ' '.join(coords) + f'" class="{css_class}" vector-effect="non-scaling-stroke"/>'
+            )
+        return ''.join(fragments)
+
     smooth_window = max(3, min(21, len(values) // 24 or 3))
-    smooth_values: list[float] = []
-    for index in range(len(values)):
-        first = max(0, index - smooth_window + 1)
-        window = values[first : index + 1]
-        smooth_values.append(sum(window) / len(window))
-    smooth_coords = [
-        f"{x_for(int(point['timestamp_utc'])):.2f},{y_for(value):.2f}"
-        for point, value in zip(points, smooth_values, strict=True)
-    ]
+    smooth_values = list(values)
+    for first, last in segment_ranges:
+        for index in range(first, last):
+            window_start = max(first, index - smooth_window + 1)
+            window = values[window_start : index + 1]
+            smooth_values[index] = sum(window) / len(window)
+    accepted_lines = segmented_polylines(values, "chart-line history-accepted-line")
+    corrected_lines = segmented_polylines(corrected_values, "history-corrected-line") if data_mode == "comparison" else ""
+    trend_lines = segmented_polylines(smooth_values, "history-trend-line")
 
     y_grid: list[str] = []
     for index in range(5):
@@ -145,18 +175,23 @@ def _history_chart(
         )
     mean = sum(values) / len(values)
     return (
-        '<figure class="workflow-history-chart"><svg viewBox="0 0 120 54" role="img" aria-label="'
+        '<figure class="workflow-history-chart">'
+        + '<div class="chart-actions"><span>' + html.escape(t("Chart controls")) + '</span>'
+        + '<button type="button" class="button" data-chart-reset>' + html.escape(t("Reset view")) + '</button>'
+        + '<button type="button" class="button" data-chart-download>' + html.escape(t("Download SVG")) + '</button></div>'
+        + '<svg viewBox="0 0 120 54" role="img" aria-label="'
         + html.escape(t("CPM history explorer"), quote=True)
         + '">'
         + ''.join(y_grid)
         + ''.join(x_grid)
         + '<line x1="13" y1="42" x2="114" y2="42" class="chart-axis"/>'
         + '<line x1="13" y1="7" x2="13" y2="42" class="chart-axis"/>'
+        + ''.join(gap_bands)
         + ''.join(markers)
         + ''.join(raw_markers)
-        + '<polyline points="' + ' '.join(coords) + '" class="chart-line history-accepted-line" vector-effect="non-scaling-stroke"/>'
-        + ('<polyline points="' + ' '.join(corrected_coords) + '" class="history-corrected-line" vector-effect="non-scaling-stroke"/>' if data_mode == "comparison" else '')
-        + '<polyline points="' + ' '.join(smooth_coords) + '" class="history-trend-line" vector-effect="non-scaling-stroke"/>'
+        + accepted_lines
+        + corrected_lines
+        + trend_lines
         + f'<text x="63.5" y="52.2" text-anchor="middle" class="history-axis-title">{html.escape(t("Local date and time"))}</text>'
         + f'<text x="2.2" y="24.5" text-anchor="middle" transform="rotate(-90 2.2 24.5)" class="history-axis-title">{html.escape(t("Count rate [CPM]"))}</text>'
         + '</svg><figcaption>'

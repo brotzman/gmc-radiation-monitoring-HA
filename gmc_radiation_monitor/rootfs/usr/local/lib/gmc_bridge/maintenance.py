@@ -248,3 +248,64 @@ def diagnostics_document(store: HistoryStore) -> dict[str, Any]:
 
 def diagnostics_json_bytes(store: HistoryStore) -> bytes:
     return json.dumps(diagnostics_document(store), indent=2, sort_keys=True).encode("utf-8") + b"\n"
+
+
+def support_diagnostics_document(store: HistoryStore) -> dict[str, Any]:
+    """Return a compact, copy-safe support summary without credentials or locations."""
+    metadata = store.get_metadata()
+    devices: list[dict[str, Any]] = []
+    for item in store.list_devices():
+        devices.append(
+            {
+                "name": str(item.get("configured_name") or item.get("device_model") or "GMC"),
+                "model": str(item.get("device_model") or "unknown"),
+                "serial_suffix": str(item.get("serial") or "")[-4:] or "unknown",
+                "runtime_online": bool(item.get("runtime_online")),
+                "runtime_status": str(item.get("runtime_status") or "unknown"),
+                "runtime_reason": str(item.get("runtime_status_reason") or "unknown"),
+                "last_measurement_utc": int(item.get("timestamp_utc") or item.get("last_timestamp_utc") or 0),
+                "scan_interval_seconds": int(item.get("scan_interval_seconds") or 0),
+                "serial_errors": int(item.get("serial_error_count") or 0),
+                "reconnects": int(item.get("serial_reconnect_count") or 0),
+                "stored_samples": int(item.get("stored_samples") or 0),
+            }
+        )
+    return {
+        "app_version": metadata.get("app_version", "unknown"),
+        "database_schema_version": store.schema_version(),
+        "database_integrity": store.cached_quick_check(max_age_seconds=60),
+        "database": {
+            key: value
+            for key, value in store.database_stats().items()
+            if key in {"measurements", "raw_measurements", "size_bytes", "first_timestamp_utc", "last_timestamp_utc"}
+        },
+        "configured_timezone": metadata.get("report_timezone", "unknown"),
+        "configured_ports_count": len([p for p in str(metadata.get("configured_ports") or "").split(",") if p]),
+        "devices": devices,
+        "privacy_note": "Serial numbers are reduced to their final four characters. No credentials, tokens, coordinates or full paths are included.",
+    }
+
+
+def support_diagnostics_text(store: HistoryStore) -> str:
+    document = support_diagnostics_document(store)
+    lines = [
+        f"App: {document['app_version']}",
+        f"Schema: {document['database_schema_version']}",
+        f"Database integrity: {document['database_integrity']}",
+        f"Timezone: {document['configured_timezone']}",
+        f"Configured serial ports: {document['configured_ports_count']}",
+        f"Devices: {len(document['devices'])}",
+    ]
+    for index, item in enumerate(document["devices"], start=1):
+        lines.extend(
+            [
+                f"Device {index}: {item['name']} ({item['model']}, serial …{item['serial_suffix']})",
+                f"  State: {item['runtime_status']} / {item['runtime_reason']}",
+                f"  Last measurement UTC: {item['last_measurement_utc']}",
+                f"  Interval: {item['scan_interval_seconds']} s",
+                f"  Serial errors / reconnects: {item['serial_errors']} / {item['reconnects']}",
+                f"  Stored samples: {item['stored_samples']}",
+            ]
+        )
+    lines.append(str(document["privacy_note"]))
+    return "\n".join(lines) + "\n"

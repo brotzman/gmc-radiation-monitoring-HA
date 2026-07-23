@@ -37,6 +37,8 @@ from .calibration_web import render_calibration_panel
 from .device_profiles import normalize_device_version_display
 from .device_card_display import (
     format_live_dose as _format_live_dose,
+    measurement_freshness,
+    render_connection_details,
     render_device_card_header,
     render_live_measurement,
     render_measurement_display_settings,
@@ -436,7 +438,11 @@ class ReportApplication(WorkflowApplicationMixin):
                 f"<p>{html.escape(t('Check the Home Assistant general settings and restart the add-on.'))}</p>"
                 "</div></details>"
             )
-        today = datetime.now(self.timezone).date().isoformat()
+        current_local_date = datetime.now(self.timezone).date()
+        today = current_local_date.isoformat()
+        yesterday = (current_local_date - timedelta(days=1)).isoformat()
+        custom_start = (current_local_date - timedelta(days=6)).isoformat()
+        current_month = current_local_date.strftime("%Y-%m")
         iso = datetime.now(self.timezone).isocalendar()
         current_week = f"{iso.year}-W{iso.week:02d}"
         gyro_note = (
@@ -1040,21 +1046,11 @@ input[type="date"], input[type="week"], input[type="month"], input[type="datetim
 </div>
 </details>
 
-<div class="advanced-only"><h3>{html.escape(t("Custom period"))}</h3>
-<div class="report-generation-preview" id="report-generation-preview" aria-live="polite"><div><strong>{html.escape(t("Selected device"))}</strong><span>{html.escape(selected_device_label or t("No connected GMC device"))}</span></div><div><strong>{html.escape(t("Report timezone"))}</strong><span>{html.escape(str(self.timezone))}</span></div><div><strong>{html.escape(t("Selected period"))}</strong><span id="report-preview-period">—</span></div><div><strong>{html.escape(t("Time-based data coverage"))}</strong><span id="report-preview-coverage">—</span></div><div><strong>{html.escape(t("Stored measurements"))}</strong><span id="report-preview-samples">—</span></div><div><strong>{html.escape(t("Uncovered time"))}</strong><span id="report-preview-gap">—</span></div><p id="report-preview-warning" class="report-preview-warning" hidden></p></div>
-<div class="custom-periods">
-<form class="custom-form report-preset-source unified-report-form" id="custom-report-form" action="" method="get" data-preset-kind="custom">
-<input type="hidden" name="action" value="download">
-<input type="hidden" name="selection" value="specific">
-<div class="form-grid">
-<label>{html.escape(t("Period type"))}<select name="period" id="custom-report-period"><option value="daily">{html.escape(t("Daily"))}</option><option value="weekly">{html.escape(t("Weekly"))}</option></select></label>
-<label data-report-date-field>{html.escape(t("Specific date"))}<input type="date" name="date" value="{today}"></label>
-<label data-report-week-field hidden>{html.escape(t("Specific ISO week"))}<input type="week" name="week" value="{current_week}"></label>
-<label>{html.escape(t("Format"))}<select name="format">{format_options}</select></label>
-<div class="form-actions"><button type="submit" class="primary">{html.escape(t("Download"))}</button></div>
-</div>
-</form>
-</div></div>
+<div class="advanced-only"><h3>{html.escape(t("Custom period"))}</h3><div class="report-generation-preview" id="report-generation-preview" aria-live="polite"><div><strong>{html.escape(t("Selected device"))}</strong><span>{html.escape(selected_device_label or t("No connected GMC device"))}</span></div><div><strong>{html.escape(t("Report timezone"))}</strong><span>{html.escape(str(self.timezone))}</span></div><div><strong>{html.escape(t("Selected period"))}</strong><span id="report-preview-period">—</span></div><div><strong>{html.escape(t("Time-based data coverage"))}</strong><span id="report-preview-coverage">—</span></div><div><strong>{html.escape(t("Stored measurements"))}</strong><span id="report-preview-samples">—</span></div><div><strong>{html.escape(t("Uncovered time"))}</strong><span id="report-preview-gap">—</span></div><p id="report-preview-warning" class="report-preview-warning" hidden></p></div>
+<div class="custom-periods"><div class="report-period-presets" role="group" aria-label="{html.escape(t("Quick period presets"), quote=True)}"><button type="button" class="button" data-report-preset="today">{html.escape(t("Today"))}</button><button type="button" class="button" data-report-preset="yesterday">{html.escape(t("Yesterday"))}</button><button type="button" class="button" data-report-preset="rolling24">{html.escape(t("Last 24 hours"))}</button><button type="button" class="button" data-report-preset="rolling7">{html.escape(t("Last 7 days"))}</button><button type="button" class="button" data-report-preset="month">{html.escape(t("Current month"))}</button><button type="button" class="button" data-report-preset="custom">{html.escape(t("Custom range"))}</button></div>
+<form class="custom-form report-preset-source unified-report-form" id="custom-report-form" action="" method="get" data-preset-kind="custom" data-today="{today}" data-yesterday="{yesterday}" data-current-month="{current_month}" novalidate><input type="hidden" name="action" value="download"><input type="hidden" name="selection" value="specific"><div class="form-grid report-form-grid">
+<label>{html.escape(t("Period type"))}<select name="period" id="custom-report-period"><option value="daily">{html.escape(t("Daily"))}</option><option value="weekly">{html.escape(t("Weekly"))}</option><option value="monthly">{html.escape(t("Monthly"))}</option><option value="rolling24">{html.escape(t("Last 24 hours"))}</option><option value="rolling7">{html.escape(t("Last 7 days"))}</option><option value="custom">{html.escape(t("Custom range"))}</option></select></label><label data-report-date-field>{html.escape(t("Specific date"))}<input type="date" name="date" value="{today}"></label><label data-report-week-field hidden>{html.escape(t("Specific ISO week"))}<input type="week" name="week" value="{current_week}"></label><label data-report-month-field hidden>{html.escape(t("Specific month"))}<input type="month" name="month" value="{current_month}"></label><label data-report-start-field hidden>{html.escape(t("From"))}<input type="date" name="start" value="{custom_start}"></label><label data-report-end-field hidden>{html.escape(t("To"))}<input type="date" name="end" value="{today}"></label><label>{html.escape(t("Format"))}<select name="format">{format_options}</select></label><div class="form-actions"><button type="submit" class="primary" id="custom-report-submit">{html.escape(t("Download"))}</button></div></div>
+<small class="report-timezone-note">{html.escape(t("Dates use the report timezone"))}: {html.escape(str(self.timezone))}</small><p id="report-form-status" class="report-form-status" role="status" aria-live="polite" hidden></p></form></div></div>
 
 <details class="download-group advanced-only" id="reports-export-details">
 <summary><span class="summary-copy">{html.escape(t("Export details"))}<small>{html.escape(t("What each report preserves and how periods are defined"))}</small></span></summary>
@@ -1071,6 +1067,8 @@ input[type="date"], input[type="week"], input[type="month"], input[type="datetim
 <div class="actions maintenance-actions">
 <a class="button primary" href="?action=history-export">{html.escape(t("Full history ZIP"))}</a>
 <a class="button" href="?action=diagnostics">{html.escape(t("Diagnostics JSON"))}</a>
+<button type="button" class="button" id="copy-support-diagnostics">{html.escape(t("Copy support diagnostics"))}</button>
+<span id="support-diagnostics-status" class="copy-status" role="status" aria-live="polite"></span>
 </div>
 {managed_backups_html}
 <details class="analysis-group history-management-tool" id="history-restore"><summary><span class="summary-copy">{html.escape(t("Restore history"))}<small>{html.escape(t("Preview and merge a compatible SQLite backup"))}</small></span></summary><div class="group-body">{restore_controls}</div></details>
@@ -1258,6 +1256,7 @@ input[type="date"], input[type="week"], input[type="month"], input[type="datetim
                 online = bool(runtime_online)
             status_class = "online" if online else "offline"
             status_label = t("Online") if online else t("Offline")
+            runtime_reason = str(item.get("runtime_status_reason") or "")
 
             def format_external_timestamp(value: object, fallback: str) -> str:
                 if value in (None, ""):
@@ -1282,11 +1281,14 @@ input[type="date"], input[type="week"], input[type="month"], input[type="datetim
             display_title = configured_name or model_display
             model_subtitle = model_display if model_display != display_title else ""
             measurement_age_seconds = max(0, int(datetime.now(UTC).timestamp()) - latest_timestamp) if latest_timestamp else None
-            freshness_display = (
-                t("{seconds} seconds ago", seconds=measurement_age_seconds)
-                if measurement_age_seconds is not None and measurement_age_seconds < 120
-                else last_update
+            freshness = measurement_freshness(
+                online=online,
+                age_seconds=measurement_age_seconds,
+                scan_interval_seconds=int(item.get("scan_interval_seconds") or self.scan_interval_seconds),
+                runtime_reason=runtime_reason,
+                t=t,
             )
+            freshness_display = str(freshness["label"])
             normalized_model = model_display.casefold().replace(" ", "")
             if "320" in normalized_model:
                 device_visual_class, device_icon = "device-320", "320"
@@ -1477,6 +1479,23 @@ input[type="date"], input[type="week"], input[type="month"], input[type="datetim
                 if alerts
                 else f'<div class="device-ok"><span>✓</span>{html.escape(t("No active device warnings"))}</div>'
             )
+            status_updated = format_external_timestamp(item.get("runtime_status_updated_utc"), t("Not available"))
+            next_scan = t("Not available")
+            if latest_timestamp and online:
+                next_scan_epoch = latest_timestamp + int(item.get("scan_interval_seconds") or self.scan_interval_seconds)
+                remaining = max(0, next_scan_epoch - int(datetime.now(UTC).timestamp()))
+                next_scan = t("in {seconds} seconds", seconds=remaining)
+            runtime_reason_label = runtime_reason.replace("_", " ") if runtime_reason else t("Not available")
+            connection_details = render_connection_details(
+                t=t, serial_value=serial_value, port=item.get("port", "—"),
+                baudrate=item.get("baudrate", "—"), interval_seconds=item.get("scan_interval_seconds", "—"),
+                last_response=last_update, next_scan=next_scan, status_updated=status_updated,
+                runtime_reason=runtime_reason_label, reconnects=reconnects, serial_errors=serial_errors,
+                profile=profile, capabilities=capabilities_value,
+                stored_samples=int(item.get("stored_samples") or 0),
+                health_summary=t("No active device warnings") if health_status == "ok" else t("Device health warning"),
+                tube_values=tube_values, diagnostics_values=device_diagnostics_values,
+            )
             action_label = t("Analysis shown") if selected else t("Show analysis")
             href = f"?mode={mode}&amp;lang={language}&amp;device={quote_plus(serial_value)}"
             selected_class = " selected" if selected else ""
@@ -1487,22 +1506,16 @@ input[type="date"], input[type="week"], input[type="month"], input[type="datetim
                     display_title=display_title, model_subtitle=model_subtitle, serial_value=serial_value,
                     device_icon=device_icon, status_class=status_class, status_label=status_label,
                     freshness_display=freshness_display, last_update=last_update,
+                    freshness_state=str(freshness["state"]),
+                    freshness_severity=str(freshness["severity"]),
                 )
                 + render_live_measurement(
                     t=t, dose_number=dose_number, dose_unit=dose_unit, quality_stars=quality_stars,
                     latest_value=latest_value, detector_name=detector_name,
+                    cpm_per_usvh=item.get("cpm_per_usvh") or self.cpm_per_usvh,
                 )
                 + f"{alert_html}"
-                + '<div class="device-fields" data-analysis-tier="expert">'
-                + f'<div class="device-field"><strong>{html.escape(t("Serial"))}</strong><span>{html.escape(serial_value)}</span></div>'
-                + f'<div class="device-field"><strong>{html.escape(t("Serial port"))}</strong><span class="technical-value">{html.escape(str(item.get("port", "—")))}</span></div>'
-                + f'<div class="device-field"><strong>{html.escape(t("Baud rate"))}</strong><span>{html.escape(str(item.get("baudrate", "—")))}</span></div>'
-                + f'<div class="device-field"><strong>{html.escape(t("Measurement interval"))}</strong><span>{html.escape(str(item.get("scan_interval_seconds", "—")))} s</span></div>'
-                + f'<div class="device-field"><strong>{html.escape(t("Profile"))}</strong><span>{html.escape(profile)}</span></div>'
-                + f'<div class="device-field"><strong>{html.escape(t("Device capabilities"))}</strong><span>{html.escape(capabilities_value)}</span></div>'
-                + f'<div class="device-field"><strong>{html.escape(t("Stored samples for this device"))}</strong><span>{int(item.get("stored_samples") or 0):,}</span></div>'
-                + f'<div class="device-field"><strong>{html.escape(t("Last update"))}</strong><span>{html.escape(last_update)}</span></div>'
-                + f"{tube_values}{device_diagnostics_values}</div>"
+                + connection_details
                 + f"{calibration_html}"
                 + f"{gmcmap_html}"
                 + f'<a class="button device-select{primary_class}" href="{href}">{html.escape(action_label)}</a>'
@@ -1564,13 +1577,12 @@ input[type="date"], input[type="week"], input[type="month"], input[type="datetim
                 latest_timestamp > 0 and now_utc - latest_timestamp <= online_window
             )
             age = max(0, now_utc - latest_timestamp) if latest_timestamp else None
-            freshness = (
-                t("{seconds} seconds ago", seconds=age)
-                if age is not None and age < 120
-                else (
-                    datetime.fromtimestamp(latest_timestamp, UTC).astimezone(self.timezone).strftime("%Y-%m-%d %H:%M:%S %Z")
-                    if latest_timestamp else t("Not detected yet")
-                )
+            freshness = measurement_freshness(
+                online=online,
+                age_seconds=age,
+                scan_interval_seconds=int(item.get("scan_interval_seconds") or self.scan_interval_seconds),
+                runtime_reason=str(item.get("runtime_status_reason") or ""),
+                t=t,
             )
             dose_number, dose_unit = _format_live_dose(item.get("derived_dose_usvh"), language)
             health_status = str(item.get("device_health_status") or "ok")
@@ -1581,7 +1593,9 @@ input[type="date"], input[type="week"], input[type="month"], input[type="datetim
                 "timestamp_utc": latest_timestamp,
                 "status_class": "online" if online else "offline",
                 "status_label": t("Online") if online else t("Offline"),
-                "freshness_display": freshness,
+                "freshness_display": str(freshness["label"]),
+                "freshness_state": str(freshness["state"]),
+                "freshness_severity": str(freshness["severity"]),
                 "dose_number": dose_number,
                 "dose_unit": dose_unit,
                 "quality_stars": str(item.get("measurement_quality_star_text") or "☆☆☆☆☆"),
@@ -1597,12 +1611,14 @@ input[type="date"], input[type="week"], input[type="month"], input[type="datetim
 
     def report_preview_payload(
         self, *, period_kind: str, date_value: str | None, week_value: str | None,
-        device_serial: str | None, language: str,
+        device_serial: str | None = None, language: str = "en",
+        month_value: str | None = None, start_value: str | None = None, end_value: str | None = None,
     ) -> dict[str, Any]:
         t = Translator(language)
         period = resolve_period(
             kind=period_kind, selection="specific", tz=self.timezone,
-            date_value=date_value, week_value=week_value,
+            date_value=date_value, week_value=week_value, month_value=month_value,
+            start_value=start_value, end_value=end_value,
         )
         rows = self.store.query_range(
             int(period.start_utc.timestamp()), int(period.end_utc.timestamp()),
@@ -1767,7 +1783,6 @@ input[type="date"], input[type="week"], input[type="month"], input[type="datetim
         )
     def _render_assessment_legend(self, *, t: Translator | None = None) -> str:
         return render_assessment_legend(t or Translator("en"))
-
 
 def run_report_server() -> None:
     """Start the HTTP service through the split server bootstrap module."""

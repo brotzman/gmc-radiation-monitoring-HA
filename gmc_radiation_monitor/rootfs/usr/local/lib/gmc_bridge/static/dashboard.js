@@ -301,33 +301,94 @@
 
   const customReportForm = document.getElementById('custom-report-form');
   const customReportPeriod = document.getElementById('custom-report-period');
-  const reportDateField = customReportForm?.querySelector('[data-report-date-field]');
-  const reportWeekField = customReportForm?.querySelector('[data-report-week-field]');
   const reportPreviewPeriod = document.getElementById('report-preview-period');
   const reportPreviewCoverage = document.getElementById('report-preview-coverage');
   const reportPreviewSamples = document.getElementById('report-preview-samples');
   const reportPreviewGap = document.getElementById('report-preview-gap');
   const reportPreviewWarning = document.getElementById('report-preview-warning');
+  const reportFormStatus = document.getElementById('report-form-status');
+  const reportSubmit = document.getElementById('custom-report-submit');
   let reportPreviewTimer = null;
+  let reportPreviewController = null;
+
   function formatDuration(seconds) {
     const value = Math.max(0, Number(seconds || 0));
     if (value < 3600) return `${Math.round(value / 60)} min`;
     if (value < 86400) return `${(value / 3600).toFixed(1)} h`;
     return `${(value / 86400).toFixed(1)} d`;
   }
+  function setReportStatus(message = '', tone = '') {
+    if (!reportFormStatus) return;
+    reportFormStatus.textContent = message;
+    reportFormStatus.dataset.tone = tone;
+    reportFormStatus.hidden = !message;
+  }
+  function reportField(name) { return customReportForm?.elements.namedItem(name) || null; }
   function updateReportPeriodFields() {
     if (!customReportForm || !customReportPeriod) return;
-    const weekly = customReportPeriod.value === 'weekly';
-    if (reportDateField) reportDateField.hidden = weekly;
-    if (reportWeekField) reportWeekField.hidden = !weekly;
-    const dateInput = customReportForm.elements.namedItem('date');
-    const weekInput = customReportForm.elements.namedItem('week');
-    if (dateInput) dateInput.required = !weekly;
-    if (weekInput) weekInput.required = weekly;
+    const period = customReportPeriod.value || 'daily';
+    const visibility = {
+      date: period === 'daily',
+      week: period === 'weekly',
+      month: period === 'monthly',
+      start: period === 'custom',
+      end: period === 'custom',
+    };
+    Object.entries(visibility).forEach(([name, visible]) => {
+      const wrapper = customReportForm.querySelector(`[data-report-${name}-field]`);
+      const input = reportField(name);
+      if (wrapper) wrapper.hidden = !visible;
+      if (input) input.required = visible;
+    });
   }
-  async function refreshReportPreview() {
-    if (!customReportForm) return;
+  function validateReportForm() {
+    if (!customReportForm) return false;
     updateReportPeriodFields();
+    const period = customReportPeriod?.value || 'daily';
+    const startInput = reportField('start');
+    const endInput = reportField('end');
+    if (period === 'custom' && startInput?.value && endInput?.value && endInput.value < startInput.value) {
+      const message = uiText.reportEndBeforeStart || 'The end date must not be before the start date.';
+      endInput.setCustomValidity(message);
+      setReportStatus(message, 'error');
+      return false;
+    }
+    if (endInput) endInput.setCustomValidity('');
+    const valid = customReportForm.checkValidity();
+    if (!valid) setReportStatus(uiText.completeRequiredFields || 'Complete the required period fields.', 'error');
+    else setReportStatus('');
+    return valid;
+  }
+  function applyReportPreset(preset) {
+    if (!customReportForm || !customReportPeriod) return;
+    const dateInput = reportField('date');
+    const monthInput = reportField('month');
+    const startInput = reportField('start');
+    const endInput = reportField('end');
+    const today = customReportForm.dataset.today || dateInput?.value || '';
+    if (preset === 'today') {
+      customReportPeriod.value = 'daily'; if (dateInput) dateInput.value = today;
+    } else if (preset === 'yesterday') {
+      customReportPeriod.value = 'daily'; if (dateInput) dateInput.value = customReportForm.dataset.yesterday || today;
+    } else if (preset === 'rolling24') customReportPeriod.value = 'rolling24';
+    else if (preset === 'rolling7') customReportPeriod.value = 'rolling7';
+    else if (preset === 'month') {
+      customReportPeriod.value = 'monthly'; if (monthInput) monthInput.value = customReportForm.dataset.currentMonth || '';
+    } else if (preset === 'custom') {
+      customReportPeriod.value = 'custom'; if (endInput && !endInput.value) endInput.value = today;
+    }
+    updateReportPeriodFields();
+    customReportForm.dispatchEvent(new Event('change', {bubbles:true}));
+    scheduleReportPreview();
+  }
+  document.querySelectorAll('[data-report-preset]').forEach((button) => {
+    button.addEventListener('click', () => applyReportPreset(button.dataset.reportPreset || 'custom'));
+  });
+
+  async function refreshReportPreview() {
+    if (!customReportForm || !validateReportForm()) return;
+    reportPreviewController?.abort();
+    reportPreviewController = new AbortController();
     const params = new URLSearchParams(new FormData(customReportForm));
     params.delete('action'); params.delete('selection'); params.delete('format');
     const currentUrl = new URL(window.location.href);
@@ -336,7 +397,9 @@
     if (device) params.set('device', device);
     if (lang) params.set('lang', lang);
     try {
-      const response = await fetch(`./api/report-preview?${params.toString()}`, {cache:'no-store', credentials:'same-origin', headers:{'Accept':'application/json'}});
+      const response = await fetch(`./api/report-preview?${params.toString()}`, {
+        cache:'no-store', credentials:'same-origin', headers:{'Accept':'application/json'}, signal:reportPreviewController.signal,
+      });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || `preview failed: ${response.status}`);
       if (reportPreviewPeriod) reportPreviewPeriod.textContent = data.period_label || '—';
@@ -345,17 +408,34 @@
       if (reportPreviewGap) reportPreviewGap.textContent = formatDuration(data.gap_seconds);
       if (reportPreviewWarning) { reportPreviewWarning.textContent = data.warning || ''; reportPreviewWarning.hidden = !data.warning; }
     } catch (error) {
-      if (reportPreviewWarning) { reportPreviewWarning.textContent = String(error.message || error); reportPreviewWarning.hidden = false; }
+      if (error?.name === 'AbortError') return;
+      const message = `${uiText.reportPreviewFailed || 'The report preview could not be created.'} (${uiText.errorCode || 'Error code'}: REPORT-PREVIEW-01)`;
+      if (reportPreviewWarning) { reportPreviewWarning.textContent = message; reportPreviewWarning.hidden = false; }
+      setReportStatus(message, 'error');
+      console.debug('GMC report preview failed', error);
     }
   }
-  function scheduleReportPreview() { window.clearTimeout(reportPreviewTimer); reportPreviewTimer = window.setTimeout(refreshReportPreview, 180); }
+  function scheduleReportPreview() {
+    window.clearTimeout(reportPreviewTimer);
+    reportPreviewTimer = window.setTimeout(refreshReportPreview, 220);
+  }
   if (customReportForm) {
     updateReportPeriodFields();
     customReportForm.addEventListener('input', scheduleReportPreview);
     customReportForm.addEventListener('change', scheduleReportPreview);
     customReportForm.addEventListener('submit', (event) => {
-      updateReportPeriodFields();
-      if (!customReportForm.reportValidity()) event.preventDefault();
+      if (!validateReportForm()) {
+        event.preventDefault();
+        customReportForm.reportValidity();
+        if (reportSubmit) reportSubmit.disabled = false;
+        return;
+      }
+      if (reportSubmit) {
+        reportSubmit.disabled = true;
+        reportSubmit.dataset.originalText = reportSubmit.textContent || '';
+        reportSubmit.textContent = uiText.preparingDownload || 'Preparing…';
+      }
+      setReportStatus(uiText.reportInputsPreserved || 'The selected settings are saved in this browser.', 'info');
     });
     scheduleReportPreview();
   }
@@ -390,6 +470,42 @@
     } catch (error) { if (output) output.textContent = `${uiText.previewFailed}: ${error.message}`; }
   });
 
+  document.getElementById('copy-support-diagnostics')?.addEventListener('click', async () => {
+    const status = document.getElementById('support-diagnostics-status');
+    try {
+      const response = await fetch('./api/support-diagnostics', {cache:'no-store', credentials:'same-origin'});
+      if (!response.ok) throw new Error(`support diagnostics failed: ${response.status}`);
+      const text = await response.text();
+      await navigator.clipboard.writeText(text);
+      if (status) status.textContent = uiText.diagnosticsCopied || 'Support diagnostics copied.';
+    } catch (error) {
+      if (status) status.textContent = `${uiText.copyFailed || 'Copy failed'} (DIAGNOSTICS-COPY-01)`;
+      console.debug('GMC support diagnostics copy failed', error);
+    }
+  });
+
+  document.addEventListener('click', (event) => {
+    const reset = event.target.closest('[data-chart-reset]');
+    if (reset) {
+      const chart = reset.closest('.workflow-history-chart');
+      chart?.scrollTo({left:0, behavior:reduceMotion ? 'auto' : 'smooth'});
+      return;
+    }
+    const download = event.target.closest('[data-chart-download]');
+    if (download) {
+      const chart = download.closest('.workflow-history-chart');
+      const svg = chart?.querySelector('svg');
+      if (!svg) return;
+      const source = new XMLSerializer().serializeToString(svg);
+      const blob = new Blob([source], {type:'image/svg+xml;charset=utf-8'});
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'gmc-history-chart.svg';
+      document.body.appendChild(link); link.click(); link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+    }
+  });
+
   const pageScroll = document.getElementById('page-scroll');
   const liveStatus = document.getElementById('live-refresh-status');
   let liveRefreshRunning = false;
@@ -412,6 +528,11 @@
     const status = card.querySelector('[data-live="status"]');
     if (status) { status.textContent = device.status_label; status.className = `device-status ${device.status_class}`; }
     update('freshness', device.freshness_display);
+    const freshness = card.querySelector('[data-live="freshness"]');
+    if (freshness) {
+      freshness.dataset.freshnessState = device.freshness_state || '';
+      freshness.className = `device-freshness freshness-${device.freshness_severity || 'online'}`;
+    }
     update('dose-number', device.dose_number);
     update('dose-unit', device.dose_unit);
     update('quality-stars', device.quality_stars);

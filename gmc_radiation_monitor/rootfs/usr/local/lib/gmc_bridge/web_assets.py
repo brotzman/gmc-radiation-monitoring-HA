@@ -38,6 +38,14 @@ def dashboard_bootstrap_payload(
             "backupReady": t("Backup is compatible and ready to restore."),
             "expandAll": t("Expand all"),
             "collapseAll": t("Collapse all"),
+            "reportEndBeforeStart": t("The end date must not be before the start date."),
+            "completeRequiredFields": t("Complete the required period fields."),
+            "reportPreviewFailed": t("The report preview could not be created."),
+            "errorCode": t("Error code"),
+            "preparingDownload": t("Preparing…"),
+            "reportInputsPreserved": t("The selected settings are saved in this browser."),
+            "diagnosticsCopied": t("Support diagnostics copied."),
+            "copyFailed": t("Copy failed"),
         },
     }
 

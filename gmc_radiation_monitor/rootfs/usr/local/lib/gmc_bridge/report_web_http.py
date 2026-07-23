@@ -19,7 +19,7 @@ from .calibration_http import (
     persist_calibration_profile,
 )
 from .config_validation import validate_candidate_options
-from .maintenance import diagnostics_json_bytes, full_history_zip_to_path
+from .maintenance import diagnostics_json_bytes, full_history_zip_to_path, support_diagnostics_text
 from .report_http_responses import HttpResponseMixin
 from .report_http_utils import localized_exception_message as _localized_exception_message
 from .report_web_support import (
@@ -150,12 +150,22 @@ class ReportRequestHandler(HttpResponseMixin, BaseHTTPRequestHandler):
                     json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8"),
                 )
                 return
+            if path == "/api/support-diagnostics":
+                payload = support_diagnostics_text(self.app.store).encode("utf-8")
+                self._send_bytes(
+                    HTTPStatus.OK, "text/plain; charset=utf-8", payload,
+                    cache_control="no-store",
+                )
+                return
             if path == "/api/report-preview":
                 language = t.language
                 payload = self.app.report_preview_payload(
                     period_kind=_optional_one(query, "period") or "daily",
                     date_value=_optional_one(query, "date"),
                     week_value=_optional_one(query, "week"),
+                    month_value=_optional_one(query, "month"),
+                    start_value=_optional_one(query, "start"),
+                    end_value=_optional_one(query, "end"),
                     device_serial=_optional_one(query, "device"),
                     language=language,
                 )
@@ -796,6 +806,9 @@ class ReportRequestHandler(HttpResponseMixin, BaseHTTPRequestHandler):
             tz=self.app.timezone,
             date_value=_optional_one(query, "date"),
             week_value=_optional_one(query, "week"),
+            month_value=_optional_one(query, "month"),
+            start_value=_optional_one(query, "start"),
+            end_value=_optional_one(query, "end"),
         )
         if not self.app.report_slot.acquire(blocking=False):
             self._send_error(HTTPStatus.TOO_MANY_REQUESTS, t("Another report is already being generated"))

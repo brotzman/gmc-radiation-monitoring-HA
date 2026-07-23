@@ -199,10 +199,14 @@ class WorkflowAutomationService:
                 state["confirmed_event_timestamp"] = newest_event
 
         cooldown = settings.cooldown_minutes * 60
+        recoverable_conditions = {"device_offline", "data_stale", "database_problem"}
         for key, (active, title, message) in conditions.items():
             item = state.get(key) if isinstance(state.get(key), dict) else {}
             last_notified = int(item.get("last_notified_utc") or 0)
             was_active = bool(item.get("active"))
+            active_since = int(item.get("active_since_utc") or 0)
+            if active and not was_active:
+                active_since = now
             should_send = active and (not was_active or now - last_notified >= cooldown)
             if should_send:
                 try:
@@ -216,7 +220,30 @@ class WorkflowAutomationService:
                 except Exception as exc:
                     LOG.warning("Could not create Home Assistant notification %s: %s", key, exc)
                     state["last_notification_error"] = str(exc)[:500]
-            state[key] = {"active": active, "last_notified_utc": last_notified, "updated_utc": now}
+            elif was_active and not active and key in recoverable_conditions:
+                duration_seconds = max(0, now - active_since) if active_since else 0
+                duration_minutes = max(1, round(duration_seconds / 60)) if duration_seconds else 1
+                try:
+                    self.home_assistant_client.create_persistent_notification(
+                        title=self.t("GMC condition resolved"),
+                        message=self.t(
+                            "{condition} is no longer active. Duration: about {minutes} minutes.",
+                            condition=title,
+                            minutes=duration_minutes,
+                        ),
+                        notification_id=f"gmc_{key}",
+                    )
+                    sent.append(f"{key}_resolved")
+                except Exception as exc:
+                    LOG.warning("Could not create Home Assistant recovery notification %s: %s", key, exc)
+                    state["last_notification_error"] = str(exc)[:500]
+                active_since = 0
+            state[key] = {
+                "active": active,
+                "active_since_utc": active_since,
+                "last_notified_utc": last_notified,
+                "updated_utc": now,
+            }
         if sent:
             state["last_notification_success_utc"] = now
         self._save_state(_NOTIFICATION_STATE_KEY, state)
