@@ -6,9 +6,9 @@ A local Home Assistant App (formerly add-on) for compatible GQ GMC Geiger counte
 
 > **Safety notice:** This add-on is intended for monitoring and home automation. It is not a calibrated radiation-protection instrument. Derived dose rates, profiles, anomaly detection and recommendations do not replace official measurements, professional advice or emergency instructions.
 
-## Version 9.0.2: focused usability and diagnostics release
+## Version 9.0.3: compact status and German number localisation
 
-Version 9.0.2 makes current-data state, report periods, chart gaps and device diagnostics easier to understand without changing measurement acquisition or scientific calculations. It adds quick report presets with validation and browser-local form persistence, explicit CPM-to-dose wording, copy-safe support diagnostics, gap-aware chart controls, quieter transition-based recovery notifications and further mobile/accessibility refinements. Existing schema-8 databases remain compatible.
+Version 9.0.3 replaces the permanently expanded six-tile system overview with a compact status summary and collapsible diagnostic details. It also applies German number formatting consistently across server-rendered dashboard values, analysis messages, reports, diagnostics and dynamically updated browser views. Existing schema-8 databases, measurements and scientific calculations remain compatible.
 
 ## Features
 

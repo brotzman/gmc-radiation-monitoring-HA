@@ -1,5 +1,15 @@
 # Changelog
 
+## 9.0.3
+
+- Replaced the permanently expanded six-tile system overview with a compact status summary and collapsible diagnostic details.
+- Keeps the most important normal-state information visible while exposing storage, database, rejection and history details on demand.
+- Added a shared German number formatter for decimal commas and grouped thousands throughout the server-rendered interface.
+- Localized dynamically updated report-preview, restore-preview, duration, size and counter values according to the selected interface language.
+- Localized German date-time presentation where the dashboard renders human-readable timestamps.
+- Added regression coverage for compact status behavior, German number formatting and JavaScript locale handling.
+- Kept database schema 8, existing history, device acquisition, detector profiles and all scientific calculations unchanged.
+
 ## 9.0.2
 
 - Added independent live measurement-freshness states and explicit estimated-dose wording with conversion-factor context.
