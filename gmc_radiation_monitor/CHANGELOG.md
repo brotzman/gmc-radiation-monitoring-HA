@@ -1,5 +1,12 @@
 # Changelog
 
+## 9.0.1
+
+- Fixed the report-preview endpoint crash caused by passing a default argument to the two-argument `_one()` query helper.
+- Defaulted missing preview period parameters to `daily` through the optional-query helper.
+- Added regression tests for report preview requests before and after report-form initialisation.
+- Kept database schema 8 and all measurement, scientific, calibration and report-generation algorithms unchanged.
+
 ## 9.0.0
 
 - Corrected Poisson uncertainty and significance calculations for overlapping rolling CPM windows when devices are polled faster than once per minute.
