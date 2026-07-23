@@ -153,7 +153,7 @@ class ReportRequestHandler(HttpResponseMixin, BaseHTTPRequestHandler):
             if path == "/api/report-preview":
                 language = t.language
                 payload = self.app.report_preview_payload(
-                    period_kind=_one(query, "period", "daily"),
+                    period_kind=_optional_one(query, "period") or "daily",
                     date_value=_optional_one(query, "date"),
                     week_value=_optional_one(query, "week"),
                     device_serial=_optional_one(query, "device"),
