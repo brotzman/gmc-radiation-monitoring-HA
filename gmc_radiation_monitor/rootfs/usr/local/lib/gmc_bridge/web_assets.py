@@ -345,12 +345,14 @@ button.danger, a.button.danger {
 }
 button.danger:hover, a.button.danger:hover { background:color-mix(in srgb,var(--red) 14%,Canvas); box-shadow:0 3px 8px color-mix(in srgb,var(--red) 20%,transparent); }
 button:disabled, a.button[aria-disabled="true"] { opacity:.5; cursor:not-allowed; transform:none; box-shadow:none; }
-form { display: grid; gap: .65rem; }
-.custom-periods { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .8rem; }
-.custom-form { padding: .9rem; border-radius: 10px; background: var(--panel); }
-.form-grid { display: grid; grid-template-columns: 1fr 1fr auto; gap: .6rem; align-items: end; }
+form { display: grid; gap: .65rem; min-width:0; max-width:100%; }
+.custom-periods { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .8rem; min-width:0; max-width:100%; }
+.custom-form { padding: .9rem; border-radius: 10px; background: var(--panel); min-width:0; max-width:100%; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr auto; gap: .6rem; align-items: end; min-width:0; max-width:100%; }
+.form-grid > *, label { min-width:0; max-width:100%; }
 label { display: grid; gap: .25rem; font-size: .9rem; }
-input, select { width: 100%; font: inherit; padding: .65rem; border-radius: 7px; border: 1px solid color-mix(in srgb, CanvasText 28%, transparent); background: Canvas; color: CanvasText; }
+input, select { width: 100%; min-width:0; max-width:100%; font: inherit; padding: .65rem; border-radius: 7px; border: 1px solid color-mix(in srgb, CanvasText 28%, transparent); background: Canvas; color: CanvasText; }
+input[type="date"], input[type="week"], input[type="month"], input[type="datetime-local"] { display:block; box-sizing:border-box; width:100%; min-width:0; max-width:100%; inline-size:100%; min-inline-size:0; max-inline-size:100%; }
 small { opacity: .8; }
 .note { padding: .7rem .8rem; border-radius: 8px; background: var(--panel); line-height: 1.45; }
 .relative-factor-note { margin-top: 1rem; }
@@ -400,8 +402,9 @@ body[data-analysis-level="analysis"] [data-analysis-tier="expert"] { display:non
   .assessment-primary { grid-column:1 / -1; }
   .legend-grid { grid-template-columns:1fr; }
   .download-columns, .custom-periods { grid-template-columns: 1fr; }
-  .dashboard-controls { position:static; flex-wrap:wrap; backdrop-filter:none; }
-  .jump-links,.dashboard-actions { flex-wrap:wrap; overflow:visible; }
+  .dashboard-controls { position:-webkit-sticky; position:sticky; top:env(safe-area-inset-top,0px); flex-wrap:nowrap; align-items:center; backdrop-filter:blur(14px); }
+  .jump-links { flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; touch-action:pan-x pan-y; }
+  .dashboard-actions { flex-wrap:nowrap; overflow:visible; }
   .status-strip { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .form-grid { grid-template-columns: 1fr; }
   .custom-form .form-grid { grid-template-columns:1fr; }
@@ -415,6 +418,7 @@ body[data-analysis-level="analysis"] [data-analysis-tier="expert"] { display:non
   .header-resource-links { grid-template-columns:1fr; }
   .language-switcher { width:100%; min-width:0; flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden; padding:.08rem 0 .3rem; scrollbar-width:thin; -webkit-overflow-scrolling:touch; }
   .language-switcher a { flex:0 0 auto; min-height:2.5rem; }
+  input[type="date"], input[type="week"], input[type="month"], input[type="datetime-local"] { font-size:16px; }
 }
 @media (max-width: 520px) {
   header, section { padding: .9rem; border-radius: 11px; }
@@ -433,10 +437,11 @@ body[data-analysis-level="analysis"] [data-analysis-tier="expert"] { display:non
   .device-grid, .device-fields { grid-template-columns: 1fr; }
   .status-strip { grid-template-columns:1fr; }
   .status-strip-item strong,.status-strip-item small { white-space:normal; }
-  .dashboard-controls { align-items:stretch; }
-  .jump-links,.dashboard-actions { width:100%; }
-  .jump-links a { flex:1 1 auto; text-align:center; }
-  .dashboard-actions .compact-action { flex:1 1 auto; }
+  .dashboard-controls { align-items:center; gap:.45rem; padding:.5rem; }
+  .jump-links { width:auto; flex:1 1 auto; min-width:0; }
+  .dashboard-actions { width:auto; flex:0 0 auto; }
+  .jump-links a { flex:0 0 auto; text-align:center; }
+  .dashboard-actions .compact-action { flex:0 0 auto; width:auto; min-width:0; padding-inline:.65rem; }
   .card-summary-actions { gap:.2rem; }
   .card-summary-actions button { width:2rem; min-height:2rem; }
   .device-card-header { align-items:flex-start; }
