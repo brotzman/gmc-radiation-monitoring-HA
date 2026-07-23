@@ -57,7 +57,8 @@ def test_dashboard_contains_persistent_usability_controls(tmp_path: Path) -> Non
     assert 'id="expand-all-cards"' not in page
     assert 'id="collapse-all-cards"' not in page
     assert 'id="preview-restore"' in page
-    assert "gmc-dashboard-usability-v1" in page
+    script = Path("rootfs/usr/local/lib/gmc_bridge/static/dashboard.js").read_text(encoding="utf-8")
+    assert "gmc-dashboard-usability-v1" in script
     assert "gmc-last-backup-request-v1" not in page
     assert 'id="database-backup-link"' not in page
     assert 'id="device-refresh-status"' not in page
@@ -68,9 +69,9 @@ def test_dashboard_contains_persistent_usability_controls(tmp_path: Path) -> Non
     assert "gmc-recent-reports-v1" not in page
     assert "gmc-report-presets-v1" not in page
     assert "Letzte in diesem Browser angeforderte Sicherung" not in page
-    assert "IntersectionObserver" in page
-    assert "localStorage" in page
-    assert "applyCardPreferences" in page
+    assert "IntersectionObserver" in script
+    assert "localStorage" in script
+    assert "applyCardPreferences" in script
     assert 'class="device-card device-320' in page
     assert 'class="device-card device-500' in page
     assert "Keine aktiven Gerätewarnungen" in page

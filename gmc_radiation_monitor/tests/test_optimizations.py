@@ -463,8 +463,9 @@ class UiAndTranslationTests(unittest.TestCase):
         self.assertIn("Counting statistics", advanced)
         self.assertIn('data-analysis-level="expert"', simple)
         self.assertIn('class="advanced-only history-management-section" id="maintenance"', simple)
+        css = Path("rootfs/usr/local/lib/gmc_bridge/static/dashboard.css").read_text(encoding="utf-8")
         self.assertIn(
-            'body[data-analysis-level="summary"] .advanced-only { display:none !important; }', simple
+            'body[data-analysis-level="summary"] .advanced-only { display:none !important; }', css
         )
         self.assertIn("History management", advanced)
 
@@ -484,11 +485,12 @@ class UiAndTranslationTests(unittest.TestCase):
         rendered = self._app().render_index(mode_override="advanced").decode("utf-8")
         self.assertIn("overflow-x: hidden;", rendered)
         self.assertIn("touch-action: pan-y;", rendered)
+        css = Path("rootfs/usr/local/lib/gmc_bridge/static/dashboard.css").read_text(encoding="utf-8")
         self.assertIn(
-            ".assessment-grid, .assessment-grid.baseline-grid { grid-template-columns:1fr; }", rendered
+            ".assessment-grid, .assessment-grid.baseline-grid { grid-template-columns:1fr; }", css
         )
-        self.assertIn(".table-wrap { overflow-x: auto;", rendered)
-        self.assertNotIn(".control-options { overflow-x:auto;", rendered)
+        self.assertIn(".table-wrap { overflow-x: auto;", css)
+        self.assertNotIn(".control-options { overflow-x:auto;", css)
 
     def test_german_analysis_details_are_fully_localized(self):
         rendered = (

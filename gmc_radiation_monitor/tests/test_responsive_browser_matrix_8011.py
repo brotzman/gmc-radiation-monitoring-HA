@@ -96,23 +96,28 @@ def test_dashboard_browser_language_and_viewport_matrix(tmp_path: Path, engine: 
     app = _dashboard_app(tmp_path)
     screenshots: dict[str, str] = {}
 
+    dashboard_css = Path("rootfs/usr/local/lib/gmc_bridge/static/dashboard.css").read_text(encoding="utf-8")
+    dashboard_js = Path("rootfs/usr/local/lib/gmc_bridge/static/dashboard.js").read_text(encoding="utf-8")
+
     with playwright.sync_playwright() as browser_api:
         browser = _launch_browser(browser_api, engine)
         try:
             for language in LANGUAGES:
                 dashboard_html = app.render_index(
-                    language_override=language,
-                    mode_override="advanced",
+                    language_override=language, mode_override="advanced"
                 ).decode()
                 for name, viewport in VIEWPORTS.items():
                     context = browser.new_context(
                         viewport=viewport,
                         color_scheme="light",
                         reduced_motion="reduce",
+                        bypass_csp=True,
                         locale=f"{language}-{language.upper()}" if language != "en" else "en-US",
                     )
                     page = context.new_page()
                     page.set_content(dashboard_html, wait_until="domcontentloaded", timeout=15_000)
+                    page.add_style_tag(content=dashboard_css)
+                    page.add_script_tag(content=dashboard_js)
                     page.add_style_tag(
                         content="*{animation:none!important;transition:none!important;caret-color:transparent!important}"
                     )
@@ -153,9 +158,14 @@ def test_dashboard_browser_language_and_viewport_matrix(tmp_path: Path, engine: 
                         page.wait_for_timeout(25)
                         nav_box = page.locator("#dashboard-controls").bounding_box()
                         assert nav_box is not None and nav_box["y"] <= 13
-                        for selector in ("input[name=date]", "input[name=week]"):
-                            field = page.locator(selector).bounding_box()
-                            form = page.locator(selector).locator("xpath=ancestor::form[1]").bounding_box()
+                        period_select = page.locator("#custom-report-period")
+                        for period_value, selector in (("daily", "input[name=date]"), ("weekly", "input[name=week]")):
+                            period_select.select_option(period_value)
+                            page.wait_for_timeout(250)
+                            field_locator = page.locator(selector)
+                            assert field_locator.is_visible()
+                            field = field_locator.bounding_box()
+                            form = field_locator.locator("xpath=ancestor::form[1]").bounding_box()
                             assert field is not None and form is not None
                             assert field["x"] >= form["x"] - 0.5
                             assert field["x"] + field["width"] <= form["x"] + form["width"] + 0.5

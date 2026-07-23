@@ -51,7 +51,7 @@ def test_analysis_view_no_longer_renders_duplicate_combined_interpretation(tmp_p
 
 
 def test_analysis_groups_use_consistent_gap_layout() -> None:
-    css = (Path(__file__).resolve().parents[1] / "rootfs/usr/local/lib/gmc_bridge/web_assets.py").read_text(
+    css = (Path(__file__).resolve().parents[1] / "rootfs/usr/local/lib/gmc_bridge/static/dashboard.css").read_text(
         encoding="utf-8"
     )
     assert ".group-body { display:grid; gap:.9rem; padding: 0 1rem 1rem; }" in css

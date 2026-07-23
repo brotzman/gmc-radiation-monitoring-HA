@@ -7,6 +7,7 @@ def _web_source() -> str:
     modules = (
         "report_web.py",
         "web_assets.py",
+        "static/dashboard.css",
         "web_analysis_views.py",
         "web_components.py",
     )

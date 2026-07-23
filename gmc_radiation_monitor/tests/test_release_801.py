@@ -12,7 +12,7 @@ from gmc_bridge.version import APP_VERSION
 
 
 def test_version_801() -> None:
-    assert APP_VERSION == "8.4.12"
+    assert APP_VERSION == "9.0.0"
 
 
 def test_acpm_accumulator_uses_all_accepted_session_readings() -> None:
@@ -71,7 +71,8 @@ def test_gmcmap_dashboard_shows_translated_cpm_and_acpm() -> None:
         assert "Zuletzt übermitteltes CPM" in page
         assert "Zuletzt übermitteltes ACPM" in page
         assert "18.2 ACPM" in page
-        assert "aktuellen Messsitzung der App" in page
+        assert "letzten 60 Minuten" in page
+        assert "lange Datenlücken werden nicht überbrückt" in page
 
 
 def test_acpm_keys_exist_in_every_catalog() -> None:
@@ -81,7 +82,7 @@ def test_acpm_keys_exist_in_every_catalog() -> None:
         "Last uploaded ACPM",
         "GMCMap last uploaded ACPM",
         "GMCMap ACPM accepted samples",
-        "ACPM is the average of all accepted CPM readings since the current app measurement session began.",
+        "ACPM is a time-weighted rolling average of accepted CPM readings from the last 60 minutes; long data gaps are not bridged.",
     )
     for language in ("en", "de", "fr", "es", "it", "nl", "pl", "hr"):
         translator = Translator(language)

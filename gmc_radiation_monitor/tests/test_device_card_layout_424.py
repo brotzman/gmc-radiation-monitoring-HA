@@ -3,7 +3,7 @@ from pathlib import Path
 
 def test_connected_device_card_icon_layout_is_consistent() -> None:
     source = Path("rootfs/usr/local/lib/gmc_bridge/report_web.py").read_text(encoding="utf-8")
-    assets = Path("rootfs/usr/local/lib/gmc_bridge/web_assets.py").read_text(encoding="utf-8")
+    assets = Path("rootfs/usr/local/lib/gmc_bridge/static/dashboard.css").read_text(encoding="utf-8")
     assert 'title=t("Connected GMC devices")' in source
     block = source.split("multi_device_html =", 1)[1].split("report_options =", 1)[0]
     assert "Device details, live values and analysis selection are shown below." not in block

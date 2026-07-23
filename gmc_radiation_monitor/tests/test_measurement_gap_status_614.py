@@ -56,7 +56,7 @@ def test_german_gap_status_translation() -> None:
 
 def test_gap_status_is_rendered_after_longest_gap() -> None:
     root = Path("rootfs/usr/local/lib/gmc_bridge")
-    source = "\n".join((root / name).read_text() for name in ("web_analysis_views.py", "web_assets.py"))
+    source = "\n".join((root / name).read_text() for name in ("web_analysis_views.py", "static/dashboard.css"))
     assert "{html.escape(value)}{gap_status_html}</span>" in source
     assert 'class="gap-status {gap_class}"' in source
     assert ".gap-status.warning" in source

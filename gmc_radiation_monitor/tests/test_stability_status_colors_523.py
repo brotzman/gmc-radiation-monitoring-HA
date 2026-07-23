@@ -5,7 +5,7 @@ def test_stability_status_colors_are_rendered():
     root = Path("rootfs/usr/local/lib/gmc_bridge")
     source = "\n".join(
         (root / name).read_text()
-        for name in ("analysis_presentation.py", "web_analysis_views.py", "web_assets.py")
+        for name in ("analysis_presentation.py", "web_analysis_views.py", "web_assets.py", "static/dashboard.css")
     )
     assert 'class="stability-dot {_STATUS_COLOR[entity.status]}"' in source
     assert '"Stable": AnalysisStatus.GOOD' in source

@@ -26,9 +26,9 @@ def _page(tmp_path: Path) -> str:
 
 def test_8412_release_metadata_is_current() -> None:
     config = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
-    assert APP_VERSION == "8.4.12"
-    assert config["version"] == "8.4.12"
-    notes = (ROOT / "RELEASE_NOTES_8.4.12.md").read_text(encoding="utf-8")
+    assert APP_VERSION == "9.0.0"
+    assert config["version"] == "9.0.0"
+    notes = (ROOT / "RELEASE_NOTES_9.0.0.md").read_text(encoding="utf-8")
     assert "floating dashboard navigation" in notes
     assert "date, ISO-week, month and date-time inputs" in notes
 

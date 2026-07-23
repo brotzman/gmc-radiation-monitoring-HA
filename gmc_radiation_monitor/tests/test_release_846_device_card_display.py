@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def test_846_configuration_and_runtime_environment() -> None:
     config = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
-    assert config["version"] == "8.4.12"
+    assert config["version"] == "9.0.0"
     assert config["options"]["interface"]["main_value_size"] == "large"
     assert config["options"]["interface"]["custom_value_font_size_px"] == 36
     assert config["schema"]["interface"]["main_value_size"] == "list(small|medium|large|custom)"
@@ -77,8 +77,8 @@ def test_846_device_card_contains_hierarchy_and_display_controls(tmp_path: Path)
     assert '<h3>GMC-320</h3>' in page
     assert 'class="device-model-line">GMC-320 Re 4.52</span>' in page
     assert 'class="device-id">ID: f488c59b0031f0</small>' in page
-    assert 'class="dose-number">0,0779</span>' in page
-    assert 'class="dose-unit">µSv/h</span>' in page
+    assert 'class="dose-number" data-live="dose-number">0,0779</span>' in page
+    assert 'class="dose-unit" data-live="dose-unit">µSv/h</span>' in page
     assert 'Hauptmesswert Schriftgröße' in page
     assert 'value="small"' in page and 'value="custom"' in page
 

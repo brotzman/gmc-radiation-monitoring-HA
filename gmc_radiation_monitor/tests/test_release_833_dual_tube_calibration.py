@@ -178,7 +178,7 @@ def test_main_device_card_exposes_calibration_in_analysis_and_expert_tiers(tmp_p
     assert 'class="calibration-grid" data-analysis-tier="analysis"' in page
     assert 'class="measurement-details" data-analysis-tier="expert"' in page
     assert "SI-3BG" in page
-    css = Path("rootfs/usr/local/lib/gmc_bridge/web_assets.py").read_text()
+    css = Path("rootfs/usr/local/lib/gmc_bridge/static/dashboard.css").read_text()
     assert ".calibration-panel" in css
     assert "@media(max-width:700px)" in css.replace(" ", "")
 
@@ -218,7 +218,7 @@ def test_analysis_json_records_dual_tube_configuration_and_selected_profile() ->
         language="de",
     )
 
-    assert document["app_version"] == "8.4.12"
+    assert document["app_version"] == "9.0.0"
     assert document["dual_tube_configuration"]["mode"] == "separate"
     assert document["dual_tube_configuration"]["low_dose"]["tube_model"] == "M4011"
     assert document["derived_dose_estimate"]["selected_tube"] == "low"

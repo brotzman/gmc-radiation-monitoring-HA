@@ -43,6 +43,6 @@ def test_redundant_statistical_indication_message_is_not_rendered() -> None:
 
 
 def test_recommendation_block_has_clear_spacing_after_metrics() -> None:
-    source = (ROOT / "rootfs/usr/local/lib/gmc_bridge/web_assets.py").read_text(encoding="utf-8")
+    source = (ROOT / "rootfs/usr/local/lib/gmc_bridge/static/dashboard.css").read_text(encoding="utf-8")
     assert ".recommendation-card { display:grid;" in source
     assert "margin:1.05rem 0 1rem;" in source

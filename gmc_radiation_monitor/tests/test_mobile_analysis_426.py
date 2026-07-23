@@ -2,7 +2,7 @@ from pathlib import Path
 
 
 def test_mobile_analysis_reflows_without_page_horizontal_scrolling() -> None:
-    source = Path("rootfs/usr/local/lib/gmc_bridge/web_assets.py").read_text(encoding="utf-8")
+    source = Path("rootfs/usr/local/lib/gmc_bridge/static/dashboard.css").read_text(encoding="utf-8")
     assert "overflow-x: hidden;" in source
     assert "touch-action: pan-y;" in source
     assert (

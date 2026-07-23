@@ -88,11 +88,13 @@ def test_dashboard_explains_view_level_and_report_formats(tmp_path: Path) -> Non
 
     assert 'id="analysis-level-description"' in page
     assert 'data-analysis-description="Ausführliche Einordnung und die wichtigsten unterstützenden Werte"' in page
-    assert "description.textContent = selectedDescription" in page
+    script = Path("rootfs/usr/local/lib/gmc_bridge/static/dashboard.js").read_text(encoding="utf-8")
+    css = Path("rootfs/usr/local/lib/gmc_bridge/static/dashboard.css").read_text(encoding="utf-8")
+    assert "description.textContent = selectedDescription" in script
     assert 'class="report-format-guide"' in page
     assert "Am besten zum Lesen, Drucken und Weitergeben" in page
     assert "Enthält Rohdaten, Prüfsummen und Angaben zur Reproduzierbarkeit" in page
     assert "Für Tabellenprogramme und weiterführende Auswertungen" in page
     assert "@media (max-width:620px) { .report-format-guide { grid-template-columns:1fr; } }" in page
-    assert ".analysis-level-button, a.button, button { min-height:2.75rem; }" in page
-    assert ".header-intro h1 { font-size:1.5rem; overflow-wrap:normal; word-break:normal; hyphens:auto; }" in page
+    assert ".analysis-level-button, a.button, button { min-height:2.75rem; }" in css
+    assert ".header-intro h1 { font-size:1.5rem; overflow-wrap:normal; word-break:normal; hyphens:auto; }" in css

@@ -114,7 +114,8 @@ def test_analysis_has_matching_device_badge_and_real_anchor(tmp_path: Path) -> N
     assert ">500+<" in analysis
     assert "Analyse für GMC-500+ Re 2.53 · SERIAL-500" in analysis
     assert '<a href="#analysis">Analyse</a>' in page
-    assert "document.getElementById(selector.slice(1))" in page
+    script = Path("rootfs/usr/local/lib/gmc_bridge/static/dashboard.js").read_text(encoding="utf-8")
+    assert "document.getElementById(selector.slice(1))" in script
 
 
 def test_obsolete_report_history_and_presets_are_removed(tmp_path: Path) -> None:
@@ -132,11 +133,13 @@ def test_obsolete_report_history_and_presets_are_removed(tmp_path: Path) -> None
     ):
         assert obsolete not in page
     assert "Schnelldownloads" in page
-    assert page.count('class="custom-form report-preset-source"') == 2
+    assert page.count('report-preset-source unified-report-form') == 1
+    assert 'id="report-generation-preview"' in page
 
 
 def test_status_strip_uses_readable_responsive_grid_without_ellipsis(tmp_path: Path) -> None:
     page = _app(tmp_path).render_index(language_override="de", mode_override="advanced").decode()
+    css = Path("rootfs/usr/local/lib/gmc_bridge/static/dashboard.css").read_text(encoding="utf-8")
     assert ".dashboard-controls { position:sticky; top:0; z-index:50;" in page
     assert (
         ".status-strip { position:static; display:grid; grid-template-columns:repeat(3,minmax(0,1fr));"
@@ -144,11 +147,11 @@ def test_status_strip_uses_readable_responsive_grid_without_ellipsis(tmp_path: P
     )
     assert (
         ".status-strip-item strong,.status-strip-item small { display:block; white-space:normal; overflow-wrap:anywhere;"
-        in page
+        in css
     )
     assert (
         ".status-strip-item strong,.status-strip-item small { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }"
-        not in page
+        not in css
     )
     status = page.split('<section class="status-strip"', 1)[1].split("</section>", 1)[0]
     labels = re.findall(r"<strong>(.*?)</strong>", status)

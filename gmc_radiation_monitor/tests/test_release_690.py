@@ -93,8 +93,9 @@ def test_dashboard_has_three_neutral_symbol_analysis_levels_and_persists_choice(
     assert 'data-analysis-level="summary"' in panel
     assert 'data-analysis-level="analysis"' in panel
     assert 'data-analysis-level="expert"' in panel
-    assert "preferences.analysisLevel" in page
-    assert "document.body.dataset.analysisLevel = level" in page
+    script = Path("rootfs/usr/local/lib/gmc_bridge/static/dashboard.js").read_text(encoding="utf-8")
+    assert "preferences.analysisLevel" in script
+    assert "document.body.dataset.analysisLevel = level" in script
 
 
 def test_analysis_cards_are_progressively_grouped_and_history_is_integrated(tmp_path: Path) -> None:
@@ -108,9 +109,10 @@ def test_analysis_cards_are_progressively_grouped_and_history_is_integrated(tmp_
     assert "Erkannte Baseline-Sprünge" in page
     assert "Warum wird das so bewertet?" in page
     assert "Wie wird das Hintergrundprofil berechnet?" in page
-    assert 'body[data-analysis-level="summary"] [data-analysis-tier="analysis"]' in page
-    assert 'body[data-analysis-level="analysis"] [data-analysis-tier="expert"]' in page
+    css = Path("rootfs/usr/local/lib/gmc_bridge/static/dashboard.css").read_text(encoding="utf-8")
+    assert 'body[data-analysis-level="summary"] [data-analysis-tier="analysis"]' in css
+    assert 'body[data-analysis-level="analysis"] [data-analysis-tier="expert"]' in css
 
 
 def test_release_version_is_690() -> None:
-    assert APP_VERSION == "8.4.12"
+    assert APP_VERSION == "9.0.0"

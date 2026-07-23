@@ -57,7 +57,9 @@ def test_dashboard_script_uses_nonce_and_controls_are_registered_early(tmp_path:
     page = _app(tmp_path).render_index(language_override="de", mode_override="advanced").decode()
     nonce_match = re.search(r'<script nonce="([A-Za-z0-9_-]+)">', page)
     assert nonce_match is not None
-    script = page.split(nonce_match.group(0), 1)[1].split("</script>", 1)[0]
+    bootstrap = page.split(nonce_match.group(0), 1)[1].split("</script>", 1)[0]
+    assert "window.GMC_BOOTSTRAP" in bootstrap
+    script = Path("rootfs/usr/local/lib/gmc_bridge/static/dashboard.js").read_text(encoding="utf-8")
     assert "function setAllCards(open)" in script
     assert "function jumpToSection(selector)" in script
     assert "event.target.closest('#toggle-all-cards')" in script
@@ -83,7 +85,7 @@ def test_html_response_csp_authorizes_only_its_generated_script_nonce(tmp_path: 
             csp = response.headers["Content-Security-Policy"]
         nonce = re.search(r'<script nonce="([A-Za-z0-9_-]+)">', page)
         assert nonce is not None
-        assert f"script-src 'nonce-{nonce.group(1)}'" in csp
+        assert f"script-src 'self' 'nonce-{nonce.group(1)}'" in csp
         assert "script-src 'unsafe-inline'" not in csp
     finally:
         server.shutdown()
@@ -93,16 +95,18 @@ def test_html_response_csp_authorizes_only_its_generated_script_nonce(tmp_path: 
 
 def test_analysis_and_custom_report_layout_selectors_target_card_body(tmp_path: Path) -> None:
     page = _app(tmp_path).render_index(language_override="de", mode_override="advanced").decode()
-    assert "#adaptive-background .collapsible-card-body > .assessment-grid" in page
-    assert "#adaptive-background .collapsible-card-body > .metrics" in page
-    assert "#cosmic-influence .collapsible-card-body > .assessment-grid" in page
-    assert "#cosmic-influence .collapsible-card-body > .metrics" in page
-    assert "#adaptive-background > .assessment-grid" not in page
-    assert "#cosmic-influence > .assessment-grid" not in page
-    assert ".custom-form .form-grid { grid-template-columns:minmax(0,1.35fr) minmax(8rem,.65fr); }" in page
+    css = Path("rootfs/usr/local/lib/gmc_bridge/static/dashboard.css").read_text(encoding="utf-8")
+    assert "#adaptive-background .collapsible-card-body > .assessment-grid" in css
+    assert "#adaptive-background .collapsible-card-body > .metrics" in css
+    assert "#cosmic-influence .collapsible-card-body > .assessment-grid" in css
+    assert "#cosmic-influence .collapsible-card-body > .metrics" in css
+    assert "#adaptive-background > .assessment-grid" not in css
+    assert "#cosmic-influence > .assessment-grid" not in css
+    assert ".custom-form .form-grid { grid-template-columns:minmax(0,1.35fr) minmax(8rem,.65fr); }" in css
+    assert ".unified-report-form .form-grid { grid-template-columns:repeat(2,minmax(0,1fr));" in css
     assert (
         ".custom-form .form-actions { grid-column:1 / -1; display:grid; grid-template-columns:minmax(10rem,16rem);"
-        in page
+        in css
     )
 
 
@@ -131,7 +135,8 @@ def test_status_stays_at_top_and_only_navigation_is_sticky(tmp_path: Path) -> No
     assert ".dashboard-controls { position:sticky; top:0; z-index:50;" in page
     assert ".dashboard-controls { position:-webkit-sticky; position:sticky;" in page
     assert "top:env(safe-area-inset-top,0px)" in page
-    assert "dashboardControls.getBoundingClientRect().height + 12" in page
+    script = Path("rootfs/usr/local/lib/gmc_bridge/static/dashboard.js").read_text(encoding="utf-8")
+    assert "dashboardControls.getBoundingClientRect().height + 12" in script
 
 
 def test_adaptive_background_values_start_on_a_new_line_after_time(tmp_path: Path) -> None:

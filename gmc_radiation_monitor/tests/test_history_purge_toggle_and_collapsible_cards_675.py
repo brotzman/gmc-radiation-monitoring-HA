@@ -117,6 +117,8 @@ def test_requested_main_cards_are_collapsible(tmp_path: Path) -> None:
         assert f"<h2>{title}</h2>" in card
 
 
-def test_device_live_refresh_preserves_details_open_state() -> None:
-    source = (Path(__file__).parents[1] / "rootfs/usr/local/lib/gmc_bridge/web_assets.py").read_text()
-    assert "nextSection.open = currentSection.open" in source
+def test_device_live_refresh_updates_fields_without_replacing_details() -> None:
+    source = (Path(__file__).parents[1] / "rootfs/usr/local/lib/gmc_bridge/static/dashboard.js").read_text()
+    assert "./api/live-devices" in source
+    assert "updateLiveCard" in source
+    assert "replaceWith" not in source

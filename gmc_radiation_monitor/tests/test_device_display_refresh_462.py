@@ -42,7 +42,7 @@ def _store_with_two_devices(path: Path) -> HistoryStore:
     return store
 
 
-def test_device_cards_refresh_without_reloading_analysis_or_losing_scroll():
+def test_device_cards_refresh_with_compact_json_and_retry_backoff():
     with tempfile.TemporaryDirectory() as tmp:
         store = _store_with_two_devices(Path(tmp) / "history.sqlite3")
         page = (
@@ -54,15 +54,15 @@ def test_device_cards_refresh_without_reloading_analysis_or_losing_scroll():
             )
             .decode("utf-8")
         )
+        script = Path("rootfs/usr/local/lib/gmc_bridge/static/dashboard.js").read_text(encoding="utf-8")
 
-        assert "const deviceRefreshIntervalMs = 20000;" in page
-        assert "new URL('./api/device-cards', currentUrl)" in page
-        assert "currentSection.replaceWith(nextSection)" in page
-        assert "window.location.replace(currentUrl.toString())" in page
-        assert "pageScroll.scrollTop = savedScrollTop" in page
-        assert "window.location.reload" not in page
-        assert "location.reload" not in page
-        assert "['mode', 'lang', 'device']" in page
+        assert 'src="./assets/dashboard.js?v=9.0.0"' in page
+        assert "resolveDashboardUrl('./api/live-devices')" in script
+        assert "updateLiveCard" in script
+        assert "liveRefreshDelayMs = Math.min(120000" in script
+        assert "replaceWith" not in script
+        assert "pageScroll.scrollTop = savedScrollTop" not in script
+        assert "window.location.reload" in script  # only when device identity/count changes
 
 
 def test_device_fragment_keeps_selected_analysis_device_and_contains_only_cards_section():

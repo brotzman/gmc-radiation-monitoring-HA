@@ -35,7 +35,7 @@ def test_legacy_history_switches_migrate_to_single_runtime_gate() -> None:
 
 def test_history_explorer_contains_explicit_axes_quick_ranges_and_responsive_chart() -> None:
     workflow = Path("rootfs/usr/local/lib/gmc_bridge/workflow_web.py").read_text()
-    css = Path("rootfs/usr/local/lib/gmc_bridge/web_assets.py").read_text()
+    css = Path("rootfs/usr/local/lib/gmc_bridge/static/dashboard.css").read_text()
     assert 't("Local date and time")' in workflow
     assert 't("Count rate [CPM]")' in workflow
     assert "24 h" in workflow
