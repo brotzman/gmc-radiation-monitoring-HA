@@ -593,6 +593,12 @@ The **Connected GMC devices** card now presents device identity, connection stat
 Under the add-on **Interface** options, `main_value_size` accepts `small`, `medium`, `large` or `custom`. When `custom` is selected, `custom_value_font_size_px` accepts 20–64 px. The same choices are available inside the dashboard under **Measurement display** and are stored locally in the current browser, allowing an immediate per-browser override of the add-on default.
 
 
+### Mobile navigation and report-form layout maintenance (8.4.12)
+
+Version 8.4.12 restores the floating dashboard navigation on mobile and tablet layouts. The navigation remains sticky inside the Ingress scrolling area, uses a safe-area-aware top offset and keeps its section links in a compact horizontally scrollable row instead of expanding into a tall multi-row panel.
+
+The report-creation forms now constrain date, ISO-week, month and date-time controls to the available card width. Additional minimum-size resets handle intrinsic browser sizing on mobile Safari and Chromium, while a 16 px mobile font size prevents unwanted form zoom. Database schema 8, reports, detector calibration, bridge-health behavior and radiation-measurement algorithms are unchanged.
+
 ### Report layout maintenance and release cleanup (8.4.11)
 
 Version 8.4.11 separates the PDF report-layout correction from the bridge-heartbeat and configurable health-limit work that remains documented as version 8.4.10. On the first page of analysis reports, the main chart, x-axis caption, measurement-quality summary and assessment panel now have enforced vertical spacing so they cannot overlap.

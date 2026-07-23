@@ -1,5 +1,15 @@
 # Changelog
 
+## 8.4.12
+
+- Restored the responsive floating dashboard navigation on phone and tablet layouts instead of disabling sticky positioning below 800 px.
+- Added the WebKit sticky-position fallback and safe-area-aware top offset for mobile Home Assistant ingress.
+- Kept navigation links in a compact horizontally scrollable row so the floating tile does not cover an excessive part of the mobile viewport.
+- Constrained date, week, month and date-time fields to their form-card width, including browser intrinsic sizing on mobile Safari and Chromium.
+- Added 16 px mobile temporal inputs to avoid unwanted browser zoom and preserve usable touch targets.
+- Added responsive regression coverage for sticky navigation and report-form field boundaries.
+- Kept database schema 8, reports, detector calibration, bridge health and all radiation-measurement algorithms unchanged.
+
 ## 8.4.11
 
 - Separated the report-layout maintenance work from the bridge-heartbeat and health-limit changes released in 8.4.10.
