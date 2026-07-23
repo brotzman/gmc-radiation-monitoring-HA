@@ -1,0 +1,452 @@
+
+(() => {
+  const analysisDevice = window.GMC_BOOTSTRAP.analysisDevice || "";
+  const uiStorageKey = 'gmc-dashboard-usability-v1';
+  const uiText = window.GMC_BOOTSTRAP.uiText || {};
+
+  function resolveDashboardUrl(value) {
+    try { return new URL(value, window.location.href); }
+    catch (_error) { return new URL(value, 'http://localhost/'); }
+  }
+
+  function readJson(key, fallback) {
+    try { return JSON.parse(localStorage.getItem(key) || '') || fallback; }
+    catch (_error) { return fallback; }
+  }
+  function writeJson(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (_error) {}
+  }
+  const preferences = readJson(uiStorageKey, { cards: {}, groups: {}, pinned: [], reportForms: {}, lastSection: '', analysisLevel: '' });
+  const allowedMainValueSizes = new Set(['small', 'medium', 'large', 'custom']);
+  const appMainValueSize = allowedMainValueSizes.has(document.body.dataset.mainValueSize)
+    ? document.body.dataset.mainValueSize
+    : 'large';
+  const configuredCustomValue = Number(document.body.dataset.customValueFontSizePx || 36);
+  const appCustomValueFontSizePx = Math.min(64, Math.max(20, Number.isFinite(configuredCustomValue) ? Math.round(configuredCustomValue) : 36));
+  function hasLocalMeasurementDisplayOverride() {
+    return Object.prototype.hasOwnProperty.call(preferences, 'mainValueSize')
+      || Object.prototype.hasOwnProperty.call(preferences, 'customValueFontSizePx');
+  }
+  function applyMeasurementDisplayPreferences() {
+    const requestedSize = preferences.mainValueSize || appMainValueSize;
+    const size = allowedMainValueSizes.has(requestedSize) ? requestedSize : appMainValueSize;
+    const requestedCustom = Number(preferences.customValueFontSizePx ?? appCustomValueFontSizePx);
+    const customPx = Math.min(64, Math.max(20, Number.isFinite(requestedCustom) ? Math.round(requestedCustom) : appCustomValueFontSizePx));
+    document.body.dataset.mainValueSize = size;
+    document.body.style.setProperty('--custom-main-value-font-size', `${customPx}px`);
+    document.querySelectorAll('input[name="main-value-size"]').forEach((input) => { input.checked = input.value === size; });
+    document.querySelectorAll('#custom-value-font-size').forEach((input) => { input.value = String(customPx); input.disabled = size !== 'custom'; });
+    const overrideStatus = document.getElementById('measurement-override-status');
+    if (overrideStatus) overrideStatus.hidden = !hasLocalMeasurementDisplayOverride();
+  }
+  applyMeasurementDisplayPreferences();
+
+  document.addEventListener('change', (event) => {
+    const sizeInput = event.target.closest('input[name="main-value-size"]');
+    if (sizeInput) {
+      preferences.mainValueSize = sizeInput.value;
+      writeJson(uiStorageKey, preferences);
+      applyMeasurementDisplayPreferences();
+      return;
+    }
+    const customInput = event.target.closest('#custom-value-font-size');
+    if (customInput) {
+      preferences.customValueFontSizePx = Math.min(64, Math.max(20, Number(customInput.value || appCustomValueFontSizePx)));
+      writeJson(uiStorageKey, preferences);
+      applyMeasurementDisplayPreferences();
+    }
+  });
+  document.addEventListener('input', (event) => {
+    const customInput = event.target.closest('#custom-value-font-size');
+    if (!customInput || document.body.dataset.mainValueSize !== 'custom') return;
+    const px = Math.min(64, Math.max(20, Number(customInput.value || appCustomValueFontSizePx)));
+    document.body.style.setProperty('--custom-main-value-font-size', `${px}px`);
+  });
+  document.addEventListener('click', (event) => {
+    const resetButton = event.target.closest('#reset-main-value-size');
+    if (!resetButton) return;
+    event.preventDefault();
+    delete preferences.mainValueSize;
+    delete preferences.customValueFontSizePx;
+    writeJson(uiStorageKey, preferences);
+    applyMeasurementDisplayPreferences();
+  });
+  const analysisLevelPanel = document.getElementById('analysis-level-panel');
+  const allowedAnalysisLevels = new Set(['summary', 'analysis', 'expert']);
+  function setAnalysisLevel(requestedLevel, persist = true) {
+    const fallback = analysisLevelPanel?.dataset.defaultLevel || 'analysis';
+    const level = allowedAnalysisLevels.has(requestedLevel) ? requestedLevel : fallback;
+    document.body.dataset.analysisLevel = level;
+    let selectedDescription = '';
+    document.querySelectorAll('.analysis-level-button').forEach((button) => {
+      const selected = button.dataset.analysisLevel === level;
+      button.setAttribute('aria-pressed', String(selected));
+      if (selected) selectedDescription = button.dataset.analysisDescription || '';
+    });
+    const description = document.getElementById('analysis-level-description');
+    if (description && selectedDescription) description.textContent = selectedDescription;
+    if (persist) { preferences.analysisLevel = level; writeJson(uiStorageKey, preferences); }
+  }
+  setAnalysisLevel(preferences.analysisLevel || analysisLevelPanel?.dataset.defaultLevel || 'analysis', false);
+
+  const toggleAllButton = document.getElementById('toggle-all-cards');
+  const allDetailsSelector = 'details.collapsible-card, details.analysis-group, details.download-group';
+  function updateToggleAllButton() {
+    if (!toggleAllButton) return;
+    const details = [...document.querySelectorAll(allDetailsSelector)];
+    const allOpen = details.length > 0 && details.every((item) => item.open);
+    toggleAllButton.textContent = allOpen ? uiText.collapseAll : uiText.expandAll;
+    toggleAllButton.setAttribute('aria-expanded', String(allOpen));
+  }
+  function setAllCards(open) {
+    const details = [...document.querySelectorAll(allDetailsSelector)];
+    preferences.cards = preferences.cards || {};
+    preferences.groups = preferences.groups || {};
+    details.forEach((item) => {
+      item.open = open;
+      if (!item.id) return;
+      if (item.classList.contains('collapsible-card')) preferences.cards[item.id] = open;
+      else preferences.groups[item.id] = open;
+    });
+    writeJson(uiStorageKey, preferences);
+    updateToggleAllButton();
+  }
+  const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true;
+  function jumpToSection(selector) {
+    if (!selector || selector.charAt(0) !== '#') return false;
+    const target = document.getElementById(selector.slice(1));
+    if (!target) return false;
+    if (target.classList.contains('advanced-only') && document.body.dataset.analysisLevel === 'summary') {
+      setAnalysisLevel('analysis');
+    }
+    let parent = target.parentElement;
+    while (parent) {
+      if (parent instanceof HTMLDetailsElement) parent.open = true;
+      parent = parent.parentElement;
+    }
+    const scroller = document.getElementById('page-scroll');
+    if (scroller) {
+      const dashboardControls = document.getElementById('dashboard-controls');
+      const stickyOffset = dashboardControls && getComputedStyle(dashboardControls).position === 'sticky'
+        ? dashboardControls.getBoundingClientRect().height + 12
+        : 12;
+      const targetTop = target.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - stickyOffset;
+      scroller.scrollTo({ top: Math.max(0, targetTop), behavior: reduceMotion ? 'auto' : 'smooth' });
+    } else {
+      target.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+    }
+    preferences.lastSection = selector;
+    writeJson(uiStorageKey, preferences);
+    try {
+      const nextUrl = new URL(window.location.href);
+      nextUrl.hash = selector;
+      history.replaceState(null, '', nextUrl.pathname + nextUrl.search + nextUrl.hash);
+    } catch (_error) {}
+    return true;
+  }
+  document.addEventListener('click', (event) => {
+    const levelButton = event.target.closest('.analysis-level-button');
+    if (levelButton) { event.preventDefault(); setAnalysisLevel(levelButton.dataset.analysisLevel || 'analysis'); return; }
+    const toggleAll = event.target.closest('#toggle-all-cards');
+    if (toggleAll) {
+      event.preventDefault();
+      const details = [...document.querySelectorAll(allDetailsSelector)];
+      setAllCards(!(details.length > 0 && details.every((item) => item.open)));
+      return;
+    }
+    const jump = event.target.closest('.jump-links a[href^="#"], .status-strip a[href^="#"]');
+    if (jump && jumpToSection(jump.getAttribute('href') || '')) event.preventDefault();
+  });
+
+  document.querySelectorAll('a[href*="action=download"]').forEach((link) => {
+    const url = resolveDashboardUrl(link.getAttribute('href') || '');
+    url.searchParams.set('device', analysisDevice);
+    url.searchParams.set('lang', "__LANGUAGE__");
+    link.setAttribute('href', url.pathname + url.search);
+  });
+  document.querySelectorAll('form').forEach((form) => {
+    const actionInput = form.querySelector('input[name="action"][value="download"]');
+    if (!actionInput || form.querySelector('input[name="device"]')) return;
+    const input = document.createElement('input');
+    input.type = 'hidden'; input.name = 'device'; input.value = analysisDevice; form.appendChild(input);
+    if (!form.querySelector('input[name="lang"]')) {
+      const langInput = document.createElement('input');
+      langInput.type = 'hidden'; langInput.name = 'lang'; langInput.value = "__LANGUAGE__"; form.appendChild(langInput);
+    }
+  });
+
+  const currentUrl = new URL(window.location.href);
+  const savedDevice = preferences.device || '';
+  const cssEscape = window.CSS && typeof window.CSS.escape === 'function'
+    ? window.CSS.escape
+    : (value) => String(value).replace(/[^a-zA-Z0-9_-]/g, (char) => `\\${char}`);
+  if (!currentUrl.searchParams.has('device') && savedDevice && savedDevice !== analysisDevice && document.querySelector(`[data-device-serial="${cssEscape(savedDevice)}"]`)) {
+    currentUrl.searchParams.set('device', savedDevice);
+    window.location.replace(currentUrl.toString());
+    return;
+  }
+  if (analysisDevice) { preferences.device = analysisDevice; writeJson(uiStorageKey, preferences); }
+  document.addEventListener('click', (event) => {
+    const deviceLink = event.target.closest('a.device-select');
+    if (deviceLink) {
+      const card = deviceLink.closest('[data-device-serial]');
+      if (card) { preferences.device = card.dataset.deviceSerial || ''; writeJson(uiStorageKey, preferences); }
+    }
+  });
+
+  const primaryDashboard = document.getElementById('primary-dashboard');
+  function applyCardPreferences() {
+    const cards = [...document.querySelectorAll('details.collapsible-card')];
+    cards.forEach((card, index) => {
+      if (!card.dataset.defaultOrder) card.dataset.defaultOrder = String(index);
+      if (Object.prototype.hasOwnProperty.call(preferences.cards || {}, card.id)) card.open = Boolean(preferences.cards[card.id]);
+      const pinned = (preferences.pinned || []).includes(card.id);
+      card.classList.toggle('pinned-card', pinned);
+      const pin = card.querySelector('.card-pin');
+      if (pin) { pin.setAttribute('aria-pressed', String(pinned)); pin.textContent = pinned ? '★' : '☆'; }
+      if (card.parentElement === primaryDashboard) {
+        const pinIndex = (preferences.pinned || []).indexOf(card.id);
+        card.style.order = pinned ? String(-100 + pinIndex) : card.dataset.defaultOrder;
+      }
+    });
+  }
+  function applyGroupPreferences() {
+    document.querySelectorAll('details.analysis-group, details.download-group').forEach((group) => {
+      if (group.id && Object.prototype.hasOwnProperty.call(preferences.groups || {}, group.id)) {
+        group.open = Boolean(preferences.groups[group.id]);
+      }
+    });
+  }
+  applyCardPreferences();
+  applyGroupPreferences();
+  updateToggleAllButton();
+
+  document.addEventListener('toggle', (event) => {
+    const item = event.target;
+    if (!(item instanceof HTMLDetailsElement)) return;
+    if (item.classList.contains('collapsible-card')) {
+      preferences.cards = preferences.cards || {};
+      preferences.cards[item.id] = item.open;
+    } else if (item.classList.contains('analysis-group') || item.classList.contains('download-group')) {
+      preferences.groups = preferences.groups || {};
+      if (item.id) preferences.groups[item.id] = item.open;
+    } else {
+      return;
+    }
+    writeJson(uiStorageKey, preferences);
+    updateToggleAllButton();
+  }, true);
+
+  let helpPopover = null;
+  let helpTrigger = null;
+  function closeHelp({ restoreFocus = false } = {}) {
+    if (helpTrigger) { helpTrigger.removeAttribute('aria-describedby'); helpTrigger.setAttribute('aria-expanded', 'false'); }
+    if (helpPopover) helpPopover.remove();
+    helpPopover = null;
+    if (restoreFocus && helpTrigger) helpTrigger.focus();
+    helpTrigger = null;
+  }
+  document.addEventListener('click', (event) => {
+    const pin = event.target.closest('.card-pin');
+    if (pin) {
+      event.preventDefault(); event.stopPropagation();
+      const card = pin.closest('details.collapsible-card');
+      if (!card) return;
+      preferences.pinned = preferences.pinned || [];
+      const index = preferences.pinned.indexOf(card.id);
+      if (index >= 0) preferences.pinned.splice(index, 1); else preferences.pinned.push(card.id);
+      writeJson(uiStorageKey, preferences); applyCardPreferences(); return;
+    }
+    const help = event.target.closest('.card-help');
+    if (help) {
+      event.preventDefault(); event.stopPropagation(); closeHelp();
+      const text = help.dataset.help || '';
+      if (!text) return;
+      const popover = document.createElement('div'); popover.className = 'card-help-popover'; popover.textContent = text; popover.setAttribute('role','tooltip'); popover.id = `help-${Date.now()}`; help.setAttribute('aria-describedby', popover.id); help.setAttribute('aria-expanded','true'); helpTrigger = help;
+      document.body.appendChild(popover); helpPopover = popover;
+      const rect = help.getBoundingClientRect();
+      const left = Math.min(window.innerWidth - popover.offsetWidth - 12, Math.max(12, rect.right - popover.offsetWidth));
+      const top = Math.min(window.innerHeight - popover.offsetHeight - 12, rect.bottom + 8);
+      popover.style.left = `${left}px`; popover.style.top = `${top}px`; return;
+    }
+    if (helpPopover && !event.target.closest('.card-help-popover')) closeHelp();
+  });
+  window.addEventListener('resize', () => closeHelp());
+  document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && helpPopover) { event.preventDefault(); closeHelp({restoreFocus:true}); } });
+  document.getElementById('page-scroll')?.addEventListener('scroll', () => closeHelp(), {passive:true});
+  const jumpLinks = [...document.querySelectorAll('.jump-links a')];
+  if (!window.location.hash && preferences.lastSection) {
+    requestAnimationFrame(() => jumpToSection(preferences.lastSection));
+  }
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+      if (!visible) return;
+      jumpLinks.forEach((link) => link.classList.toggle('active', link.getAttribute('href') === `#${visible.target.id}`));
+    }, { root: document.getElementById('page-scroll'), rootMargin: '-20% 0px -65% 0px', threshold: [0.05, 0.25] });
+    ['devices','radiation-intelligence','analysis','history','workflow','reports','maintenance'].forEach((id) => { const node = document.getElementById(id); if (node) observer.observe(node); });
+  }
+
+  document.querySelectorAll('form.report-preset-source').forEach((form) => {
+    const kind = form.dataset.presetKind || 'custom';
+    const saved = (preferences.reportForms || {})[kind] || {};
+    for (const [name, value] of Object.entries(saved)) { const field = form.elements.namedItem(name); if (field && typeof value === 'string') field.value = value; }
+    form.addEventListener('change', () => {
+      preferences.reportForms = preferences.reportForms || {};
+      preferences.reportForms[kind] = Object.fromEntries([...new FormData(form).entries()].filter(([key]) => !['device','lang','action'].includes(key)).map(([key,value]) => [key,String(value)]));
+      writeJson(uiStorageKey, preferences);
+    });
+  });
+
+
+  const customReportForm = document.getElementById('custom-report-form');
+  const customReportPeriod = document.getElementById('custom-report-period');
+  const reportDateField = customReportForm?.querySelector('[data-report-date-field]');
+  const reportWeekField = customReportForm?.querySelector('[data-report-week-field]');
+  const reportPreviewPeriod = document.getElementById('report-preview-period');
+  const reportPreviewCoverage = document.getElementById('report-preview-coverage');
+  const reportPreviewSamples = document.getElementById('report-preview-samples');
+  const reportPreviewGap = document.getElementById('report-preview-gap');
+  const reportPreviewWarning = document.getElementById('report-preview-warning');
+  let reportPreviewTimer = null;
+  function formatDuration(seconds) {
+    const value = Math.max(0, Number(seconds || 0));
+    if (value < 3600) return `${Math.round(value / 60)} min`;
+    if (value < 86400) return `${(value / 3600).toFixed(1)} h`;
+    return `${(value / 86400).toFixed(1)} d`;
+  }
+  function updateReportPeriodFields() {
+    if (!customReportForm || !customReportPeriod) return;
+    const weekly = customReportPeriod.value === 'weekly';
+    if (reportDateField) reportDateField.hidden = weekly;
+    if (reportWeekField) reportWeekField.hidden = !weekly;
+    const dateInput = customReportForm.elements.namedItem('date');
+    const weekInput = customReportForm.elements.namedItem('week');
+    if (dateInput) dateInput.required = !weekly;
+    if (weekInput) weekInput.required = weekly;
+  }
+  async function refreshReportPreview() {
+    if (!customReportForm) return;
+    updateReportPeriodFields();
+    const params = new URLSearchParams(new FormData(customReportForm));
+    params.delete('action'); params.delete('selection'); params.delete('format');
+    const currentUrl = new URL(window.location.href);
+    const device = currentUrl.searchParams.get('device');
+    const lang = currentUrl.searchParams.get('lang');
+    if (device) params.set('device', device);
+    if (lang) params.set('lang', lang);
+    try {
+      const response = await fetch(`./api/report-preview?${params.toString()}`, {cache:'no-store', credentials:'same-origin', headers:{'Accept':'application/json'}});
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || `preview failed: ${response.status}`);
+      if (reportPreviewPeriod) reportPreviewPeriod.textContent = data.period_label || '—';
+      if (reportPreviewCoverage) reportPreviewCoverage.textContent = `${Number(data.time_coverage_percent || 0).toFixed(1)} %`;
+      if (reportPreviewSamples) reportPreviewSamples.textContent = Number(data.samples || 0).toLocaleString();
+      if (reportPreviewGap) reportPreviewGap.textContent = formatDuration(data.gap_seconds);
+      if (reportPreviewWarning) { reportPreviewWarning.textContent = data.warning || ''; reportPreviewWarning.hidden = !data.warning; }
+    } catch (error) {
+      if (reportPreviewWarning) { reportPreviewWarning.textContent = String(error.message || error); reportPreviewWarning.hidden = false; }
+    }
+  }
+  function scheduleReportPreview() { window.clearTimeout(reportPreviewTimer); reportPreviewTimer = window.setTimeout(refreshReportPreview, 180); }
+  if (customReportForm) {
+    updateReportPeriodFields();
+    customReportForm.addEventListener('input', scheduleReportPreview);
+    customReportForm.addEventListener('change', scheduleReportPreview);
+    customReportForm.addEventListener('submit', (event) => {
+      updateReportPeriodFields();
+      if (!customReportForm.reportValidity()) event.preventDefault();
+    });
+    scheduleReportPreview();
+  }
+
+
+  const restoreForm = document.getElementById('restore-form');
+  document.getElementById('preview-restore')?.addEventListener('click', async () => {
+    if (!restoreForm) return;
+    const file = restoreForm.querySelector('input[name="backup"]')?.files?.[0];
+    const output = document.getElementById('restore-preview');
+    if (!file) { if (output) output.textContent = uiText.noFile; return; }
+    if (output) output.textContent = uiText.previewing;
+    const body = new FormData(); body.append('backup', file); body.append('preview_csrf_token', restoreForm.querySelector('input[name="preview_csrf_token"]')?.value || '');
+    try {
+      const response = await fetch('?action=restore-preview', { method:'POST', body, credentials:'same-origin', headers:{'Accept':'application/json'} });
+      const data = await response.json(); const previewToken = restoreForm.querySelector('input[name="preview_csrf_token"]'); if (previewToken && data.next_csrf_token) previewToken.value = data.next_csrf_token; if (!response.ok) throw new Error(data.error || uiText.previewFailed);
+      const formatTime = (value) => value ? new Date(value * 1000).toLocaleString() : uiText.noData;
+      const formatSize = (value) => `${(Number(value || 0) / 1024 / 1024).toFixed(2)} MiB`;
+      if (output) {
+        output.replaceChildren();
+        const headline = document.createElement('strong'); headline.textContent = uiText.backupReady; output.appendChild(headline);
+        const grid = document.createElement('div'); grid.className = 'restore-preview-grid';
+        const values = [
+          [uiText.integrity, data.integrity], [uiText.schema, `${data.schema_version} / ${data.supported_schema_version}`],
+          [uiText.measurements, Number(data.measurements || 0).toLocaleString()], [uiText.rawMeasurements, Number(data.raw_measurements || 0).toLocaleString()],
+          [uiText.annotations, Number(data.annotations || 0).toLocaleString()], [uiText.devices, (data.device_serials || []).length.toLocaleString()], [uiText.fileSize, formatSize(data.size_bytes)],
+          [uiText.dataPeriod, `${formatTime(data.first_timestamp_utc)} – ${formatTime(data.last_timestamp_utc)}`],
+        ];
+        values.forEach(([label,value]) => { const cell=document.createElement('div'); const title=document.createElement('strong'); title.textContent=label; const content=document.createElement('span'); content.textContent=String(value); cell.append(title,content); grid.appendChild(cell); });
+        output.appendChild(grid);
+      }
+    } catch (error) { if (output) output.textContent = `${uiText.previewFailed}: ${error.message}`; }
+  });
+
+  const pageScroll = document.getElementById('page-scroll');
+  const liveStatus = document.getElementById('live-refresh-status');
+  let liveRefreshRunning = false;
+  let liveRefreshDelayMs = 10000;
+  let liveRefreshTimer = null;
+  function scheduleLiveRefresh(delay = liveRefreshDelayMs) {
+    window.clearTimeout(liveRefreshTimer);
+    liveRefreshTimer = window.setTimeout(refreshLiveDevices, delay);
+  }
+  function setLiveStatus(text, state = '') {
+    if (!liveStatus) return;
+    liveStatus.textContent = text || '';
+    liveStatus.dataset.state = state;
+    liveStatus.hidden = !text;
+  }
+  function updateLiveCard(device) {
+    const card = [...document.querySelectorAll('#devices .device-card')].find((item) => item.dataset.deviceSerial === String(device.serial || ''));
+    if (!card) return false;
+    const update = (name, value) => { const node = card.querySelector(`[data-live="${name}"]`); if (node && value !== undefined && value !== null) node.textContent = String(value); };
+    const status = card.querySelector('[data-live="status"]');
+    if (status) { status.textContent = device.status_label; status.className = `device-status ${device.status_class}`; }
+    update('freshness', device.freshness_display);
+    update('dose-number', device.dose_number);
+    update('dose-unit', device.dose_unit);
+    update('quality-stars', device.quality_stars);
+    update('cpm', device.latest_value);
+    update('health', device.health_summary);
+    card.dataset.liveUpdatedUtc = String(device.timestamp_utc || 0);
+    return true;
+  }
+  async function refreshLiveDevices() {
+    if (liveRefreshRunning || document.hidden) { scheduleLiveRefresh(); return; }
+    liveRefreshRunning = true;
+    try {
+      const currentUrl = new URL(window.location.href);
+      const refreshUrl = resolveDashboardUrl('./api/live-devices');
+      for (const key of ['lang', 'device']) { const value = currentUrl.searchParams.get(key); if (value !== null) refreshUrl.searchParams.set(key, value); }
+      const response = await fetch(refreshUrl, { cache:'no-store', credentials:'same-origin', headers:{'Accept':'application/json'} });
+      if (!response.ok) throw new Error(`live refresh failed: ${response.status}`);
+      const data = await response.json();
+      const cards = [...document.querySelectorAll('#devices .device-card')];
+      if (Number(data.connected_count) !== cards.length || String(data.selected_serial || '') !== String(document.getElementById('devices')?.dataset.selectedSerial || '')) {
+        window.location.reload(); return;
+      }
+      (data.devices || []).forEach(updateLiveCard);
+      liveRefreshDelayMs = 10000;
+      setLiveStatus('', 'ok');
+    } catch (error) {
+      liveRefreshDelayMs = Math.min(120000, Math.max(15000, liveRefreshDelayMs * 2));
+      setLiveStatus(window.GMC_BOOTSTRAP.liveRefreshInterrupted || 'Live update interrupted', 'warning');
+      console.debug('GMC live device refresh paused', error);
+    } finally {
+      liveRefreshRunning = false;
+      scheduleLiveRefresh();
+    }
+  }
+  scheduleLiveRefresh(10000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) scheduleLiveRefresh(100); });
+  window.addEventListener('online', () => scheduleLiveRefresh(100));
+})();

@@ -53,6 +53,19 @@ def persist_calibration_profile(
     dead_time_text = (data.get("dead_time_us") or [""])[0].strip()
     reliable_text = (data.get("reliable_max_cpm") or [""])[0].strip()
     dead_time_model = (data.get("dead_time_model") or ["none"])[0].strip()
+    dossier_text_fields = (
+        "device_model", "device_serial_number", "firmware_version",
+        "calibration_type", "reference_device", "laboratory",
+        "accreditation", "certificate_number", "calibration_date",
+        "valid_until", "measurement_geometry", "environment_conditions",
+        "operator_name", "certificate_sha256",
+    )
+    dossier = {
+        key: (data.get(key) or [""])[0].strip()[:500]
+        for key in dossier_text_fields
+    }
+    calibration_uncertainty_text = (data.get("calibration_uncertainty_percent") or [""])[0].strip()
+    conversion_uncertainty_text = (data.get("conversion_factor_uncertainty_percent") or [""])[0].strip()
     if not profile_id or not display_name or not detector_type or cpm_per_usvh <= 0:
         raise ValueError(
             translate("Profile ID, profile name, tube model and conversion factor are required")
@@ -68,7 +81,21 @@ def persist_calibration_profile(
         "calibration_reference": comment,
         "calibration_status": "customized",
         "calibration_source": source,
+        "calibration_uncertainty_percent": (
+            float(calibration_uncertainty_text) if calibration_uncertainty_text else None
+        ),
+        "conversion_factor_uncertainty_percent": (
+            float(conversion_uncertainty_text) if conversion_uncertainty_text else None
+        ),
+        "calibration_dossier": dossier,
     }
+    for field_name in ("calibration_uncertainty_percent", "conversion_factor_uncertainty_percent"):
+        field_value = values[field_name]
+        if field_value is not None and not 0 <= float(field_value) <= 1000:
+            raise ValueError(translate("Calibration uncertainty must be between 0 and 1000 percent"))
+    checksum = dossier.get("certificate_sha256", "")
+    if checksum and (len(checksum) != 64 or any(character not in "0123456789abcdefABCDEF" for character in checksum)):
+        raise ValueError(translate("Certificate SHA-256 must contain exactly 64 hexadecimal characters"))
     store.save_custom_calibration_profile(
         profile_id=profile_id,
         display_name=display_name,
@@ -104,5 +131,8 @@ def persist_calibration_profile(
             "calibration_status": "customized",
             "calibration_source": source,
             "calibration_reference": comment,
+            "calibration_uncertainty_percent": values["calibration_uncertainty_percent"],
+            "conversion_factor_uncertainty_percent": values["conversion_factor_uncertainty_percent"],
+            "calibration_dossier": dossier,
         },
     )

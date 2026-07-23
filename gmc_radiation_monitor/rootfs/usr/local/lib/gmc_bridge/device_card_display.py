@@ -62,7 +62,7 @@ def render_device_card_header(
         f'<div class="device-card-title-copy"><h3>{html.escape(display_title)}</h3>{subtitle}'
         f'<small class="device-id">ID: {html.escape(serial_value)}</small></div></div>'
         f'<div class="device-status-stack"><span class="device-status {status_class}">{html.escape(status_label)}</span>'
-        f'<small class="device-freshness" title="{html.escape(last_update, quote=True)}">{html.escape(freshness_display)}</small></div></div>'
+        f'<small class="device-freshness" data-live="freshness" title="{html.escape(last_update, quote=True)}">{html.escape(freshness_display)}</small></div></div>'
     )
 
 
@@ -77,10 +77,10 @@ def render_live_measurement(
 ) -> str:
     return (
         f'<div class="device-live measurement-hero"><strong>{html.escape(t("Latest measurement"))}</strong>'
-        f'<span class="dose-reading"><span class="dose-number">{html.escape(dose_number)}</span>'
-        f'<span class="dose-unit">{html.escape(dose_unit)}</span></span>'
-        f'<small class="quality-stars" title="{html.escape(t("Measurement quality explanation"), quote=True)}">{html.escape(quality_stars)}</small>'
-        f'<div class="measurement-context"><span class="measurement-chip cpm-chip">{html.escape(latest_value)}</span>'
+        f'<span class="dose-reading"><span class="dose-number" data-live="dose-number">{html.escape(dose_number)}</span>'
+        f'<span class="dose-unit" data-live="dose-unit">{html.escape(dose_unit)}</span></span>'
+        f'<small class="quality-stars" data-live="quality-stars" title="{html.escape(t("Measurement quality explanation"), quote=True)}">{html.escape(quality_stars)}</small>'
+        f'<div class="measurement-context"><span class="measurement-chip cpm-chip" data-live="cpm">{html.escape(latest_value)}</span>'
         f'<span class="measurement-chip detector-chip">{html.escape(detector_name)}</span></div></div>'
     )
 

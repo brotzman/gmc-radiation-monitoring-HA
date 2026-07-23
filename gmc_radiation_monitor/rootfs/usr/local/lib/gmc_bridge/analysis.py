@@ -6,6 +6,7 @@ import statistics
 from typing import Any
 
 from .history import HistoryRow
+from .time_series import time_weighted_summary
 
 
 def longest_gap_seconds(rows: list[HistoryRow]) -> int:
@@ -45,7 +46,27 @@ def data_quality_summary(
     ingest_diagnostics: dict[str, int] | None = None,
     capabilities: dict[str, bool] | None = None,
 ) -> dict[str, Any]:
-    completeness = min(100.0, 100.0 * len(rows) / expected_count) if expected_count else 0.0
+    count_completeness = min(100.0, 100.0 * len(rows) / expected_count) if expected_count else 0.0
+    window_seconds = max(scan_interval_seconds, expected_count * scan_interval_seconds)
+    if rows:
+        end_utc = max(row.timestamp_utc for row in rows) + max(1, scan_interval_seconds // 2)
+        start_utc = end_utc - window_seconds
+        temporal = time_weighted_summary(
+            rows,
+            timestamp=lambda row: row.timestamp_utc,
+            value=lambda row: row.cpm,
+            start_utc=start_utc,
+            end_utc=end_utc,
+            expected_interval_seconds=scan_interval_seconds,
+        )
+        completeness = temporal.coverage_percent
+    else:
+        temporal = time_weighted_summary(
+            [], timestamp=lambda row: 0, value=lambda row: 0,
+            start_utc=0, end_utc=window_seconds,
+            expected_interval_seconds=scan_interval_seconds,
+        )
+        completeness = 0.0
     longest_gap = longest_gap_seconds(rows)
     interval = interval_diagnostics(rows, scan_interval_seconds)
     ingest = ingest_diagnostics or {}
@@ -102,6 +123,10 @@ def data_quality_summary(
         "score": score,
         "reasons": reasons,
         "completeness_percent": completeness,
+        "time_coverage_percent": completeness,
+        "sample_count_coverage_percent": count_completeness,
+        "covered_seconds": temporal.covered_seconds,
+        "gap_seconds": temporal.gap_seconds,
         "longest_gap_seconds": longest_gap,
         "temperature_coverage_percent": temperature_coverage,
         "voltage_coverage_percent": voltage_coverage,

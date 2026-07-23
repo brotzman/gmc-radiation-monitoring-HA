@@ -2,7 +2,6 @@ from __future__ import annotations
 import html
 import json
 import logging
-import re
 import sqlite3
 import time
 from datetime import UTC, datetime
@@ -21,6 +20,8 @@ from .calibration_http import (
 )
 from .config_validation import validate_candidate_options
 from .maintenance import diagnostics_json_bytes, full_history_zip_to_path
+from .report_http_responses import HttpResponseMixin
+from .report_http_utils import localized_exception_message as _localized_exception_message
 from .report_web_support import (
     MAX_DOWNLOAD_BYTES,
     MAX_RESTORE_BYTES,
@@ -35,6 +36,7 @@ from .reports import build_report_to_path, resolve_period
 from .translations import Translator, resolve_language
 from .utils import slugify
 from .version import REPORT_SERVER_VERSION
+from .web_assets import read_dashboard_asset
 from .web_security import validate_same_origin
 from .workflow import (
     WorkflowSettings,
@@ -48,7 +50,7 @@ if TYPE_CHECKING:
 
 LOG = logging.getLogger("gmc_reports")
 
-class ReportRequestHandler(BaseHTTPRequestHandler):
+class ReportRequestHandler(HttpResponseMixin, BaseHTTPRequestHandler):
     server_version = REPORT_SERVER_VERSION
     protocol_version = "HTTP/1.1"
 
@@ -126,6 +128,43 @@ class ReportRequestHandler(BaseHTTPRequestHandler):
         query = parse_qs(parsed.query, keep_blank_values=False)
         t = self._request_translator(query)
         try:
+            if path in {"/assets/dashboard.css", "/assets/dashboard.js"}:
+                asset_name = path.rsplit("/", 1)[-1]
+                content_type = (
+                    "text/css; charset=utf-8" if asset_name.endswith(".css")
+                    else "application/javascript; charset=utf-8"
+                )
+                self._send_bytes(
+                    HTTPStatus.OK, content_type, read_dashboard_asset(asset_name),
+                    cache_control="public, max-age=3600, immutable",
+                )
+                return
+            if path == "/api/live-devices":
+                payload = self.app.live_devices_payload(
+                    language_override=_optional_one(query, "lang"),
+                    accept_language=self.headers.get("Accept-Language", ""),
+                    device_override=_optional_one(query, "device"),
+                )
+                self._send_bytes(
+                    HTTPStatus.OK, "application/json; charset=utf-8",
+                    json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8"),
+                )
+                return
+            if path == "/api/report-preview":
+                language = t.language
+                payload = self.app.report_preview_payload(
+                    period_kind=_one(query, "period", "daily"),
+                    date_value=_optional_one(query, "date"),
+                    week_value=_optional_one(query, "week"),
+                    device_serial=_optional_one(query, "device"),
+                    language=language,
+                )
+                self._send_bytes(
+                    HTTPStatus.OK, "application/json; charset=utf-8",
+                    json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8"),
+                    cache_control="no-store",
+                )
+                return
             if path == "/health":
                 health = self.app.api_health()
                 response_status = HTTPStatus.OK if bool(health.get("healthy")) else HTTPStatus.SERVICE_UNAVAILABLE
@@ -921,79 +960,3 @@ class ReportRequestHandler(BaseHTTPRequestHandler):
         with path.open("rb") as handle:
             while chunk := handle.read(STREAM_CHUNK_BYTES):
                 self.wfile.write(chunk)
-
-    def _send_bytes(
-        self,
-        status: HTTPStatus,
-        content_type: str,
-        payload: bytes,
-        *,
-        close_connection: bool = False,
-    ) -> None:
-        self.send_response(status)
-        self.send_header("Content-Type", content_type)
-        self.send_header("Content-Length", str(len(payload)))
-        self.send_header("Cache-Control", "no-store")
-        self.send_header("X-Content-Type-Options", "nosniff")
-        self.send_header("Referrer-Policy", "same-origin")
-        self.send_header("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
-        script_nonce_match = (
-            re.search(rb'<script nonce="([A-Za-z0-9_-]+)"', payload)
-            if content_type.startswith("text/html")
-            else None
-        )
-        script_policy = (
-            f"; script-src 'nonce-{script_nonce_match.group(1).decode('ascii')}'"
-            if script_nonce_match
-            else ""
-        )
-        self.send_header(
-            "Content-Security-Policy",
-            "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; connect-src 'self'"
-            + script_policy,
-        )
-        if close_connection:
-            self.send_header("Connection", "close")
-            self.close_connection = True
-        self.end_headers()
-        self.wfile.write(payload)
-
-    def _send_error(
-        self,
-        status: HTTPStatus,
-        message: str,
-        *,
-        close_connection: bool | None = None,
-    ) -> None:
-        payload = f"{status.value}\n{message}\n".encode()
-        # On an unsuccessful POST the request body may not have been consumed.
-        # Closing the HTTP/1.1 connection prevents those bytes from being parsed
-        # as a second request line (for example "csrf_token=..." as a method).
-        should_close = self.command == "POST" if close_connection is None else close_connection
-        self._send_bytes(
-            status,
-            "text/plain; charset=utf-8",
-            payload,
-            close_connection=should_close,
-        )
-
-
-def _localized_exception_message(t: Translator, exc: BaseException) -> str:
-    """Return a localized, user-safe message while preserving full details in logs."""
-    message = str(exc).strip()
-    translated = t(message)
-    if translated != message:
-        return translated
-    prefix_templates = (
-        ("Unknown IANA timezone: ", "Unknown IANA timezone: {value}"),
-        ("Unsupported daily selection: ", "Unsupported daily selection: {value}"),
-        ("Unsupported weekly selection: ", "Unsupported weekly selection: {value}"),
-        ("Unsupported report period: ", "Unsupported report period: {value}"),
-        ("Unsupported report format: ", "Unsupported report format: {value}"),
-    )
-    for prefix, template in prefix_templates:
-        if message.startswith(prefix):
-            return t(template, value=message[len(prefix) :])
-    if message.startswith("Exactly one ") or message.startswith("At most one "):
-        return t("Invalid request parameters")
-    return t("The request could not be processed. Check the selected options.")

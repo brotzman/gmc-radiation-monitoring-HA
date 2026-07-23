@@ -13,6 +13,7 @@ from datetime import datetime
 from typing import Any
 from zoneinfo import ZoneInfo
 
+from .baseline_cache import RollingBaselineCache
 from .config import (
     DeviceConfig,
     Settings,
@@ -50,6 +51,7 @@ from .metrology import (
 from .monitoring import SmartMonitor
 from .mqtt_pub import MqttPublisher
 from .orientation import calculate_orientation, calibration_for_serial
+from .runtime_diagnostics import RuntimeDiagnosticTracker
 from .security_logging import configure_secure_logging
 from .serial_autoconfig import effective_serial_startup_delays
 from .serial_device import (
@@ -664,7 +666,32 @@ def _run_device(
     device_health = DeviceHealthMonitor()
     latest_device_health = {"device_health_status": "ok", "device_health_reason": "initializing"}
     heartbeat_window: deque[int] = deque(maxlen=60)
-    gmcmap_acpm = AcpmAccumulator()
+    gmcmap_acpm = AcpmAccumulator(
+        window_seconds=3600, expected_interval_seconds=device_config.scan_interval
+    )
+    baseline_cache = RollingBaselineCache(
+        window_seconds=settings.baseline_learning_days * 86400
+    )
+    runtime_diagnostics = RuntimeDiagnosticTracker()
+    if history_store is not None:
+        try:
+            baseline_seed_now = int(time.time())
+            baseline_cache.seed(
+                history_store.query_range(
+                    baseline_seed_now - settings.baseline_learning_days * 86400,
+                    baseline_seed_now + 1,
+                    device_serial=publisher.serial,
+                ),
+                now_utc=baseline_seed_now,
+            )
+        except (OSError, sqlite3.Error, RuntimeError, ValueError) as exc:
+            issue, should_log = runtime_diagnostics.record("baseline_seed", exc)
+            if should_log:
+                LOG.warning("[%s] Could not seed rolling baseline cache: %s", port, exc)
+            if history_store is not None:
+                history_store.set_metadata({
+                    f"runtime_diagnostic_{publisher.serial}_baseline_seed": issue
+                })
     cached_optional_state: dict[str, Any] = {}
     last_orientation_position: str | None = None
     cached_optional_available = {
@@ -1031,7 +1058,7 @@ def _run_device(
                         LOG.error("[%s] Could not store measurement: %s", port, exc)
 
                 if accepted and gmcmap_uploader is not None:
-                    average_cpm = gmcmap_acpm.add(cpm)
+                    average_cpm = gmcmap_acpm.add(cpm, timestamp_utc=measurement_timestamp)
                     gmcmap_uploader.offer(
                         GmcMapReading(
                             cpm=cpm,
@@ -1058,19 +1085,13 @@ def _run_device(
                             LOG.warning("[%s] Could not store device-health event: %s", port, exc)
 
                 if accepted and settings.smart_alerts_enabled:
-                    baseline = None
-                    if history_store is not None:
-                        try:
-                            recent = history_store.query_range(
-                                int(time.time()) - settings.baseline_learning_days * 86400,
-                                int(time.time()) + 1,
-                                device_serial=publisher.serial,
-                            )
-                            if recent:
-                                baseline = sum(float(row.cpm) for row in recent) / len(recent)
-                        except (OSError, sqlite3.Error, RuntimeError, ValueError):
-                            pass
+                    baseline_snapshot = baseline_cache.snapshot(now_utc=measurement_timestamp)
+                    baseline = baseline_snapshot.value_cpm
                     derived, events = monitor.update(cpm, baseline_cpm=baseline)
+                    baseline_cache.add(measurement_timestamp, cpm)
+                    recovered = runtime_diagnostics.recover("baseline_seed")
+                    if recovered is not None:
+                        LOG.info("[%s] Rolling baseline cache is available again", port)
                     if settings.publish_advanced_sensors:
                         state.update({k: v for k, v in derived.items() if v is not None})
                     if history_store is not None:
@@ -1093,6 +1114,8 @@ def _run_device(
                 )
                 diagnostics.update(clock_diagnostics)
                 diagnostics.update(latest_device_health)
+                diagnostics["recoverable_runtime_issues"] = runtime_diagnostics.snapshot()
+                diagnostics["gmcmap_acpm_window_minutes"] = gmcmap_acpm.window_minutes
                 diagnostics.update(
                     gmcmap_uploader.snapshot() if gmcmap_uploader is not None else gmcmap_static_status
                 )

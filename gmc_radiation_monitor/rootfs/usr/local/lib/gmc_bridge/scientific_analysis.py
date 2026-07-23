@@ -8,6 +8,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from .history import HistoryRow
+from .time_series import independent_count_windows
 
 
 def _poisson_limit(count: int, *, z: float, upper: bool) -> float:
@@ -21,18 +22,31 @@ def _poisson_limit(count: int, *, z: float, upper: bool) -> float:
     return n * max(0.0, 1.0 - 1.0 / (9.0 * n) - z / (3.0 * math.sqrt(n))) ** 3
 
 
-def counting_uncertainty(rows: Iterable[HistoryRow], *, confidence_z: float = 1.0) -> dict[str, Any]:
-    """Estimate Poisson counting uncertainty from stored one-minute CPM counts.
+def counting_uncertainty(
+    rows: Iterable[HistoryRow],
+    *,
+    confidence_z: float = 1.0,
+    minimum_independent_window_seconds: int = 60,
+) -> dict[str, Any]:
+    """Estimate Poisson uncertainty from independent one-minute CPM windows.
 
-    GMC CPM values represent counts in an approximately one-minute counting window.
-    Each accepted row therefore contributes its observed CPM as an impulse count and
-    60 seconds of effective counting time. Gaps are not treated as exposure time.
+    Polls faster than one minute usually observe overlapping rolling CPM windows.
+    They are retained for live display and time-series analysis, but only
+    conservatively separated windows contribute to Poisson counting time.
     """
     clean = [row for row in rows if int(row.cpm) >= 0]
-    if not clean:
+    independent = independent_count_windows(
+        clean,
+        timestamp=lambda row: int(row.timestamp_utc),
+        minimum_separation_seconds=minimum_independent_window_seconds,
+    )
+    if not independent:
         return {
             "available": False,
             "sample_count": 0,
+            "raw_sample_count": len(clean),
+            "independent_sample_count": 0,
+            "overlap_excluded_count": len(clean),
             "impulses": 0,
             "duration_seconds": 0,
             "rate_cpm": None,
@@ -41,9 +55,10 @@ def counting_uncertainty(rows: Iterable[HistoryRow], *, confidence_z: float = 1.
             "minus_cpm": None,
             "plus_cpm": None,
             "relative_uncertainty_percent": None,
+            "window_model": "independent_rolling_cpm",
         }
-    impulses = sum(int(row.cpm) for row in clean)
-    duration_seconds = len(clean) * 60
+    impulses = sum(int(row.cpm) for row in independent)
+    duration_seconds = len(independent) * 60
     duration_minutes = duration_seconds / 60.0
     rate = impulses / duration_minutes
     lower = _poisson_limit(impulses, z=confidence_z, upper=False) / duration_minutes
@@ -51,7 +66,10 @@ def counting_uncertainty(rows: Iterable[HistoryRow], *, confidence_z: float = 1.
     symmetric = math.sqrt(impulses) / duration_minutes if impulses > 0 else upper
     return {
         "available": True,
-        "sample_count": len(clean),
+        "sample_count": len(independent),
+        "raw_sample_count": len(clean),
+        "independent_sample_count": len(independent),
+        "overlap_excluded_count": max(0, len(clean) - len(independent)),
         "impulses": impulses,
         "duration_seconds": duration_seconds,
         "rate_cpm": rate,
@@ -62,6 +80,8 @@ def counting_uncertainty(rows: Iterable[HistoryRow], *, confidence_z: float = 1.
         "sigma_cpm": symmetric,
         "relative_uncertainty_percent": (100.0 * symmetric / rate) if rate > 0 else None,
         "confidence_z": confidence_z,
+        "minimum_independent_window_seconds": minimum_independent_window_seconds,
+        "window_model": "independent_rolling_cpm",
     }
 
 
@@ -71,8 +91,11 @@ def _hourly_count_rates(rows: Iterable[HistoryRow]) -> list[dict[str, Any]]:
         buckets[int(row.timestamp_utc) // 3600 * 3600].append(row)
     points: list[dict[str, Any]] = []
     for timestamp, bucket in sorted(buckets.items()):
-        impulses = sum(max(0, int(row.cpm)) for row in bucket)
-        minutes = len(bucket)
+        independent = independent_count_windows(
+            bucket, timestamp=lambda row: int(row.timestamp_utc), minimum_separation_seconds=60
+        )
+        impulses = sum(max(0, int(row.cpm)) for row in independent)
+        minutes = len(independent)
         if minutes <= 0:
             continue
         rate = impulses / minutes
@@ -224,6 +247,16 @@ def relative_device_response(
         for left, right in pairs
         if int(left.cpm) > 0 and int(right.cpm) > 0
     ]
+    if clean:
+        ordered_pairs = sorted(clean, key=lambda pair: int(pair[0].timestamp_utc))
+        independent_pairs = [ordered_pairs[0]]
+        last_timestamp = int(ordered_pairs[0][0].timestamp_utc)
+        for pair in ordered_pairs[1:]:
+            timestamp = int(pair[0].timestamp_utc)
+            if timestamp - last_timestamp >= 60:
+                independent_pairs.append(pair)
+                last_timestamp = timestamp
+        clean = independent_pairs
     if not clean:
         return {
             "available": False,
@@ -334,8 +367,14 @@ def recent_change_significance(
     on baseline hourly rates.  This is an explanatory statistic, not a safety
     classification or identification of a physical cause.
     """
-    recent = [row for row in recent_rows if int(row.cpm) >= 0]
-    baseline = [row for row in baseline_rows if int(row.cpm) >= 0]
+    recent_raw = [row for row in recent_rows if int(row.cpm) >= 0]
+    baseline_raw = [row for row in baseline_rows if int(row.cpm) >= 0]
+    recent = independent_count_windows(
+        recent_raw, timestamp=lambda row: int(row.timestamp_utc), minimum_separation_seconds=60
+    )
+    baseline = independent_count_windows(
+        baseline_raw, timestamp=lambda row: int(row.timestamp_utc), minimum_separation_seconds=60
+    )
     if len(recent) < 5 or len(baseline) < 30:
         return {
             "available": False,

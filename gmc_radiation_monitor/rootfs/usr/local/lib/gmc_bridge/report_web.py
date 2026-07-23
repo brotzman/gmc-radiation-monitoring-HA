@@ -67,10 +67,12 @@ from .report_web_support import (
     _stream_restore_upload_to_temp,
     _temporary_path,
 )
-from .reports import build_live_analysis, load_timezone
+from .report_statistics import build_statistics
+from .reports import build_live_analysis, expected_samples, load_timezone, resolve_period
 from .revision_cache import RevisionCache
 from .scientific_web import render_calibration_management
 from .security_logging import configure_secure_logging
+from .time_series import time_weighted_summary
 from .translations import SUPPORTED_UI_LANGUAGES, Translator, resolve_language
 from .utils import slugify
 from .version import APP_VERSION
@@ -87,7 +89,7 @@ from .web_analysis_views import (
     render_radiation_intelligence,
     render_recommendation,
 )
-from .web_assets import DASHBOARD_CSS, render_dashboard_script
+from .web_assets import render_dashboard_bootstrap
 from .web_components import render_analysis_level_controls, render_collapsible_card
 from .web_security import CsrfTokenManager
 from .web_server import BoundedThreadingHTTPServer
@@ -734,10 +736,25 @@ class ReportApplication(WorkflowApplicationMixin):
             ]
         else:
             history_values = [float(row.raw_cpm if row.raw_cpm is not None else row.cpm) for row in explorer_rows]
+        history_weighted = time_weighted_summary(
+            explorer_rows,
+            timestamp=lambda row: row.timestamp_utc,
+            value=(
+                (lambda row: row.corrected_cpm if row.corrected_cpm is not None else row.cpm)
+                if data_mode == "corrected"
+                else (lambda row: row.raw_cpm if row.raw_cpm is not None else row.cpm)
+            ),
+            start_utc=explorer_start,
+            end_utc=explorer_end,
+            expected_interval_seconds=selected_scan_interval,
+        )
         history_summary = {
             "samples": len(explorer_rows),
-            "coverage_percent": min(100.0, 100.0 * len(explorer_rows) / expected_history_samples),
-            "mean_cpm": statistics.fmean(history_values) if history_values else None,
+            "coverage_percent": history_weighted.coverage_percent,
+            "sample_coverage_percent": min(100.0, 100.0 * len(explorer_rows) / expected_history_samples),
+            "mean_cpm": history_weighted.mean if history_weighted.available else (statistics.fmean(history_values) if history_values else None),
+            "covered_seconds": history_weighted.covered_seconds,
+            "gap_seconds": history_weighted.gap_seconds,
             "median_cpm": statistics.median(history_values) if history_values else None,
             "minimum_cpm": min(history_values) if history_values else None,
             "maximum_cpm": max(history_values) if history_values else None,
@@ -889,7 +906,17 @@ class ReportApplication(WorkflowApplicationMixin):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>{html.escape(t("GMC Radiation Monitoring"))}</title>
-<style>{DASHBOARD_CSS}</style>
+<link rel="stylesheet" href="./assets/dashboard.css?v={html.escape(APP_VERSION, quote=True)}">
+<style id="critical-dashboard-layout">
+.page-scroll {{ width:100%; height:100%; min-height:0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; touch-action: pan-y; padding-bottom:env(safe-area-inset-bottom,0px); }}
+.status-strip {{ position:static; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); }}
+.dashboard-controls {{ position:sticky; top:0; z-index:50; display:flex; justify-content:space-between; align-items:center; gap:.75rem; flex-wrap:nowrap; }}
+.dashboard-controls {{ position:-webkit-sticky; position:sticky; top:env(safe-area-inset-top,0px); }}
+.jump-links {{ flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden; }}
+.form-grid > *, label {{ min-width:0; max-width:100%; }}
+input[type="date"], input[type="week"], input[type="month"], input[type="datetime-local"] {{ min-inline-size:0; max-inline-size:100%; }}
+@media (max-width:620px) {{ .report-format-guide {{ grid-template-columns:1fr; }} }}
+</style>
 </head>
 <body class="mode-{mode}" data-analysis-level="{"summary" if mode == "simple" else "analysis"}" data-main-value-size="{html.escape(self.main_value_size, quote=True)}" data-custom-value-font-size-px="{self.custom_value_font_size_px}" style="--custom-main-value-font-size:{self.custom_value_font_size_px}px"><div class="page-scroll" id="page-scroll"><main>
 <header class="report-header">
@@ -1014,23 +1041,15 @@ class ReportApplication(WorkflowApplicationMixin):
 </details>
 
 <div class="advanced-only"><h3>{html.escape(t("Custom period"))}</h3>
+<div class="report-generation-preview" id="report-generation-preview" aria-live="polite"><div><strong>{html.escape(t("Selected device"))}</strong><span>{html.escape(selected_device_label or t("No connected GMC device"))}</span></div><div><strong>{html.escape(t("Report timezone"))}</strong><span>{html.escape(str(self.timezone))}</span></div><div><strong>{html.escape(t("Selected period"))}</strong><span id="report-preview-period">—</span></div><div><strong>{html.escape(t("Time-based data coverage"))}</strong><span id="report-preview-coverage">—</span></div><div><strong>{html.escape(t("Stored measurements"))}</strong><span id="report-preview-samples">—</span></div><div><strong>{html.escape(t("Uncovered time"))}</strong><span id="report-preview-gap">—</span></div><p id="report-preview-warning" class="report-preview-warning" hidden></p></div>
 <div class="custom-periods">
-<form class="custom-form report-preset-source" action="" method="get" data-preset-kind="daily">
+<form class="custom-form report-preset-source unified-report-form" id="custom-report-form" action="" method="get" data-preset-kind="custom">
 <input type="hidden" name="action" value="download">
-<input type="hidden" name="period" value="daily">
 <input type="hidden" name="selection" value="specific">
 <div class="form-grid">
-<label>{html.escape(t("Specific date"))}<input type="date" name="date" value="{today}" required></label>
-<label>{html.escape(t("Format"))}<select name="format">{format_options}</select></label>
-<div class="form-actions"><button type="submit" class="primary">{html.escape(t("Download"))}</button></div>
-</div>
-</form>
-<form class="custom-form report-preset-source" action="" method="get" data-preset-kind="weekly">
-<input type="hidden" name="action" value="download">
-<input type="hidden" name="period" value="weekly">
-<input type="hidden" name="selection" value="specific">
-<div class="form-grid">
-<label>{html.escape(t("Specific ISO week"))}<input type="week" name="week" value="{current_week}" required></label>
+<label>{html.escape(t("Period type"))}<select name="period" id="custom-report-period"><option value="daily">{html.escape(t("Daily"))}</option><option value="weekly">{html.escape(t("Weekly"))}</option></select></label>
+<label data-report-date-field>{html.escape(t("Specific date"))}<input type="date" name="date" value="{today}"></label>
+<label data-report-week-field hidden>{html.escape(t("Specific ISO week"))}<input type="week" name="week" value="{current_week}"></label>
 <label>{html.escape(t("Format"))}<select name="format">{format_options}</select></label>
 <div class="form-actions"><button type="submit" class="primary">{html.escape(t("Download"))}</button></div>
 </div>
@@ -1058,7 +1077,7 @@ class ReportApplication(WorkflowApplicationMixin):
 <details class="analysis-group history-management-tool" id="history-delete"><summary><span class="summary-copy">{html.escape(t("Delete history"))}<small>{html.escape(t("Permanently remove app and Recorder history after explicit confirmation"))}</small></span></summary><div class="group-body">{purge_controls}</div></details>
 </section>
 </main></div>
-<script nonce="{html.escape(script_nonce, quote=True)}">{render_dashboard_script(selected_serial=selected_serial, language=language, translator=t)}</script></body></html>"""
+<script nonce="{html.escape(script_nonce, quote=True)}">{render_dashboard_bootstrap(selected_serial=selected_serial, language=language, translator=t)}</script><script src="./assets/dashboard.js?v={html.escape(APP_VERSION, quote=True)}" defer></script></body></html>"""
         # Bind every download server-side to the device currently shown in Analysis.
         # JavaScript is only a progressive enhancement; Ingress-safe links work without it.
         report_prefix = (
@@ -1404,7 +1423,7 @@ class ReportApplication(WorkflowApplicationMixin):
                     f"<div><strong>{html.escape(t('Last upload'))}</strong><span>{html.escape(str(last_map_upload))}</span></div>"
                     f"<div><strong>{html.escape(t('Last uploaded CPM'))}</strong><span>{html.escape(str(item.get('gmcmap_last_cpm') if item.get('gmcmap_last_cpm') is not None else '—'))} CPM</span></div>"
                     f"<div><strong>{html.escape(t('Last uploaded ACPM'))}</strong><span>{html.escape(str(item.get('gmcmap_last_average_cpm') if item.get('gmcmap_last_average_cpm') is not None else '—'))} ACPM</span></div>"
-                    f'</div><small class="gmcmap-acpm-help">{html.escape(t("ACPM is the average of all accepted CPM readings since the current app measurement session began."))}</small>'
+                    f'</div><small class="gmcmap-acpm-help">{html.escape(t("ACPM is a time-weighted rolling average of accepted CPM readings from the last 60 minutes; long data gaps are not bridged."))}</small>'
                     f"{map_error}</div>"
                 )
             alerts: list[str] = []
@@ -1501,6 +1520,7 @@ class ReportApplication(WorkflowApplicationMixin):
             title=t("Connected GMC devices"),
             body=(
                 render_measurement_display_settings(t=t, custom_px=self.custom_value_font_size_px)
+                + f'<div id="live-refresh-status" class="live-refresh-status" role="status" aria-live="polite" hidden></div>'
                 + f'<div class="device-grid">{device_cards}</div>'
             ),
             attributes=(
@@ -1513,6 +1533,103 @@ class ReportApplication(WorkflowApplicationMixin):
             pin_label=t("Pin card"),
             help_label=t("Show help"),
         )
+
+    def live_devices_payload(
+        self, *, language_override: str | None = None, accept_language: str = "",
+        device_override: str | None = None,
+    ) -> dict[str, Any]:
+        language = resolve_language(
+            self.ui_language, accept_language=accept_language, override=language_override
+        )
+        t = Translator(language)
+        devices = self._connected_devices(sorted(
+            self.store.list_devices(),
+            key=lambda item: (str(item.get("device_model", "")), str(item.get("serial", ""))),
+        ))
+        serials = {str(item.get("serial") or "") for item in devices}
+        primary_serial = str(self.store.get_metadata().get("serial", ""))
+        if primary_serial not in serials:
+            primary_serial = next(iter(sorted(serials)), "")
+        selected_serial = device_override if device_override in serials else primary_serial
+        now_utc = int(datetime.now(UTC).timestamp())
+        payload_devices: list[dict[str, Any]] = []
+        for item in devices:
+            serial = str(item.get("serial") or "")
+            latest_timestamp = int(item.get("timestamp_utc") or item.get("last_timestamp_utc") or 0)
+            runtime_online = item.get("runtime_online")
+            if isinstance(runtime_online, str):
+                runtime_online = runtime_online.strip().lower() in {"1", "true", "yes", "on", "online"}
+            online_window = max(180, int(item.get("scan_interval_seconds") or self.scan_interval_seconds) * 3)
+            online = bool(runtime_online) if runtime_online is not None else (
+                latest_timestamp > 0 and now_utc - latest_timestamp <= online_window
+            )
+            age = max(0, now_utc - latest_timestamp) if latest_timestamp else None
+            freshness = (
+                t("{seconds} seconds ago", seconds=age)
+                if age is not None and age < 120
+                else (
+                    datetime.fromtimestamp(latest_timestamp, UTC).astimezone(self.timezone).strftime("%Y-%m-%d %H:%M:%S %Z")
+                    if latest_timestamp else t("Not detected yet")
+                )
+            )
+            dose_number, dose_unit = _format_live_dose(item.get("derived_dose_usvh"), language)
+            health_status = str(item.get("device_health_status") or "ok")
+            health_summary = t("No active device warnings") if health_status == "ok" else t("Device health warning")
+            latest_cpm = item.get("cpm")
+            payload_devices.append({
+                "serial": serial,
+                "timestamp_utc": latest_timestamp,
+                "status_class": "online" if online else "offline",
+                "status_label": t("Online") if online else t("Offline"),
+                "freshness_display": freshness,
+                "dose_number": dose_number,
+                "dose_unit": dose_unit,
+                "quality_stars": str(item.get("measurement_quality_star_text") or "☆☆☆☆☆"),
+                "latest_value": "—" if latest_cpm is None else f"{int(latest_cpm)} CPM",
+                "health_summary": health_summary,
+            })
+        return {
+            "generated_at_utc": now_utc,
+            "selected_serial": selected_serial,
+            "connected_count": len(devices),
+            "devices": payload_devices,
+        }
+
+    def report_preview_payload(
+        self, *, period_kind: str, date_value: str | None, week_value: str | None,
+        device_serial: str | None, language: str,
+    ) -> dict[str, Any]:
+        t = Translator(language)
+        period = resolve_period(
+            kind=period_kind, selection="specific", tz=self.timezone,
+            date_value=date_value, week_value=week_value,
+        )
+        rows = self.store.query_range(
+            int(period.start_utc.timestamp()), int(period.end_utc.timestamp()),
+            device_serial=device_serial or None,
+        )
+        stats = build_statistics(
+            rows, expected_count=expected_samples(period, self.scan_interval_seconds),
+            start_utc=int(period.start_utc.timestamp()), end_utc=int(period.end_utc.timestamp()),
+            scan_interval_seconds=self.scan_interval_seconds,
+        )
+        coverage = float(stats.get("time_coverage_percent") or 0.0)
+        gap_seconds = float(stats.get("gap_seconds") or 0.0)
+        warning = ""
+        if not rows:
+            warning = t("No accepted measurements are available for the selected period.")
+        elif coverage < 75.0:
+            warning = t("The selected period contains substantial data gaps; interpret averages cautiously.")
+        return {
+            "period_label": period.label,
+            "start_local": period.start_local.isoformat(),
+            "end_local": period.end_local.isoformat(),
+            "samples": len(rows),
+            "time_coverage_percent": coverage,
+            "sample_coverage_percent": float(stats.get("sample_completeness_percent") or 0.0),
+            "gap_seconds": gap_seconds,
+            "warning": warning,
+        }
 
     def render_devices_fragment(
         self,
@@ -1650,149 +1767,10 @@ class ReportApplication(WorkflowApplicationMixin):
         )
     def _render_assessment_legend(self, *, t: Translator | None = None) -> str:
         return render_assessment_legend(t or Translator("en"))
+
+
 def run_report_server() -> None:
-    level_name = os.environ.get("LOG_LEVEL", "info").upper()
-    configure_secure_logging(
-        level=getattr(logging, level_name, logging.INFO),
-        format_string="%(asctime)s %(levelname)s %(message)s",
-    )
-    timezone_name = os.environ.get("REPORT_TIMEZONE", "UTC")
-    scan_interval = int(os.environ.get("SCAN_INTERVAL", "60"))
-    retention_days = int(os.environ.get("HISTORY_RETENTION_DAYS", "90"))
-    read_gyro = os.environ.get("READ_GYRO", "false").strip().lower() == "true"
-    history_management_enabled = (
-        os.environ.get(
-            "HISTORY_MANAGEMENT_ENABLED",
-            os.environ.get("ENABLE_RESTORE", os.environ.get("ENABLE_PURGE_ALL_HISTORY", "false")),
-        )
-        .strip()
-        .lower()
-        == "true"
-    )
-    cpm_per_usvh = float(os.environ.get("CPM_PER_USVH", "154.0"))
-    traffic_light_yellow_percent = float(os.environ.get("TRAFFIC_LIGHT_YELLOW_PERCENT", "125.0"))
-    traffic_light_red_percent = float(os.environ.get("TRAFFIC_LIGHT_RED_PERCENT", "175.0"))
-    safety_profile = os.environ.get("SAFETY_PROFILE", "gq").strip().lower()
-    safety_threshold_basis = os.environ.get("SAFETY_THRESHOLD_BASIS", "either").strip().lower()
-    safety_warning_cpm = int(os.environ.get("SAFETY_WARNING_CPM", "51"))
-    safety_danger_cpm = int(os.environ.get("SAFETY_DANGER_CPM", "100"))
-    safety_warning_usvh = float(os.environ.get("SAFETY_WARNING_USVH", "0.326"))
-    safety_danger_usvh = float(os.environ.get("SAFETY_DANGER_USVH", "0.651"))
-    ui_mode = os.environ.get("UI_MODE", "simple").strip().lower()
-    ui_language = os.environ.get("UI_LANGUAGE", "auto").strip().lower()
-    main_value_size = os.environ.get("MAIN_VALUE_SIZE", "large").strip().lower()
-    custom_value_font_size_px = int(os.environ.get("CUSTOM_VALUE_FONT_SIZE_PX", "36"))
-    cosmic_hint_enabled = os.environ.get("COSMIC_HINT_ENABLED", "false").strip().lower() == "true"
-    bridge_heartbeat_path = os.environ.get("BRIDGE_HEARTBEAT_PATH", "/data/gmc_bridge_heartbeat.json").strip()
-    pressure_weather_entity_primary = os.environ.get(
-        "PRESSURE_WEATHER_ENTITY_PRIMARY", ""
-    ).strip()
-    pressure_weather_entity_secondary = os.environ.get(
-        "PRESSURE_WEATHER_ENTITY_SECONDARY", ""
-    ).strip()
-    pressure_weather_source_name = os.environ.get(
-        "PRESSURE_WEATHER_SOURCE_NAME", "Meteorologisk institutt (Met.no)"
-    ).strip()
-    pressure_weather_max_age_seconds = int(os.environ.get("PRESSURE_WEATHER_MAX_AGE_SECONDS", "7200"))
-    pressure_weather_max_difference_hpa = float(os.environ.get("PRESSURE_WEATHER_MAX_DIFFERENCE_HPA", "5.0"))
-    load_timezone(timezone_name)
-    if scan_interval < 5:
-        raise ValueError("SCAN_INTERVAL must be at least 5 seconds")
-    if not 7 <= retention_days <= 3650:
-        raise ValueError("HISTORY_RETENTION_DAYS must be between 7 and 3650")
-    if cpm_per_usvh <= 0:
-        raise ValueError("CPM_PER_USVH must be greater than 0")
-    if traffic_light_yellow_percent < 100:
-        raise ValueError("TRAFFIC_LIGHT_YELLOW_PERCENT must be at least 100")
-    if traffic_light_red_percent <= traffic_light_yellow_percent:
-        raise ValueError("TRAFFIC_LIGHT_RED_PERCENT must be greater than TRAFFIC_LIGHT_YELLOW_PERCENT")
-    if safety_profile not in {"gq", "bfs_reference", "icrp_reference", "custom"}:
-        raise ValueError("SAFETY_PROFILE must be gq, bfs_reference, icrp_reference, or custom")
-    if safety_threshold_basis not in {"cpm", "dose_rate", "either"}:
-        raise ValueError("SAFETY_THRESHOLD_BASIS must be cpm, dose_rate, or either")
-    if safety_warning_cpm < 0 or safety_danger_cpm <= safety_warning_cpm:
-        raise ValueError("CPM safety danger threshold must be greater than warning threshold")
-    if safety_warning_usvh < 0 or safety_danger_usvh <= safety_warning_usvh:
-        raise ValueError("Dose-rate safety danger threshold must be greater than warning threshold")
-    if ui_mode not in {"simple", "advanced"}:
-        raise ValueError("UI_MODE must be simple or advanced")
-    if ui_language not in {"auto", *SUPPORTED_UI_LANGUAGES}:
-        raise ValueError("UI_LANGUAGE is unsupported")
-    if main_value_size not in {"small", "medium", "large", "custom"}:
-        raise ValueError("MAIN_VALUE_SIZE must be small, medium, large, or custom")
-    if not 20 <= custom_value_font_size_px <= 64:
-        raise ValueError("CUSTOM_VALUE_FONT_SIZE_PX must be between 20 and 64")
-    store = HistoryStore(DEFAULT_DB_PATH, retention_days=retention_days)
-    home_assistant_client = HomeAssistantConfigClient()
-    pressure_client = (
-        HomeAssistantPressureClient(
-            entity_ids=(pressure_weather_entity_primary, pressure_weather_entity_secondary),
-            provider_name=pressure_weather_source_name,
-            max_age_seconds=pressure_weather_max_age_seconds,
-            max_difference_hpa=pressure_weather_max_difference_hpa,
-        )
-        if cosmic_hint_enabled
-        else None
-    )
-    app = ReportApplication(
-        store=store,
-        timezone_name=timezone_name,
-        scan_interval_seconds=scan_interval,
-        read_gyro=read_gyro,
-        cpm_per_usvh=cpm_per_usvh,
-        traffic_light_yellow_percent=traffic_light_yellow_percent,
-        traffic_light_red_percent=traffic_light_red_percent,
-        safety_profile=safety_profile,
-        safety_threshold_basis=safety_threshold_basis,
-        safety_warning_cpm=safety_warning_cpm,
-        safety_danger_cpm=safety_danger_cpm,
-        safety_warning_usvh=safety_warning_usvh,
-        safety_danger_usvh=safety_danger_usvh,
-        ui_mode=ui_mode,
-        ui_language=ui_language,
-        main_value_size=main_value_size,
-        custom_value_font_size_px=custom_value_font_size_px,
-        history_management_enabled=history_management_enabled,
-        home_assistant_client=home_assistant_client,
-        pressure_client=pressure_client,
-        cosmic_hint_enabled=cosmic_hint_enabled,
-        bridge_heartbeat_path=bridge_heartbeat_path,
-    )
-    automation_service = WorkflowAutomationService(
-        store=store,
-        timezone=app.timezone,
-        timezone_name=timezone_name,
-        scan_interval_seconds=scan_interval,
-        cpm_per_usvh=cpm_per_usvh,
-        traffic_light_yellow_percent=traffic_light_yellow_percent,
-        traffic_light_red_percent=traffic_light_red_percent,
-        home_assistant_client=home_assistant_client,
-        ui_language=ui_language,
-        report_slot=app.report_slot,
-        backup_manager=app.backup_manager,
-    )
-    automation_service.start()
-    max_http_workers = int(os.environ.get("HTTP_MAX_WORKERS", "12"))
-    socket_timeout_seconds = float(os.environ.get("HTTP_SOCKET_TIMEOUT_SECONDS", "30"))
-    if not 2 <= max_http_workers <= 64:
-        raise ValueError("HTTP_MAX_WORKERS must be between 2 and 64")
-    if not 5.0 <= socket_timeout_seconds <= 300.0:
-        raise ValueError("HTTP_SOCKET_TIMEOUT_SECONDS must be between 5 and 300")
-    server = BoundedThreadingHTTPServer(
-        # Binding on all interfaces is required for Home Assistant add-on ingress.
-        ("0.0.0.0", 8099),  # nosec B104
-        ReportRequestHandler,
-        max_workers=max_http_workers,
-        socket_timeout_seconds=socket_timeout_seconds,
-    )
-    server.app = app  # type: ignore[attr-defined]
-    LOG.info(
-        "GMC report server ready on port 8099 (%s, %d stored measurements)",
-        timezone_name,
-        store.count(),
-    )
-    try:
-        server.serve_forever(poll_interval=0.5)
-    finally:
-        automation_service.stop()
-        server.server_close()
+    """Start the HTTP service through the split server bootstrap module."""
+    from .report_server import run_report_server as _run_report_server
+
+    _run_report_server()

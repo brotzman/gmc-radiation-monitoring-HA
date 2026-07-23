@@ -4,8 +4,9 @@ import html
 import re
 import threading
 import time
+from collections import deque
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field as dataclass_field
 from datetime import UTC, datetime
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode, urlsplit
@@ -37,23 +38,46 @@ class GmcMapReading:
 
 @dataclass
 class AcpmAccumulator:
-    """Cumulative mean of accepted CPM readings for the current app session.
+    """Time-defined rolling ACPM for GMCMap uploads.
 
-    GMCMap calls this value ACPM (Average Counts Per Minute). GQ counters derive
-    it from total counts divided by elapsed minutes. The bridge receives periodic
-    CPM rates rather than the counter's internal total-count accumulator, so the
-    equivalent robust estimate is the cumulative mean of every accepted CPM
-    reading since this device worker started.
+    Version 9 replaces the restart-dependent cumulative session mean with a
+    documented rolling window. Samples are retained for ``window_seconds`` and
+    weighted by the time until the next accepted reading, without bridging gaps
+    larger than 1.5 times the expected scan cadence.
     """
 
-    sample_count: int = 0
-    average_cpm: float = 0.0
+    window_seconds: int = 3600
+    expected_interval_seconds: int = 60
+    _samples: deque[tuple[int, float]] = dataclass_field(default_factory=deque, init=False, repr=False)
 
-    def add(self, cpm: int | float) -> float:
+    @property
+    def sample_count(self) -> int:
+        return len(self._samples)
+
+    def add(self, cpm: int | float, *, timestamp_utc: int | None = None) -> float:
+        captured = int(time.time()) if timestamp_utc is None else int(timestamp_utc)
         value = max(0.0, float(cpm))
-        self.sample_count += 1
-        self.average_cpm += (value - self.average_cpm) / self.sample_count
-        return self.average_cpm
+        self._samples.append((captured, value))
+        cutoff = captured - max(60, int(self.window_seconds))
+        while self._samples and self._samples[0][0] < cutoff:
+            self._samples.popleft()
+        if len(self._samples) == 1:
+            return value
+        weighted = 0.0
+        covered = 0.0
+        maximum_gap = max(60.0, float(self.expected_interval_seconds) * 1.5)
+        samples = list(self._samples)
+        for (left_ts, left), (right_ts, right) in zip(samples, samples[1:]):
+            dt = right_ts - left_ts
+            if dt <= 0 or dt > maximum_gap:
+                continue
+            weighted += ((left + right) / 2.0) * dt
+            covered += dt
+        return weighted / covered if covered > 0 else sum(value for _ts, value in samples) / len(samples)
+
+    @property
+    def window_minutes(self) -> float:
+        return max(60, int(self.window_seconds)) / 60.0
 
 
 @dataclass(frozen=True)

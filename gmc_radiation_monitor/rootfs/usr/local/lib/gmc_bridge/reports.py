@@ -34,11 +34,13 @@ from .metrology import (
     integrated_dual_tube_dose_estimate,
 )
 from .quality_pipeline import filter_history_rows, robust_sigma, robust_trimmed_mean
+from .report_statistics import build_statistics, pearson_correlation as _pearson_correlation, percentile as _percentile
 from .scientific_analysis import (
     counting_uncertainty,
     detect_persistent_level_shift,
     recent_change_significance,
 )
+from .time_series import time_weighted_summary
 from .translations import Translator
 from .version import APP_VERSION
 
@@ -127,85 +129,36 @@ def expected_samples(period: ReportPeriod, scan_interval_seconds: int) -> int:
     return max(1, round(duration / scan_interval_seconds))
 
 
-def _percentile(values: list[float], percent: float) -> float | None:
-    if not values:
-        return None
-    if len(values) == 1:
-        return values[0]
-    ordered = sorted(values)
-    rank = (len(ordered) - 1) * percent
-    lower = math.floor(rank)
-    upper = math.ceil(rank)
-    if lower == upper:
-        return ordered[lower]
-    weight = rank - lower
-    return ordered[lower] * (1.0 - weight) + ordered[upper] * weight
-
-
-def _pearson_correlation(pairs: list[tuple[float, float]]) -> tuple[float | None, str]:
-    if len(pairs) < 2:
-        return None, "insufficient paired samples"
-    x_values = [pair[0] for pair in pairs]
-    y_values = [pair[1] for pair in pairs]
-    if len(set(x_values)) < 2:
-        return None, "no CPM variation"
-    if len(set(y_values)) < 2:
-        return None, "no sensor variation"
-    return statistics.correlation(x_values, y_values), "ok"
-
-
-def build_statistics(
-    rows: list[HistoryRow],
-    *,
-    expected_count: int,
-) -> dict[str, Any]:
-    cpm_values = [float(row.cpm) for row in rows]
-    completeness = min(100.0, 100.0 * len(rows) / expected_count) if expected_count else 0.0
-    stats: dict[str, Any] = {
-        "samples": len(rows),
-        "expected_samples": expected_count,
-        "missing_samples": max(0, expected_count - len(rows)),
-        "completeness_percent": completeness,
-    }
-    if not cpm_values:
-        stats.update(
-            {
-                "cpm_min": None,
-                "cpm_max": None,
-                "cpm_mean": None,
-                "cpm_median": None,
-                "cpm_standard_deviation": None,
-                "cpm_95th_percentile": None,
-            }
-        )
-        return stats
-    stats.update(
-        {
-            "cpm_min": min(cpm_values),
-            "cpm_max": max(cpm_values),
-            "cpm_mean": statistics.fmean(cpm_values),
-            "cpm_median": statistics.median(cpm_values),
-            "cpm_standard_deviation": statistics.stdev(cpm_values) if len(cpm_values) > 1 else 0.0,
-            "cpm_95th_percentile": _percentile(cpm_values, 0.95),
-        }
-    )
-    return stats
-
-
-
-
 def _analysis_for_rows(
     rows: list[HistoryRow],
     *,
     expected_count: int,
     scan_interval_seconds: int,
+    start_utc: int | None = None,
+    end_utc: int | None = None,
     baseline_rows: list[HistoryRow],
     yellow_percent: float,
     red_percent: float,
 ) -> dict[str, Any]:
-    stats = build_statistics(rows, expected_count=expected_count)
+    stats = build_statistics(
+        rows,
+        expected_count=expected_count,
+        start_utc=start_utc,
+        end_utc=end_utc,
+        scan_interval_seconds=scan_interval_seconds,
+    )
     baseline_values = [float(row.cpm) for row in baseline_rows]
-    baseline_mean = statistics.fmean(baseline_values) if baseline_values else stats.get("cpm_mean")
+    baseline_mean = None
+    if baseline_rows:
+        baseline_start = int(baseline_rows[0].timestamp_utc)
+        baseline_end = max(baseline_start + scan_interval_seconds, int(baseline_rows[-1].timestamp_utc) + scan_interval_seconds)
+        baseline_weighted = time_weighted_summary(
+            baseline_rows, timestamp=lambda row: row.timestamp_utc, value=lambda row: row.cpm,
+            start_utc=baseline_start, end_utc=baseline_end, expected_interval_seconds=scan_interval_seconds,
+        )
+        baseline_mean = baseline_weighted.mean if baseline_weighted.available else statistics.fmean(baseline_values)
+    if baseline_mean is None:
+        baseline_mean = stats.get("cpm_mean")
     period_mean = stats.get("cpm_mean")
     deviation_cpm = None if period_mean is None or baseline_mean is None else float(period_mean) - float(baseline_mean)
     deviation_percent = None
@@ -333,9 +286,24 @@ def build_live_analysis(
     cpm_24h = [float(row.cpm) for row in rows_24h]
     cpm_7d = [float(row.cpm) for row in rows_7d]
 
-    mean_1h = robust_trimmed_mean(cpm_1h)
-    mean_24h = robust_trimmed_mean(cpm_24h)
-    mean_7d = float(statistics.median(cpm_7d)) if cpm_7d else None
+    weighted_1h = time_weighted_summary(
+        rows_1h, timestamp=lambda row: row.timestamp_utc, value=lambda row: row.cpm,
+        start_utc=latest_timestamp - 3600, end_utc=latest_timestamp + 1,
+        expected_interval_seconds=scan_interval_seconds,
+    )
+    weighted_24h = time_weighted_summary(
+        rows_24h, timestamp=lambda row: row.timestamp_utc, value=lambda row: row.cpm,
+        start_utc=latest_timestamp - 86400, end_utc=latest_timestamp + 1,
+        expected_interval_seconds=scan_interval_seconds,
+    )
+    weighted_7d = time_weighted_summary(
+        rows_7d, timestamp=lambda row: row.timestamp_utc, value=lambda row: row.cpm,
+        start_utc=latest_timestamp - 7 * 86400, end_utc=latest_timestamp + 1,
+        expected_interval_seconds=scan_interval_seconds,
+    )
+    mean_1h = weighted_1h.mean
+    mean_24h = weighted_24h.mean
+    mean_7d = weighted_7d.mean
     median_24h = float(statistics.median(cpm_24h)) if cpm_24h else None
     sd_24h = robust_sigma(cpm_24h)
     variance_24h = sd_24h * sd_24h if sd_24h is not None else None
@@ -384,9 +352,9 @@ def build_live_analysis(
         red_percent=traffic_light_red_percent, scan_interval_seconds=scan_interval_seconds,
     )
     uncertainty_latest = counting_uncertainty([rows[-1]])
-    uncertainty_1h = counting_uncertainty(rows_1h)
-    uncertainty_24h = counting_uncertainty(rows_24h)
-    uncertainty_7d = counting_uncertainty(rows_7d)
+    uncertainty_1h = counting_uncertainty(rows_1h, minimum_independent_window_seconds=60)
+    uncertainty_24h = counting_uncertainty(rows_24h, minimum_independent_window_seconds=60)
+    uncertainty_7d = counting_uncertainty(rows_7d, minimum_independent_window_seconds=60)
     level_shift = detect_persistent_level_shift(rows_7d)
     baseline_reference = [row for row in rows_7d if row.timestamp_utc <= latest_timestamp - 3600]
     change_significance = recent_change_significance(
@@ -411,14 +379,21 @@ def build_live_analysis(
                 traffic_indices.append(100.0 * rolling_level / mean_7d)
     traffic_state = current_hysteretic_state(traffic_indices, yellow=traffic_light_yellow_percent, red=traffic_light_red_percent)
 
-    def coverage(sample_count: int, seconds: int) -> float:
-        expected = max(1, round(seconds / scan_interval_seconds))
-        return min(100.0, 100.0 * sample_count / expected)
+    def coverage(summary) -> float:
+        return float(summary.coverage_percent)
 
-    minimum_baseline_samples = max(6, round(21600 / scan_interval_seconds))
-    baseline_readiness_percent = min(100.0, 100.0 * len(rows_7d) / minimum_baseline_samples)
-    baseline_ready = mean_7d is not None and len(rows_7d) >= minimum_baseline_samples
-    recent_window_ready = mean_1h is not None and coverage(len(rows_1h), 3600) >= 50.0
+    minimum_baseline_samples = max(6, round(21600 / max(60, scan_interval_seconds)))
+    minimum_baseline_covered_seconds = max(0, 6 * 3600 - max(1, scan_interval_seconds))
+    baseline_readiness_percent = min(
+        100.0,
+        100.0 * float(weighted_7d.covered_seconds) / float(minimum_baseline_covered_seconds),
+    )
+    baseline_ready = (
+        mean_7d is not None
+        and weighted_7d.covered_seconds >= minimum_baseline_covered_seconds
+        and len(rows_7d) >= minimum_baseline_samples
+    )
+    recent_window_ready = mean_1h is not None and coverage(weighted_1h) >= 50.0
 
     runtime_metadata = store.get_metadata()
     def runtime_counter(name: str) -> int:
@@ -440,8 +415,14 @@ def build_live_analysis(
         "samples_1h": len(rows_1h), "samples_24h": len(rows_24h), "samples_7d": len(rows_7d),
         "raw_samples_24h": len(raw_rows_24h), "excluded_samples_24h": excluded_24h,
         "quality_filter_reasons_24h": filtered.rejected_by_reason,
-        "coverage_1h_percent": coverage(len(rows_1h), 3600), "coverage_24h_percent": coverage(len(rows_24h), 86400),
-        "coverage_7d_percent": coverage(len(rows_7d), 7 * 86400),
+        "coverage_1h_percent": coverage(weighted_1h), "coverage_24h_percent": coverage(weighted_24h),
+        "coverage_7d_percent": coverage(weighted_7d),
+        "sample_coverage_1h_percent": min(100.0, 100.0 * len(rows_1h) / max(1, round(3600 / scan_interval_seconds))),
+        "sample_coverage_24h_percent": min(100.0, 100.0 * len(rows_24h) / max(1, round(86400 / scan_interval_seconds))),
+        "sample_coverage_7d_percent": min(100.0, 100.0 * len(rows_7d) / max(1, round(7 * 86400 / scan_interval_seconds))),
+        "time_weighted_1h": weighted_1h.as_dict(),
+        "time_weighted_24h": weighted_24h.as_dict(),
+        "time_weighted_7d": weighted_7d.as_dict(),
         "data_quality_label_24h": quality_24h["label"], "data_quality_score_24h": quality_24h["score"],
         "data_quality_reasons_24h": quality_24h["reasons"], "longest_gap_24h_seconds": quality_24h["longest_gap_seconds"],
         "duplicate_timestamps_24h": quality_24h["duplicate_timestamps"], "clock_regressions_since_start": quality_24h["clock_regressions"],
@@ -481,6 +462,9 @@ def metadata_document(
     stats = build_statistics(
         rows,
         expected_count=expected_samples(period, scan_interval_seconds),
+        start_utc=int(period.start_utc.timestamp()),
+        end_utc=int(period.end_utc.timestamp()),
+        scan_interval_seconds=scan_interval_seconds,
     )
     return {
         "report_schema_version": 1,
@@ -754,7 +738,11 @@ def png_bytes(
         fontsize=14,
     )
 
-    stats = build_statistics(rows, expected_count=expected_samples(period, scan_interval_seconds))
+    stats = build_statistics(
+        rows, expected_count=expected_samples(period, scan_interval_seconds),
+        start_utc=int(period.start_utc.timestamp()), end_utc=int(period.end_utc.timestamp()),
+        scan_interval_seconds=scan_interval_seconds,
+    )
     stats_text = _statistics_text(stats, t=t)
     footer = t(
         "Sampling interval: {interval} s | Samples: {samples}/{expected} | Completeness: {completeness:.2f}% | Generated: {generated} | App {version}",
@@ -820,6 +808,8 @@ def analysis_document(
         rows,
         expected_count=expected_count,
         scan_interval_seconds=scan_interval_seconds,
+        start_utc=int(period.start_utc.timestamp()),
+        end_utc=int(period.end_utc.timestamp()),
         baseline_rows=baseline_rows,
         yellow_percent=yellow_percent,
         red_percent=red_percent,
@@ -973,7 +963,11 @@ def daily_summary_csv_bytes(
         start = datetime.combine(day, dt_time.min, tzinfo=tz)
         end = start + timedelta(days=1)
         period = ReportPeriod("daily", day.isoformat(), start, end)
-        stats = build_statistics(day_rows, expected_count=expected_samples(period, scan_interval_seconds))
+        stats = build_statistics(
+            day_rows, expected_count=expected_samples(period, scan_interval_seconds),
+            start_utc=int(start.timestamp()), end_utc=int(end.timestamp()),
+            scan_interval_seconds=scan_interval_seconds,
+        )
         cpms = [float(row.cpm) for row in day_rows]
         variance = statistics.variance(cpms) if len(cpms) > 1 else None
         mean = stats.get("cpm_mean")
@@ -2171,6 +2165,8 @@ def _prepare_report(
         rows,
         expected_count=expected_samples(period, scan_interval_seconds),
         scan_interval_seconds=scan_interval_seconds,
+        start_utc=int(period.start_utc.timestamp()),
+        end_utc=int(period.end_utc.timestamp()),
         baseline_rows=baseline_rows,
         yellow_percent=traffic_light_yellow_percent,
         red_percent=traffic_light_red_percent,

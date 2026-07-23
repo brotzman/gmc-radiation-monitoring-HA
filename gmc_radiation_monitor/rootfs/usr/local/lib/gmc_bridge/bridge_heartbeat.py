@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import threading
 import time
@@ -8,6 +9,8 @@ from pathlib import Path
 from typing import Any
 
 from .health_settings import DEFAULT_BRIDGE_HEARTBEAT_INTERVAL_SECONDS
+
+LOG = logging.getLogger("gmc_bridge")
 
 DEFAULT_BRIDGE_HEARTBEAT_PATH = Path("/data/gmc_bridge_heartbeat.json")
 BRIDGE_HEARTBEAT_SCHEMA_VERSION = 1
@@ -38,6 +41,9 @@ class BridgeHeartbeatReporter:
             "configured_devices": max(0, int(configured_devices)),
             "assigned_devices": 0,
             "last_child_exit_code": None,
+            "write_error_count": 0,
+            "last_write_error_utc": None,
+            "last_write_error": "",
         }
         self._lock = threading.Lock()
         self._stop_event = threading.Event()
@@ -81,14 +87,26 @@ class BridgeHeartbeatReporter:
         finally:
             try:
                 temporary.unlink(missing_ok=True)
-            except OSError:
-                pass
+            except OSError as exc:
+                self._record_write_error(exc)
+
+    def _record_write_error(self, error: OSError) -> None:
+        now = int(time.time())
+        with self._lock:
+            count = int(self._state.get("write_error_count") or 0) + 1
+            self._state.update({
+                "write_error_count": count,
+                "last_write_error_utc": now,
+                "last_write_error": str(error).replace("\n", " ")[:240],
+            })
+        if count == 1 or count % 20 == 0:
+            LOG.warning("Bridge heartbeat write failed (%d): %s", count, error)
 
     def _try_write(self) -> None:
         try:
             self.write_now()
-        except OSError:
-            pass
+        except OSError as exc:
+            self._record_write_error(exc)
 
     def stop(self, *, state: str = "stopped") -> None:
         self.update(
