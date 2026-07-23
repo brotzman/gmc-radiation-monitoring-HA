@@ -1,5 +1,16 @@
 # Changelog
 
+## 9.0.2
+
+- Added independent live measurement-freshness states and explicit estimated-dose wording with conversion-factor context.
+- Added report period presets, custom-range validation, browser-local form persistence and actionable preview errors.
+- Added gap-aware history rendering, chart reset and SVG export controls.
+- Added collapsible connection details and privacy-safe copyable support diagnostics.
+- Added state-transition recovery notifications without repeating unchanged alerts.
+- Improved mobile touch targets, safe-area behaviour, reduced-motion support and multilingual regression validation.
+- Added targeted tests for period resolution, freshness classification, diagnostics redaction and data-gap rendering.
+- Kept database schema 8 and all measurement, detector, calibration and scientific algorithms unchanged.
+
 ## 9.0.1
 
 - Fixed the report-preview endpoint crash caused by passing a default argument to the two-argument `_one()` query helper.
