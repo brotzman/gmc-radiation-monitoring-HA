@@ -2,25 +2,21 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import yaml
 from gmc_bridge.reports import (
     _PAGE1_ASSESSMENT_RECT,
     _PAGE1_CHART_RECT,
     _PAGE1_METROLOGY_Y,
 )
-from gmc_bridge.version import APP_VERSION
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_8411_release_metadata_and_notes_are_current() -> None:
-    config = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
-    assert APP_VERSION == "8.4.11"
-    assert config["version"] == "8.4.11"
-    notes = (ROOT / "RELEASE_NOTES_8.4.11.md").read_text(encoding="utf-8")
-    assert "report-layout maintenance release" in notes
-    assert "released in version 8.4.10" in notes
-    assert "bridge-heartbeat behavior" in notes
+def test_8411_release_scope_remains_in_changelog() -> None:
+    changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    release_8411 = changelog.split("## 8.4.11", 1)[1].split("\n## ", 1)[0]
+    assert "report-layout" in release_8411
+    assert "bridge-heartbeat" in release_8411
+    assert "8.4.10" in release_8411
 
 
 def test_8410_and_8411_documentation_scopes_are_separate() -> None:

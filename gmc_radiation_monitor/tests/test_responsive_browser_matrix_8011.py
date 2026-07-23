@@ -144,6 +144,21 @@ def test_dashboard_browser_language_and_viewport_matrix(tmp_path: Path, engine: 
                         screenshot = tmp_path / f"dashboard-{engine}-{name}.png"
                         page.screenshot(path=str(screenshot), full_page=False)
                         screenshots[name] = _assert_screenshot(screenshot, viewport)
+
+                    if viewport["width"] <= 800:
+                        assert page.locator("#dashboard-controls").evaluate(
+                            "el => getComputedStyle(el).position"
+                        ) == "sticky"
+                        page.locator("#reports").scroll_into_view_if_needed()
+                        page.wait_for_timeout(25)
+                        nav_box = page.locator("#dashboard-controls").bounding_box()
+                        assert nav_box is not None and nav_box["y"] <= 13
+                        for selector in ("input[name=date]", "input[name=week]"):
+                            field = page.locator(selector).bounding_box()
+                            form = page.locator(selector).locator("xpath=ancestor::form[1]").bounding_box()
+                            assert field is not None and form is not None
+                            assert field["x"] >= form["x"] - 0.5
+                            assert field["x"] + field["width"] <= form["x"] + form["width"] + 0.5
                     context.close()
         finally:
             browser.close()

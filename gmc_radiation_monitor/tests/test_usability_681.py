@@ -129,7 +129,8 @@ def test_status_stays_at_top_and_only_navigation_is_sticky(tmp_path: Path) -> No
     assert page.index('<section class="status-strip"') < page.index('<nav class="dashboard-controls"')
     assert ".status-strip { position:static;" in page
     assert ".dashboard-controls { position:sticky; top:0; z-index:50;" in page
-    assert ".dashboard-controls { position:static; flex-wrap:wrap; backdrop-filter:none; }" in page
+    assert ".dashboard-controls { position:-webkit-sticky; position:sticky;" in page
+    assert "top:env(safe-area-inset-top,0px)" in page
     assert "dashboardControls.getBoundingClientRect().height + 12" in page
 
 
