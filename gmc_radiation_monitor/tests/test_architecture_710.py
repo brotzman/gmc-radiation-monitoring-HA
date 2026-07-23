@@ -78,9 +78,9 @@ def _profile() -> dict[str, object]:
 
 
 def test_release_version_is_710() -> None:
-    assert APP_VERSION == "9.0.1"
-    assert "version: 9.0.1" in (ROOT / "config.yaml").read_text(encoding="utf-8")
-    assert (ROOT / "RELEASE_NOTES_9.0.1.md").is_file()
+    assert APP_VERSION == "9.0.2"
+    assert "version: 9.0.2" in (ROOT / "config.yaml").read_text(encoding="utf-8")
+    assert (ROOT / "RELEASE_NOTES_9.0.2.md").is_file()
 
 
 def test_every_dashboard_analysis_builder_returns_the_shared_model() -> None:
