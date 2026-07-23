@@ -1,5 +1,19 @@
 # Changelog
 
+## 9.0.0
+
+- Corrected Poisson uncertainty and significance calculations for overlapping rolling CPM windows when devices are polled faster than once per minute.
+- Added gap-aware time-weighted CPM means, time-based coverage and uncovered-duration diagnostics across reports and history views.
+- Replaced restart-dependent cumulative GMCMap ACPM with a documented rolling 60-minute time-weighted value.
+- Added a seeded rolling baseline cache and rate-limited runtime diagnostics for recoverable operational failures.
+- Added a complete calibration dossier and traceability metadata.
+- Replaced full HTML device-card polling with a compact JSON live endpoint and exponential retry backoff.
+- Unified custom report creation and added a live data-coverage preview before export.
+- Improved accessibility, reduced-motion handling, high-contrast behaviour and mobile form layout.
+- Extracted CSS and JavaScript into static assets and added dedicated time-series, report-statistics, baseline-cache, runtime-diagnostics and interface modules.
+- Strengthened localisation validation and updated all eight user manuals.
+- Kept database schema 8 and existing history fully compatible.
+
 ## 8.4.12
 
 - Restored the responsive floating dashboard navigation on phone and tablet layouts instead of disabling sticky positioning below 800 px.

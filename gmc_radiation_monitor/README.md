@@ -6,6 +6,10 @@ A local Home Assistant App (formerly add-on) for compatible GQ GMC Geiger counte
 
 > **Safety notice:** This add-on is intended for monitoring and home automation. It is not a calibrated radiation-protection instrument. Derived dose rates, profiles, anomaly detection and recommendations do not replace official measurements, professional advice or emergency instructions.
 
+## Version 9.0.0: scientific and architectural renewal
+
+Version 9.0.0 distinguishes sample-based distribution statistics from time-based period estimates. Overlapping rolling CPM values are no longer counted as independent minutes, long data gaps cannot be hidden by dense retry bursts, and report means and coverage are calculated over observed time. GMCMap ACPM is now a defined rolling 60-minute value. The dashboard uses versioned static assets and compact JSON live updates, while report creation provides a live coverage preview. Calibration profiles can include a complete traceability dossier. Existing schema-8 databases remain compatible.
+
 ## Features
 
 - Multi-device dashboard with identity, serial port, profile, capabilities, current value, history count and connection state for every GMC

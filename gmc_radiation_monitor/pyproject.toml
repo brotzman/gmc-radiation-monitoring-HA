@@ -26,6 +26,19 @@ files = [
   "rootfs/usr/local/lib/gmc_bridge/serial_device.py",
   "rootfs/usr/local/lib/gmc_bridge/serial_discovery.py",
   "rootfs/usr/local/lib/gmc_bridge/serial_scheduler.py",
+  "rootfs/usr/local/lib/gmc_bridge/interfaces.py",
+  "rootfs/usr/local/lib/gmc_bridge/time_series.py",
+  "rootfs/usr/local/lib/gmc_bridge/report_statistics.py",
+  "rootfs/usr/local/lib/gmc_bridge/baseline_cache.py",
+  "rootfs/usr/local/lib/gmc_bridge/runtime_diagnostics.py",
+  "rootfs/usr/local/lib/gmc_bridge/scientific_analysis.py",
+  "rootfs/usr/local/lib/gmc_bridge/analysis.py",
+  "rootfs/usr/local/lib/gmc_bridge/gmcmap.py",
+  "rootfs/usr/local/lib/gmc_bridge/bridge_heartbeat.py",
+  "rootfs/usr/local/lib/gmc_bridge/web_assets.py",
+  "rootfs/usr/local/lib/gmc_bridge/report_server.py",
+  "rootfs/usr/local/lib/gmc_bridge/report_http_responses.py",
+  "rootfs/usr/local/lib/gmc_bridge/report_http_utils.py",
 ]
 ignore_missing_imports = true
 check_untyped_defs = true
