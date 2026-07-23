@@ -26,17 +26,16 @@ def _row(timestamp: int, cpm: int) -> HistoryRow:
 
 def test_900_release_metadata_and_single_release_notes() -> None:
     config = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
-    assert APP_VERSION == "9.0.0"
-    assert config["version"] == "9.0.0"
+    assert APP_VERSION == "9.0.1"
+    assert config["version"] == "9.0.1"
     notes = sorted(path.name for path in ROOT.glob("RELEASE_NOTES_*.md"))
-    assert notes == ["RELEASE_NOTES_9.0.0.md"]
+    assert notes == ["RELEASE_NOTES_9.0.1.md"]
     text = (ROOT / notes[0]).read_text(encoding="utf-8")
     for phrase in (
-        "overlapping rolling CPM windows",
-        "time-based coverage",
-        "rolling 60-minute value",
-        "calibration dossier",
-        "floating dashboard navigation",
+        "report-preview API failure",
+        "defaulted it safely to `daily`",
+        "regression coverage",
+        "database schema 8",
     ):
         assert phrase in text
 
@@ -155,8 +154,8 @@ def test_dashboard_uses_versioned_assets_compact_live_api_and_unified_report_for
         ui_mode="advanced",
     )
     page = app.render_index(language_override="de", mode_override="advanced").decode()
-    assert './assets/dashboard.css?v=9.0.0' in page
-    assert './assets/dashboard.js?v=9.0.0' in page
+    assert './assets/dashboard.css?v=9.0.1' in page
+    assert './assets/dashboard.js?v=9.0.1' in page
     assert page.count('id="custom-report-form"') == 1
     assert 'id="report-generation-preview"' in page
     payload = app.live_devices_payload(language_override="de", device_override="SERIAL")
@@ -210,9 +209,9 @@ def test_translation_catalogues_are_complete_and_not_likely_untranslated() -> No
 def test_all_eight_manuals_are_current_and_describe_version_900() -> None:
     manuals = sorted(DOCS.glob("*.pdf"))
     assert len(manuals) == 8
-    assert all("9.0.0" in path.name for path in manuals)
+    assert all("9.0.1" in path.name for path in manuals)
     for manual in manuals:
         reader = PdfReader(str(manual))
         text = "\n".join((page.extract_text() or "") for page in (reader.pages[0], reader.pages[-1]))
-        assert "9.0.0" in text
+        assert "9.0.1" in text
         assert len(reader.pages) >= 24

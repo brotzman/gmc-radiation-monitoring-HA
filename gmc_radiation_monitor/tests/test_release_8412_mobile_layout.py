@@ -26,11 +26,12 @@ def _page(tmp_path: Path) -> str:
 
 def test_8412_release_metadata_is_current() -> None:
     config = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
-    assert APP_VERSION == "9.0.0"
-    assert config["version"] == "9.0.0"
-    notes = (ROOT / "RELEASE_NOTES_9.0.0.md").read_text(encoding="utf-8")
-    assert "floating dashboard navigation" in notes
-    assert "date, ISO-week, month and date-time inputs" in notes
+    assert APP_VERSION == "9.0.1"
+    assert config["version"] == "9.0.1"
+    changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    section = changelog.split("## 8.4.12", 1)[1].split("## 8.4.11", 1)[0]
+    assert "floating dashboard navigation" in section
+    assert "date, week, month and date-time fields" in section
 
 
 def test_mobile_navigation_remains_sticky_and_compact(tmp_path: Path) -> None:
