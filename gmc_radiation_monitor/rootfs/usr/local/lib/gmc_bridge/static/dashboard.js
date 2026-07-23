@@ -3,6 +3,12 @@
   const analysisDevice = window.GMC_BOOTSTRAP.analysisDevice || "";
   const uiStorageKey = 'gmc-dashboard-usability-v1';
   const uiText = window.GMC_BOOTSTRAP.uiText || {};
+  const uiLanguage = (document.documentElement.lang || 'en').toLowerCase();
+  const uiLocale = uiLanguage === 'de' ? 'de-DE' : uiLanguage === 'en' ? 'en-US' : uiLanguage;
+  function formatUiNumber(value, options = {}) {
+    const number = Number(value || 0);
+    return new Intl.NumberFormat(uiLocale, options).format(Number.isFinite(number) ? number : 0);
+  }
 
   function resolveDashboardUrl(value) {
     try { return new URL(value, window.location.href); }
@@ -314,8 +320,8 @@
   function formatDuration(seconds) {
     const value = Math.max(0, Number(seconds || 0));
     if (value < 3600) return `${Math.round(value / 60)} min`;
-    if (value < 86400) return `${(value / 3600).toFixed(1)} h`;
-    return `${(value / 86400).toFixed(1)} d`;
+    if (value < 86400) return `${formatUiNumber(value / 3600, { minimumFractionDigits:1, maximumFractionDigits:1 })} h`;
+    return `${formatUiNumber(value / 86400, { minimumFractionDigits:1, maximumFractionDigits:1 })} d`;
   }
   function setReportStatus(message = '', tone = '') {
     if (!reportFormStatus) return;
@@ -403,8 +409,8 @@
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || `preview failed: ${response.status}`);
       if (reportPreviewPeriod) reportPreviewPeriod.textContent = data.period_label || '—';
-      if (reportPreviewCoverage) reportPreviewCoverage.textContent = `${Number(data.time_coverage_percent || 0).toFixed(1)} %`;
-      if (reportPreviewSamples) reportPreviewSamples.textContent = Number(data.samples || 0).toLocaleString();
+      if (reportPreviewCoverage) reportPreviewCoverage.textContent = `${formatUiNumber(data.time_coverage_percent, { minimumFractionDigits:1, maximumFractionDigits:1 })} %`;
+      if (reportPreviewSamples) reportPreviewSamples.textContent = formatUiNumber(data.samples, { maximumFractionDigits:0 });
       if (reportPreviewGap) reportPreviewGap.textContent = formatDuration(data.gap_seconds);
       if (reportPreviewWarning) { reportPreviewWarning.textContent = data.warning || ''; reportPreviewWarning.hidden = !data.warning; }
     } catch (error) {
@@ -452,16 +458,16 @@
     try {
       const response = await fetch('?action=restore-preview', { method:'POST', body, credentials:'same-origin', headers:{'Accept':'application/json'} });
       const data = await response.json(); const previewToken = restoreForm.querySelector('input[name="preview_csrf_token"]'); if (previewToken && data.next_csrf_token) previewToken.value = data.next_csrf_token; if (!response.ok) throw new Error(data.error || uiText.previewFailed);
-      const formatTime = (value) => value ? new Date(value * 1000).toLocaleString() : uiText.noData;
-      const formatSize = (value) => `${(Number(value || 0) / 1024 / 1024).toFixed(2)} MiB`;
+      const formatTime = (value) => value ? new Date(value * 1000).toLocaleString(uiLocale) : uiText.noData;
+      const formatSize = (value) => `${formatUiNumber(Number(value || 0) / 1024 / 1024, { minimumFractionDigits:2, maximumFractionDigits:2 })} MiB`;
       if (output) {
         output.replaceChildren();
         const headline = document.createElement('strong'); headline.textContent = uiText.backupReady; output.appendChild(headline);
         const grid = document.createElement('div'); grid.className = 'restore-preview-grid';
         const values = [
           [uiText.integrity, data.integrity], [uiText.schema, `${data.schema_version} / ${data.supported_schema_version}`],
-          [uiText.measurements, Number(data.measurements || 0).toLocaleString()], [uiText.rawMeasurements, Number(data.raw_measurements || 0).toLocaleString()],
-          [uiText.annotations, Number(data.annotations || 0).toLocaleString()], [uiText.devices, (data.device_serials || []).length.toLocaleString()], [uiText.fileSize, formatSize(data.size_bytes)],
+          [uiText.measurements, formatUiNumber(data.measurements, { maximumFractionDigits:0 })], [uiText.rawMeasurements, formatUiNumber(data.raw_measurements, { maximumFractionDigits:0 })],
+          [uiText.annotations, formatUiNumber(data.annotations, { maximumFractionDigits:0 })], [uiText.devices, formatUiNumber((data.device_serials || []).length, { maximumFractionDigits:0 })], [uiText.fileSize, formatSize(data.size_bytes)],
           [uiText.dataPeriod, `${formatTime(data.first_timestamp_utc)} – ${formatTime(data.last_timestamp_utc)}`],
         ];
         values.forEach(([label,value]) => { const cell=document.createElement('div'); const title=document.createElement('strong'); title.textContent=label; const content=document.createElement('span'); content.textContent=String(value); cell.append(title,content); grid.appendChild(cell); });

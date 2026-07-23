@@ -4,6 +4,7 @@ import html
 from collections.abc import Callable
 from typing import Any
 
+from .number_format import format_number, translator_language
 from .calibration_presets import PRESETS, infer_profile_id
 from .metrology import (
     DualTubeMetrologyConfig,
@@ -74,11 +75,11 @@ def dual_tube_config_from_device(item: dict[str, Any]) -> DualTubeMetrologyConfi
     )
 
 
-def _value(value: object, suffix: str = "", decimals: int | None = None) -> str:
+def _value(value: object, suffix: str = "", decimals: int | None = None, language: str = "en") -> str:
     if value in (None, ""):
         return "—"
     if isinstance(value, (int, float)):
-        rendered = f"{float(value):.{decimals}f}" if decimals is not None else f"{float(value):g}"
+        rendered = format_number(float(value), language, decimals=decimals, trim=decimals is None)
     else:
         rendered = str(value)
     if suffix.startswith(" "):
@@ -134,8 +135,8 @@ def _tube_card(
         f'<div class="tube-title"><strong>{html.escape(profile.tube_model or heading)}</strong>{active_label}</div>'
         f'<div class="tube-state"><span>{state_icon}</span>{html.escape(state_label)}</div>'
         '<dl>'
-        f'<div><dt>{html.escape(t("Conversion factor"))}</dt><dd>{html.escape(_value(profile.cpm_per_usvh, " CPM/(µSv/h)")) if profile.cpm_per_usvh is not None else html.escape(t("Not configured"))}</dd></div>'
-        f'<div><dt>{html.escape(t("Dead time"))}</dt><dd>{html.escape(_value(profile.dead_time_us, " µs"))}</dd></div>'
+        f'<div><dt>{html.escape(t("Conversion factor"))}</dt><dd>{html.escape(_value(profile.cpm_per_usvh, " CPM/(µSv/h)", language=translator_language(t))) if profile.cpm_per_usvh is not None else html.escape(t("Not configured"))}</dd></div>'
+        f'<div><dt>{html.escape(t("Dead time"))}</dt><dd>{html.escape(_value(profile.dead_time_us, " µs", language=translator_language(t)))}</dd></div>'
         f'<div><dt>{html.escape(t("Model"))}</dt><dd>{html.escape(t("Non-Paralyzable") if profile.dead_time_model == "nonparalyzable" else t("None"))}</dd></div>'
         '</dl></div>'
     )
@@ -301,7 +302,7 @@ def render_calibration_panel(*, item: dict[str, Any], latest_cpm: object, t: Tra
         source_label = calibration_source.replace("_", " ")
     active_display = active_name
     correction_label = t("Active") if correction_active else t("Inactive")
-    loss_label = t("No losses") if not loss else _value(loss, " %", 2)
+    loss_label = t("No losses") if not loss else _value(loss, " %", 2, translator_language(t))
 
     layout_html = (
         f'<small class="detector-layout-label">{html.escape(t("Single physical tube") if config.mode == "single" else t("Two physical tubes"))}</small>'
@@ -322,22 +323,22 @@ def render_calibration_panel(*, item: dict[str, Any], latest_cpm: object, t: Tra
         f'<div class="detector-tube-grid" data-analysis-tier="analysis">{tube_html}</div>'
         f'<div data-analysis-tier="analysis">{layout_html}</div>'
         '<div class="detector-load-card" data-analysis-tier="analysis">'
-        f'<div class="load-heading"><strong>{html.escape(t("Detector load"))}</strong><span>{traffic_icon} {html.escape(_value(load, " %", 1))}</span></div>'
+        f'<div class="load-heading"><strong>{html.escape(t("Detector load"))}</strong><span>{traffic_icon} {html.escape(_value(load, " %", 1, translator_language(t)))}</span></div>'
         f'<div class="load-track"><span class="load-fill {traffic}" style="width:{load_width:.1f}%"></span></div></div>'
         '<div class="calibration-grid" data-analysis-tier="analysis"><div class="dead-time-monitor">'
         + (f'<div><strong>{html.escape(t("Active detector"))}</strong><span>{html.escape(active_display)}</span></div>' if config.mode != "single" else "")
         + f'<div><strong>{html.escape(t("Estimated losses"))}</strong><span>{html.escape(loss_label)}</span></div>'
         f'<div><strong>{html.escape(t("Correction"))}</strong><span>{html.escape(correction_label)}</span></div>'
-        f'<div><strong>{html.escape(t("Live dose quality"))}</strong><span>{html.escape(_value(dose, " µSv/h", 4))} · {html.escape(accuracy_label)}</span></div>'
+        f'<div><strong>{html.escape(t("Live dose quality"))}</strong><span>{html.escape(_value(dose, " µSv/h", 4, translator_language(t)))} · {html.escape(accuracy_label)}</span></div>'
         '</div></div>'
         '<section class="measurement-details" data-analysis-tier="expert">'
         f'<div class="measurement-details-header"><strong>{html.escape(t("Measurement details"))}</strong></div>'
         '<div class="measurement-details-body"><div class="expert-statistics">'
-        f'<div><strong>{html.escape(t("Raw CPM"))}</strong><span>{html.escape(_value(latest_cpm, " CPM"))}</span></div>'
-        f'<div><strong>{html.escape(t("Corrected CPM"))}</strong><span>{html.escape(_value(corrected, " CPM", 1))}</span></div>'
-        f'<div><strong>{html.escape(t("Dead-time losses"))}</strong><span>{html.escape(_value(loss, " %", 2))}</span></div>'
-        f'<div><strong>{html.escape(t("Correction factor"))}</strong><span>{html.escape(_value(factor, "", 4))}</span></div>'
-        f'<div class="measurement-quality-row"><strong title="{html.escape(t("Measurement quality explanation"), quote=True)}">{html.escape(t("Measurement quality"))} ⓘ</strong><span class="quality-stars">{html.escape(stars)} <small>({quality_index}/100)</small></span></div>'
+        f'<div><strong>{html.escape(t("Raw CPM"))}</strong><span>{html.escape(_value(latest_cpm, " CPM", language=translator_language(t)))}</span></div>'
+        f'<div><strong>{html.escape(t("Corrected CPM"))}</strong><span>{html.escape(_value(corrected, " CPM", 1, translator_language(t)))}</span></div>'
+        f'<div><strong>{html.escape(t("Dead-time losses"))}</strong><span>{html.escape(_value(loss, " %", 2, translator_language(t)))}</span></div>'
+        f'<div><strong>{html.escape(t("Correction factor"))}</strong><span>{html.escape(_value(factor, "", 4, translator_language(t)))}</span></div>'
+        f'<div class="measurement-quality-row"><strong title="{html.escape(t("Measurement quality explanation"), quote=True)}">{html.escape(t("Measurement quality"))} ⓘ</strong><span class="quality-stars">{html.escape(stars)} <small>({format_number(quality_index, translator_language(t))}/100)</small></span></div>'
         '</div>'
         f'<small class="measurement-quality-explanation">{html.escape(t("Measurement quality explanation"))}</small></div></section>'
         + (f'<ul class="calibration-warnings">{warnings_html}</ul>' if warnings_html else "")

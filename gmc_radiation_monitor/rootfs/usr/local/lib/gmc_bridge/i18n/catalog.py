@@ -1355,7 +1355,7 @@ _release_900_report_preview = {
 for _language, _catalogue in _release_900_report_preview.items():
     CATALOGS[_language].update(_catalogue)
 
-# Version 9.0.2: focused live-status, report-period and support-diagnostics wording.
+# Version 9.0.2-9.0.3: focused live status, compact status and diagnostics wording.
 _release_902_overrides = {
     "en": {
         "Reconnecting": "Reconnecting",
@@ -1732,3 +1732,65 @@ _not_available_902 = {
 }
 for _language, _value in _not_available_902.items():
     CATALOGS[_language]["Not available"] = _value
+
+# Version 9.0.3: compact system-status panel and localized German display numbers.
+_release_903_overrides = {
+    "en": {
+        "System running normally": "System running normally",
+        "Attention required": "Attention required",
+        "Show status details": "Show status details",
+        "Storage current": "Storage current",
+        "No successful storage yet": "No successful storage yet",
+    },
+    "de": {
+        "System running normally": "System läuft normal",
+        "Attention required": "Aufmerksamkeit erforderlich",
+        "Show status details": "Statusdetails anzeigen",
+        "Storage current": "Speicherung aktuell",
+        "No successful storage yet": "Noch keine erfolgreiche Speicherung",
+    },
+    "fr": {
+        "System running normally": "Le système fonctionne normalement",
+        "Attention required": "Attention requise",
+        "Show status details": "Afficher les détails d’état",
+        "Storage current": "Enregistrement à jour",
+        "No successful storage yet": "Aucun enregistrement réussi",
+    },
+    "es": {
+        "System running normally": "El sistema funciona con normalidad",
+        "Attention required": "Se requiere atención",
+        "Show status details": "Mostrar detalles del estado",
+        "Storage current": "Almacenamiento actualizado",
+        "No successful storage yet": "Aún no hay almacenamiento correcto",
+    },
+    "it": {
+        "System running normally": "Il sistema funziona normalmente",
+        "Attention required": "È richiesta attenzione",
+        "Show status details": "Mostra dettagli stato",
+        "Storage current": "Salvataggio aggiornato",
+        "No successful storage yet": "Nessun salvataggio riuscito",
+    },
+    "nl": {
+        "System running normally": "Het systeem werkt normaal",
+        "Attention required": "Aandacht vereist",
+        "Show status details": "Statusdetails tonen",
+        "Storage current": "Opslag actueel",
+        "No successful storage yet": "Nog geen geslaagde opslag",
+    },
+    "pl": {
+        "System running normally": "System działa prawidłowo",
+        "Attention required": "Wymagana uwaga",
+        "Show status details": "Pokaż szczegóły stanu",
+        "Storage current": "Zapis aktualny",
+        "No successful storage yet": "Brak udanego zapisu",
+    },
+    "hr": {
+        "System running normally": "Sustav radi normalno",
+        "Attention required": "Potrebna je pozornost",
+        "Show status details": "Prikaži pojedinosti stanja",
+        "Storage current": "Pohrana je ažurna",
+        "No successful storage yet": "Još nema uspješne pohrane",
+    },
+}
+for _language, _catalogue in _release_903_overrides.items():
+    CATALOGS[_language].update(_catalogue)

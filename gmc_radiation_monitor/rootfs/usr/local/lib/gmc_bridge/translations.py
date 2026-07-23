@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from decimal import Decimal
 
 from .i18n import CATALOGS, SUPPORTED_UI_LANGUAGES, validate_catalogs
+from .number_format import LocalizedNumber
 
 # Backwards-compatible alias used by existing tests and integrations.
 _TRANSLATIONS = CATALOGS
@@ -14,7 +16,13 @@ class Translator:
 
     def __call__(self, text: str, **values: object) -> str:
         translated = _TRANSLATIONS.get(self.language, {}).get(text, text)
-        return translated.format(**values) if values else translated
+        if not values:
+            return translated
+        localized_values = {
+            key: LocalizedNumber(value, self.language) if isinstance(value, (int, float, Decimal)) and not isinstance(value, bool) else value
+            for key, value in values.items()
+        }
+        return translated.format(**localized_values)
 
 
 def resolve_language(

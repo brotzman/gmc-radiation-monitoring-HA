@@ -9,6 +9,7 @@ from typing import Any, Protocol
 from urllib.parse import quote_plus
 
 from .backup_manager import ManagedBackup
+from .number_format import format_number, localize_numeric_text, translator_language
 from .workflow import CheckResult, PeriodComparison, WorkflowSettings
 
 
@@ -22,10 +23,10 @@ def _checked(value: bool) -> str:
     return " checked" if value else ""
 
 
-def _format_time(timestamp: int | None, timezone) -> str:
+def _format_time(timestamp: int | None, timezone, language: str = "en") -> str:
     if not timestamp:
         return "—"
-    return datetime.fromtimestamp(int(timestamp), UTC).astimezone(timezone).strftime("%Y-%m-%d %H:%M %Z")
+    return datetime.fromtimestamp(int(timestamp), UTC).astimezone(timezone).strftime("%d.%m.%Y %H:%M %Z" if language == "de" else "%Y-%m-%d %H:%M %Z")
 
 
 def _metric(title: str, value: str, detail: str = "") -> str:
@@ -39,8 +40,12 @@ def _metric(title: str, value: str, detail: str = "") -> str:
 def _comparison_html(comparison: PeriodComparison, t: TranslatorLike) -> str:
     first = comparison.first
     second = comparison.second
+    language = translator_language(t)
+
     def shown(value: float | int | None, suffix: str = "") -> str:
-        return "—" if value is None else f"{value:.2f}{suffix}" if isinstance(value, float) else f"{value}{suffix}"
+        if value is None:
+            return "—"
+        return f"{format_number(value, language, decimals=2) if isinstance(value, float) else format_number(value, language, grouping=True)}{suffix}"
     interpretation = {
         "insufficient_data": t("Not enough data for a comparison"),
         "low_coverage": t("The comparison is only indicative because data coverage is low"),
@@ -145,7 +150,7 @@ def _history_chart(
         y = y_for(value)
         y_grid.append(
             f'<line x1="13" y1="{y:.2f}" x2="114" y2="{y:.2f}" class="history-grid-line"/>'
-            f'<text x="11.2" y="{y + 0.9:.2f}" text-anchor="end" class="history-axis-label">{value:.1f}</text>'
+            f'<text x="11.2" y="{y + 0.9:.2f}" text-anchor="end" class="history-axis-label">{format_number(value, translator_language(t), decimals=1)}</text>'
         )
     x_grid: list[str] = []
     for fraction in (0.0, 0.5, 1.0):
@@ -164,7 +169,7 @@ def _history_chart(
         value = float(item.get("cpm") or 0.0)
         raw_markers.append(
             f'<circle cx="{x_for(timestamp):.2f}" cy="{y_for(value):.2f}" r="0.72" class="raw-rejected-marker">'
-            f'<title>{value:.0f} CPM · {html.escape(str(item.get("gate_state") or ""))}</title></circle>'
+            f'<title>{format_number(value, translator_language(t), decimals=0)} CPM · {html.escape(str(item.get("gate_state") or ""))}</title></circle>'
         )
     markers: list[str] = []
     for item in annotations:
@@ -195,10 +200,10 @@ def _history_chart(
         + f'<text x="63.5" y="52.2" text-anchor="middle" class="history-axis-title">{html.escape(t("Local date and time"))}</text>'
         + f'<text x="2.2" y="24.5" text-anchor="middle" transform="rotate(-90 2.2 24.5)" class="history-axis-title">{html.escape(t("Count rate [CPM]"))}</text>'
         + '</svg><figcaption>'
-        + f'<span>{html.escape(t("Minimum"))}: {minimum:.1f} CPM</span>'
-        + f'<span>{html.escape(t("Mean"))}: {mean:.1f} CPM</span>'
-        + f'<span>{html.escape(t("Maximum"))}: {maximum:.1f} CPM</span>'
-        + (f'<span>{html.escape(t("Rejected raw values"))}: {len(raw_points)}</span>' if raw_points else '')
+        + f'<span>{html.escape(t("Minimum"))}: {format_number(minimum, translator_language(t), decimals=1)} CPM</span>'
+        + f'<span>{html.escape(t("Mean"))}: {format_number(mean, translator_language(t), decimals=1)} CPM</span>'
+        + f'<span>{html.escape(t("Maximum"))}: {format_number(maximum, translator_language(t), decimals=1)} CPM</span>'
+        + (f'<span>{html.escape(t("Rejected raw values"))}: {format_number(len(raw_points), translator_language(t), grouping=True)}</span>' if raw_points else '')
         + '</figcaption></figure>'
     )
 
@@ -214,8 +219,8 @@ def render_scheduled_reports(
     delete_confirmation = html.escape(json.dumps(t("Delete this generated report?"), ensure_ascii=False), quote=True)
     rows = ''.join(
         '<div class="managed-backup-row"><div><strong>' + html.escape(str(item.get("name") or "")) + '</strong><small>'
-        + html.escape(_format_time(int(item.get("created_utc") or 0), timezone))
-        + f' · {int(item.get("size_bytes") or 0) / (1024 * 1024):.2f} MiB</small></div><div class="annotation-actions">'
+        + html.escape(_format_time(int(item.get("created_utc") or 0), timezone, t.language))
+        + f' · {format_number(int(item.get("size_bytes") or 0) / (1024 * 1024), t.language, decimals=2)} MiB</small></div><div class="annotation-actions">'
         + f'<a class="button" href="?action=scheduled-report-download&amp;name={quote_plus(str(item.get("name") or ""))}">{html.escape(t("Download"))}</a>'
         + f'<form method="post" action="?action=scheduled-report-delete" onsubmit="return confirm({delete_confirmation});">'
         + f'<input type="hidden" name="csrf_token" value="{html.escape(csrf_token, quote=True)}">'
@@ -242,7 +247,7 @@ def render_managed_backups(
     """Render all SQLite snapshot actions in the maintenance area."""
     rows = ''.join(
         '<div class="managed-backup-row"><div><strong>' + html.escape(item.name) + '</strong><small>'
-        + html.escape(_format_time(item.created_utc, timezone)) + f' · {item.size_bytes / (1024 * 1024):.2f} MiB · {int(item.summary.get("measurements", 0)):,} '
+        + html.escape(_format_time(item.created_utc, timezone, t.language)) + f' · {format_number(item.size_bytes / (1024 * 1024), t.language, decimals=2)} MiB · {format_number(int(item.summary.get("measurements", 0)), t.language, grouping=True)} '
         + html.escape(t("measurements")) + '</small></div><div class="annotation-actions">'
         f'<a class="button" href="?action=managed-backup-download&amp;name={quote_plus(item.name)}">{html.escape(t("Download"))}</a>'
         f'<form method="post" action="?action=managed-backup-delete"><input type="hidden" name="csrf_token" value="{html.escape(csrf_token, quote=True)}"><input type="hidden" name="name" value="{html.escape(item.name, quote=True)}"><button type="submit" class="danger">{html.escape(t("Delete"))}</button></form>'
@@ -293,7 +298,7 @@ def _render_annotation_rows(
         '<div class="annotation-row"><div><strong>'
         + html.escape(t(category_labels.get(str(item.get("category") or "other"), "Other")))
         + "</strong><small>"
-        + html.escape(_format_time(int(item.get("start_timestamp_utc") or 0), timezone))
+        + html.escape(_format_time(int(item.get("start_timestamp_utc") or 0), timezone, t.language))
         + " · "
         + html.escape(t(status_labels.get(str(item.get("status") or "note"), "Note")))
         + "</small><p>"
@@ -344,15 +349,15 @@ def render_history_section(
     def shown(value: Any, *, decimals: int = 1, suffix: str = "") -> str:
         if value is None:
             return "—"
-        return f"{float(value):.{decimals}f}{suffix}"
+        return f"{format_number(float(value), t.language, decimals=decimals)}{suffix}"
 
     summary_metrics = (
-        _metric(t("Accepted measurements"), f"{int(history_summary.get('samples') or 0):,}", t("Selected period"))
+        _metric(t("Accepted measurements"), format_number(int(history_summary.get('samples') or 0), t.language, grouping=True), t("Selected period"))
         + _metric(t("Data coverage"), shown(history_summary.get("coverage_percent"), decimals=1, suffix="%"), t("Expected from the configured scan interval"))
         + _metric(t("Mean count rate"), shown(history_summary.get("mean_cpm"), decimals=1, suffix=" CPM"), t("Accepted values only"))
         + _metric(t("Median count rate"), shown(history_summary.get("median_cpm"), decimals=1, suffix=" CPM"), t("Robust center of the selected period"))
         + _metric(t("Minimum / maximum"), f"{shown(history_summary.get('minimum_cpm'), decimals=1)} / {shown(history_summary.get('maximum_cpm'), decimals=1)} CPM", t("Accepted values only"))
-        + _metric(t("Rejected raw values"), (f"{int(history_summary['rejected_raw_count']):,}" if history_summary.get('rejected_raw_count') is not None else "—"), t("Visible only when the raw-value layer is enabled"))
+        + _metric(t("Rejected raw values"), (format_number(int(history_summary['rejected_raw_count']), t.language, grouping=True) if history_summary.get('rejected_raw_count') is not None else "—"), t("Visible only when the raw-value layer is enabled"))
     )
     return f"""
 <section class="advanced-only history-section" id="history">
@@ -424,12 +429,12 @@ def render_workflow_section(
         default=0,
     )
     if latest_schedule:
-        schedule_detail = t("Last scheduled report: {time}", time=_format_time(latest_schedule, timezone))
+        schedule_detail = t("Last scheduled report: {time}", time=_format_time(latest_schedule, timezone, t.language))
     notification_detail = t("No notification has been sent yet")
     if notifications.get("last_notification_success_utc"):
         notification_detail = t(
             "Last notification: {time}",
-            time=_format_time(int(notifications["last_notification_success_utc"]), timezone),
+            time=_format_time(int(notifications["last_notification_success_utc"]), timezone, t.language),
         )
     return f"""
 <section class="advanced-only workflow-section" id="workflow">

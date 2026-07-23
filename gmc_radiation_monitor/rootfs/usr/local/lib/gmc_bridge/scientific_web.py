@@ -8,6 +8,7 @@ from typing import Any
 from .calibration_presets import PRESETS
 from .device_profiles import normalize_device_version_display
 from .history import HistoryStore
+from .number_format import format_number, localize_numeric_text
 from .translations import Translator
 
 
@@ -34,7 +35,7 @@ def render_device_comparison(*, devices: list[dict[str, Any]], t: Translator) ->
             + "</strong><small>"
             + html.escape(serial)
             + "</small></div><span>"
-            + html.escape(f"{float(item.get('cpm') or 0):.1f} CPM")
+            + html.escape(f"{format_number(float(item.get('cpm') or 0), t.language, decimals=1)} CPM")
             + "</span></div>"
         )
     return (
@@ -48,7 +49,7 @@ def render_device_comparison(*, devices: list[dict[str, Any]], t: Translator) ->
         + "".join(rows)
         + '<div class="device-comparison-summary"><strong>'
         + html.escape(t("Maximum deviation"))
-        + f"</strong><span>{deviation:.1f} %</span></div></div></section>"
+        + f"</strong><span>{format_number(deviation, t.language, decimals=1)} %</span></div></div></section>"
     )
 
 
@@ -81,7 +82,7 @@ def render_calibration_management(
             + "</small>"
             + secondary
             + "</div><span>"
-            + html.escape(f"{preset.cpm_per_usvh:g} CPM/µSv/h")
+            + html.escape(f"{format_number(preset.cpm_per_usvh, t.language, trim=True)} CPM/µSv/h")
             + "</span></div>"
         )
     custom_rows: list[str] = []
@@ -93,7 +94,7 @@ def render_calibration_management(
             + "</strong><small>"
             + html.escape(str(item.get("detector_type") or ""))
             + "</small></div><span>"
-            + html.escape(str(values.get("cpm_per_usvh") or "—"))
+            + html.escape(localize_numeric_text(values.get("cpm_per_usvh") or "—", t.language, group_plain_integers=True))
             + " CPM/µSv/h</span></div>"
         )
     if not custom_rows:

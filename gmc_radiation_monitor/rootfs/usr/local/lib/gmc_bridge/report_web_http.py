@@ -20,6 +20,7 @@ from .calibration_http import (
 )
 from .config_validation import validate_candidate_options
 from .maintenance import diagnostics_json_bytes, full_history_zip_to_path, support_diagnostics_text
+from .number_format import format_number
 from .report_http_responses import HttpResponseMixin
 from .report_http_utils import localized_exception_message as _localized_exception_message
 from .report_web_support import (
@@ -748,12 +749,12 @@ class ReportRequestHandler(HttpResponseMixin, BaseHTTPRequestHandler):
                 f"<!doctype html><meta charset=utf-8><title>{html.escape(t('History deleted'))}</title>"
                 f"<h1>{html.escape(t('All GMC history was deleted'))}</h1>"
                 f"<ul>"
-                f"<li>✓ {html.escape(t('Internal database cleared'))}: {int(result['measurements']):,} {html.escape(t('measurements'))}</li>"
-                f"<li>✓ {html.escape(t('Raw-data archive'))}: {int(result.get('raw_measurements', 0)):,}</li>"
-                f"<li>✓ {html.escape(t('Operational events cleared'))}: {int(result['events']):,}</li>"
-                f"<li>✓ {html.escape(t('Ingest diagnostics cleared'))}: {int(result['diagnostics']):,}</li>"
-                f"<li>✓ {html.escape(t('Home Assistant Recorder history cleared'))}: {entity_count} exact Home Assistant entities</li>"
-                f"<li>✓ Home Assistant long-term statistics cleared: {statistic_count}</li>"
+                f"<li>✓ {html.escape(t('Internal database cleared'))}: {format_number(int(result['measurements']), t.language, grouping=True)} {html.escape(t('measurements'))}</li>"
+                f"<li>✓ {html.escape(t('Raw-data archive'))}: {format_number(int(result.get('raw_measurements', 0)), t.language, grouping=True)}</li>"
+                f"<li>✓ {html.escape(t('Operational events cleared'))}: {format_number(int(result['events']), t.language, grouping=True)}</li>"
+                f"<li>✓ {html.escape(t('Ingest diagnostics cleared'))}: {format_number(int(result['diagnostics']), t.language, grouping=True)}</li>"
+                f"<li>✓ {html.escape(t('Home Assistant Recorder history cleared'))}: {format_number(entity_count, t.language, grouping=True)} exact Home Assistant entities</li>"
+                f"<li>✓ Home Assistant long-term statistics cleared: {format_number(statistic_count, t.language, grouping=True)}</li>"
                 f"<li>✓ {html.escape(t('SQLite database vacuum completed'))}</li>"
                 f"<li>✓ {html.escape(t('Ready for new measurements'))}</li>"
                 f"</ul>"

@@ -4,6 +4,7 @@ import html
 from typing import Protocol
 
 from .explanations import translate_action, translate_explanation
+from .number_format import format_number, localize_numeric_text, translator_language
 from .presentation_models import AnalysisLevel, AnalysisMetric, AnalysisResult, AnalysisStatus
 
 
@@ -64,7 +65,7 @@ def render_metric_card(metric: AnalysisMetric, translator: TranslatorLike) -> st
     shown_value = (
         translator(metric.value_key, **translated_template_values(dict(metric.value_values), translator))
         if metric.value_key
-        else metric.value
+        else localize_numeric_text(metric.value, translator_language(translator), group_plain_integers=True)
     )
     return (
         f'<div class="metric{priority_class}" data-metric-key="{html.escape(metric.key, quote=True)}" '
@@ -161,7 +162,7 @@ def render_analysis_result_summary(result: AnalysisResult, translator: Translato
     if result.confidence is not None:
         confidence = (
             f'<small>{html.escape(translator("Confidence"))}: '
-            f'{float(result.confidence) * 100.0:.0f}%</small>'
+            f'{format_number(float(result.confidence) * 100.0, translator_language(translator), decimals=0)}%</small>'
         )
     action = translate_action(result.action_code, translator)
     action_html = (

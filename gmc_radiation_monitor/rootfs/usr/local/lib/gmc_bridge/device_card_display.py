@@ -5,6 +5,8 @@ import math
 from collections.abc import Callable
 from typing import Any
 
+from .number_format import format_number, localize_numeric_text, translator_language
+
 TranslatorLike = Callable[..., str]
 
 
@@ -137,7 +139,7 @@ def render_live_measurement(
         try:
             factor_value = float(cpm_per_usvh)
             if math.isfinite(factor_value) and factor_value > 0:
-                factor = f'<span class="measurement-chip factor-chip">{html.escape(t("Factor"))}: {factor_value:g} CPM/(µSv/h)</span>'
+                factor = f'<span class="measurement-chip factor-chip">{html.escape(t("Factor"))}: {format_number(factor_value, translator_language(t), trim=True)} CPM/(µSv/h)</span>'
         except (TypeError, ValueError):
             pass
     return (
@@ -191,20 +193,28 @@ def render_connection_details(
     tube_values: str = "",
     diagnostics_values: str = "",
 ) -> str:
+    language = translator_language(t)
+
+    def shown_integer(value: object, *, grouping: bool = True) -> str:
+        try:
+            return format_number(int(value), language, grouping=grouping)
+        except (TypeError, ValueError):
+            return localize_numeric_text(value, language)
+
     rows = (
         ("Serial", serial_value, ""),
         ("Serial port", str(port), "technical-value"),
-        ("Baud rate", str(baudrate), ""),
-        ("Measurement interval", f"{interval_seconds} s", ""),
+        ("Baud rate", shown_integer(baudrate), ""),
+        ("Measurement interval", f"{shown_integer(interval_seconds, grouping=False)} s", ""),
         ("Last successful response", last_response, ""),
         ("Next automatic scan", next_scan, ""),
         ("Connection state updated", status_updated, ""),
         ("Connection reason", runtime_reason, ""),
-        ("Reconnects since app start", str(reconnects), ""),
-        ("Serial errors since app start", str(serial_errors), ""),
+        ("Reconnects since app start", shown_integer(reconnects), ""),
+        ("Serial errors since app start", shown_integer(serial_errors), ""),
         ("Profile", profile, ""),
         ("Device capabilities", capabilities, ""),
-        ("Stored samples for this device", f"{stored_samples:,}", ""),
+        ("Stored samples for this device", shown_integer(stored_samples), ""),
     )
     fields = "".join(
         f'<div class="device-field"><strong>{html.escape(t(label))}</strong>'

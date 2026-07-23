@@ -48,6 +48,7 @@ from .historical_presentation import trend_symbol
 from .history import DEFAULT_DB_PATH, HistoryStore
 from .home_assistant import HomeAssistantConfigClient, HomeAssistantPressureClient
 from .intelligence import build_radiation_intelligence
+from .number_format import format_number, localize_numeric_text
 from .orientation import calculate_orientation, orientation_status
 from .report_web_http import ReportRequestHandler, _localized_exception_message
 from .report_web_support import (
@@ -232,7 +233,6 @@ class ReportApplication(WorkflowApplicationMixin):
             result["_cpm_per_usvh"] = cpm_per_usvh
             return result
         return self.analysis_cache.get_or_build(key, build)
-
     def _fleet_context_cached(self, *, selected_serial: str, devices: list[dict[str, Any]]) -> dict[str, Any]:
         revision = self._data_revision()
         device_signature = tuple(
@@ -246,7 +246,6 @@ class ReportApplication(WorkflowApplicationMixin):
             )
         )
         key = ("fleet-context", revision, selected_serial, device_signature)
-
         def build() -> dict[str, Any]:
             fleet_snapshot = build_fleet_snapshot(self.store)
             selected_rows = self.store.query_all(device_serial=selected_serial) if selected_serial else []
@@ -292,7 +291,6 @@ class ReportApplication(WorkflowApplicationMixin):
                 "site_profile": site_profile,
                 "barometric_hint": barometric_hint,
             }
-
         return self.analysis_cache.get_or_build(key, build)
 
     def status(self) -> dict[str, Any]:
@@ -410,9 +408,9 @@ class ReportApplication(WorkflowApplicationMixin):
             country = str(home_location.get("country") or "")
             location_parts: list[str] = []
             if latitude is not None and longitude is not None:
-                location_parts.append(f"{t('Coordinates')}: {float(latitude):.5f}, {float(longitude):.5f}")
+                location_parts.append(f"{t('Coordinates')}: {format_number(float(latitude), language, decimals=5)}, {format_number(float(longitude), language, decimals=5)}")
             if elevation is not None:
-                location_parts.append(f"{t('Elevation')}: {float(elevation):g} m")
+                location_parts.append(f"{t('Elevation')}: {format_number(float(elevation), language, trim=True)} m")
             if country:
                 location_parts.append(f"{t('Country')}: {country}")
             location_parts.append(f"{t('Timezone')}: {timezone_text}")
@@ -452,18 +450,15 @@ class ReportApplication(WorkflowApplicationMixin):
         )
         database = status["database"]
         db_size_bytes = int(database.get("size_bytes", 0))
-        db_size = f"{db_size_bytes / (1024 * 1024):.2f} MiB"
+        db_size = f"{format_number(db_size_bytes / (1024 * 1024), language, decimals=2)} MiB"
         now_epoch = int(datetime.now(UTC).timestamp())
 
         def _dashboard_timestamp(value: object, fallback: str | None = None) -> str:
             if value in (None, "", 0):
                 return fallback or t("No data")
             try:
-                return (
-                    datetime.fromtimestamp(int(value), UTC)
-                    .astimezone(self.timezone)
-                    .strftime("%Y-%m-%d %H:%M:%S %Z")
-                )
+                localized = datetime.fromtimestamp(int(value), UTC).astimezone(self.timezone)
+                return localized.strftime("%d.%m.%Y %H:%M:%S %Z" if language == "de" else "%Y-%m-%d %H:%M:%S %Z")
             except (TypeError, ValueError, OSError):
                 return str(value)
 
@@ -487,7 +482,7 @@ class ReportApplication(WorkflowApplicationMixin):
         selected_latest_timestamp = int((selected_device or {}).get("timestamp_utc") or 0)
         selected_latest_cpm = (selected_device or {}).get("cpm")
         selected_latest_value = (
-            f"{int(selected_latest_cpm)} CPM" if selected_latest_cpm is not None else t("No measurement yet")
+            f"{format_number(int(selected_latest_cpm), language, grouping=True)} CPM" if selected_latest_cpm is not None else t("No measurement yet")
         )
         selected_latest_age = (
             max(0, now_epoch - selected_latest_timestamp) if selected_latest_timestamp else None
@@ -503,15 +498,29 @@ class ReportApplication(WorkflowApplicationMixin):
         )
         db_integrity = str(database.get("integrity") or "unknown")
         db_state_class = "ok" if db_integrity == "ok" else "error"
+        status_state = (
+            "error"
+            if db_state_class == "error" or (known_count and connected_count == 0)
+            else "warning"
+            if disconnected_count or discarded_peak_samples or not selected_latest_timestamp or not global_last_timestamp
+            else "ok"
+        )
+        status_headline = t("System running normally") if status_state == "ok" else t("Attention required")
+        storage_summary = t("Storage current") if global_last_timestamp else t("No successful storage yet")
+        compact_status = " · ".join((connection_summary, f"{selected_latest_value} · {selected_latest_meta}", storage_summary))
+        status_open = " open" if status_state == "error" else ""
         status_strip_html = f"""
-<section class="status-strip" id="live-status" aria-label="{html.escape(t("Live system status"), quote=True)}">
+<section class="status-strip" id="live-status" aria-label="{html.escape(t("Live system status"), quote=True)}"><details class="system-status-panel {status_state}"{status_open}>
+<summary><span class="status-dot"></span><span class="system-status-copy"><strong>{html.escape(status_headline)}</strong><small>{html.escape(compact_status)}</small></span><span class="system-status-detail-label">{html.escape(t("Show status details"))}</span></summary>
+<div class="status-details-grid">
 <a class="status-strip-item {connection_state_class}" href="#devices"><span class="status-dot"></span><span><strong>{html.escape(t("Devices"))}</strong><small>{html.escape(connection_summary)}</small></span></a>
 <a class="status-strip-item {"ok" if selected_latest_timestamp else "waiting"}" href="#analysis"><span class="status-dot"></span><span><strong>{html.escape(t("Latest accepted value"))}: {html.escape(selected_latest_value)}</strong><small>{html.escape(selected_latest_meta)}</small></span></a>
 <a class="status-strip-item {"ok" if global_last_timestamp else "waiting"}" href="#maintenance"><span class="status-dot"></span><span><strong>{html.escape(t("Last successful storage"))}</strong><small>{html.escape(_dashboard_timestamp(global_last_timestamp))}</small></span></a>
-<a class="status-strip-item {"warning" if discarded_peak_samples else "ok"}" href="#devices"><span class="status-dot"></span><span><strong>{html.escape(t("Discarded CPM peaks"))}: {discarded_peak_samples:,}</strong><small>{html.escape(t("Unconfirmed values since bridge start"))}</small></span></a>
-<a class="status-strip-item ok" href="#maintenance"><span class="status-dot"></span><span><strong>{html.escape(t("Stored samples"))}: {count:,}</strong><small>{html.escape(t("Stored samples across all devices"))}</small></span></a>
+<a class="status-strip-item {"warning" if discarded_peak_samples else "ok"}" href="#devices"><span class="status-dot"></span><span><strong>{html.escape(t("Discarded CPM peaks"))}: {format_number(discarded_peak_samples, language, grouping=True)}</strong><small>{html.escape(t("Unconfirmed values since bridge start"))}</small></span></a>
+<a class="status-strip-item ok" href="#maintenance"><span class="status-dot"></span><span><strong>{html.escape(t("Stored samples"))}: {format_number(count, language, grouping=True)}</strong><small>{html.escape(t("Stored samples across all devices"))}</small></span></a>
 <a class="status-strip-item {db_state_class}" href="#maintenance"><span class="status-dot"></span><span><strong>{html.escape(t("Database"))}: {html.escape(db_integrity)}</strong><small>{html.escape(db_size)}</small></span></a>
-</section>
+</div>
+</details></section>
 """
         dashboard_controls_html = f"""
 <nav class="dashboard-controls" id="dashboard-controls" aria-label="{html.escape(t("Dashboard navigation"), quote=True)}">
@@ -549,11 +558,8 @@ class ReportApplication(WorkflowApplicationMixin):
             def _history_time(value: object) -> str:
                 if value is None:
                     return t("No data")
-                return (
-                    datetime.fromtimestamp(int(value), UTC)
-                    .astimezone(self.timezone)
-                    .strftime("%Y-%m-%d %H:%M:%S %Z")
-                )
+                localized = datetime.fromtimestamp(int(value), UTC).astimezone(self.timezone)
+                return localized.strftime("%d.%m.%Y %H:%M:%S %Z" if language == "de" else "%Y-%m-%d %H:%M:%S %Z")
 
             purge_period = (
                 f"{_history_time(purge_preview.get('first_timestamp_utc'))} – "
@@ -567,9 +573,9 @@ class ReportApplication(WorkflowApplicationMixin):
 <h3>{html.escape(t("Danger zone"))}</h3>
 <p>{html.escape(t("Permanently delete all GMC history from this app and Home Assistant Recorder. This includes CPM, temperature, voltage, gyro and tube measurements for every known GMC and all time periods."))}</p>
 <div class="database-grid">
-<div class="metric"><strong>{html.escape(t("Measurements to delete"))}</strong><div class="value">{int(purge_preview.get("measurements", 0)):,}</div><small>{html.escape(purge_period)}</small></div>
-<div class="metric"><strong>{html.escape(t("Raw-data archive"))}</strong><div class="value">{int(purge_preview.get("raw_measurements", 0)):,}</div><small>{html.escape(t("Raw device values are stored separately before quality filtering"))}</small></div>
-<div class="metric"><strong>{html.escape(t("Events, annotations and diagnostics"))}</strong><div class="value">{int(purge_preview.get("events", 0)) + int(purge_preview.get("annotations", 0)) + int(purge_preview.get("diagnostics", 0)):,}</div><small>{html.escape(t("{events} events · {annotations} annotations · {diagnostics} diagnostics", events=int(purge_preview.get("events", 0)), annotations=int(purge_preview.get("annotations", 0)), diagnostics=int(purge_preview.get("diagnostics", 0))))}</small></div>
+<div class="metric"><strong>{html.escape(t("Measurements to delete"))}</strong><div class="value">{format_number(int(purge_preview.get("measurements", 0)), language, grouping=True)}</div><small>{html.escape(purge_period)}</small></div>
+<div class="metric"><strong>{html.escape(t("Raw-data archive"))}</strong><div class="value">{format_number(int(purge_preview.get("raw_measurements", 0)), language, grouping=True)}</div><small>{html.escape(t("Raw device values are stored separately before quality filtering"))}</small></div>
+<div class="metric"><strong>{html.escape(t("Events, annotations and diagnostics"))}</strong><div class="value">{format_number(int(purge_preview.get("events", 0)) + int(purge_preview.get("annotations", 0)) + int(purge_preview.get("diagnostics", 0)), language, grouping=True)}</div><small>{html.escape(t("{events} events · {annotations} annotations · {diagnostics} diagnostics", events=int(purge_preview.get("events", 0)), annotations=int(purge_preview.get("annotations", 0)), diagnostics=int(purge_preview.get("diagnostics", 0))))}</small></div>
 <div class="metric"><strong>{html.escape(t("Affected GMC devices"))}</strong><div class="value">{len(purge_serials)}</div><small>{html.escape(t("All known GMC devices with stored history"))}</small></div>
 <div class="metric"><strong>{html.escape(t("Home Assistant Recorder entity patterns"))}</strong><div class="value">{len(purge_entity_globs)}</div><small>{html.escape(t("Scoped only to known GMC sensor entities"))}</small></div>
 <div class="metric"><strong>{html.escape(t("Current database size"))}</strong><div class="value">{html.escape(db_size)}</div><small>{html.escape(t("A fresh backup is recommended before deletion."))}</small></div>
@@ -915,7 +921,8 @@ class ReportApplication(WorkflowApplicationMixin):
 <link rel="stylesheet" href="./assets/dashboard.css?v={html.escape(APP_VERSION, quote=True)}">
 <style id="critical-dashboard-layout">
 .page-scroll {{ width:100%; height:100%; min-height:0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; touch-action: pan-y; padding-bottom:env(safe-area-inset-bottom,0px); }}
-.status-strip {{ position:static; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); }}
+.status-strip {{ position:static; display:block; }}
+.system-status-panel {{ display:block; width:100%; }}
 .dashboard-controls {{ position:sticky; top:0; z-index:50; display:flex; justify-content:space-between; align-items:center; gap:.75rem; flex-wrap:nowrap; }}
 .dashboard-controls {{ position:-webkit-sticky; position:sticky; top:env(safe-area-inset-top,0px); }}
 .jump-links {{ flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden; }}
@@ -1263,7 +1270,7 @@ input[type="date"], input[type="week"], input[type="month"], input[type="datetim
                     return fallback
                 try:
                     parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
-                    return parsed.astimezone(self.timezone).strftime("%Y-%m-%d %H:%M:%S %Z")
+                    return parsed.astimezone(self.timezone).strftime("%d.%m.%Y %H:%M:%S %Z" if language == "de" else "%Y-%m-%d %H:%M:%S %Z")
                 except (TypeError, ValueError):
                     return str(value)
 
@@ -1271,7 +1278,7 @@ input[type="date"], input[type="week"], input[type="month"], input[type="datetim
                 last_update = (
                     datetime.fromtimestamp(latest_timestamp, UTC)
                     .astimezone(self.timezone)
-                    .strftime("%Y-%m-%d %H:%M:%S %Z")
+                    .strftime("%d.%m.%Y %H:%M:%S %Z" if language == "de" else "%Y-%m-%d %H:%M:%S %Z")
                 )
             else:
                 last_update = t("Not detected yet")
@@ -1297,7 +1304,7 @@ input[type="date"], input[type="week"], input[type="month"], input[type="datetim
             else:
                 device_visual_class, device_icon = "device-generic", "GMC"
             latest_cpm = item.get("cpm")
-            latest_value = "—" if latest_cpm is None else f"{int(latest_cpm)} CPM"
+            latest_value = "—" if latest_cpm is None else f"{format_number(int(latest_cpm), language, grouping=True)} CPM"
             dose_value = item.get("derived_dose_usvh")
             dose_number, dose_unit = _format_live_dose(dose_value, language)
             quality_stars = str(item.get("measurement_quality_star_text") or "☆☆☆☆☆")
@@ -1306,9 +1313,9 @@ input[type="date"], input[type="week"], input[type="month"], input[type="datetim
             if item.get("tube_low_cpm") is not None or item.get("tube_high_cpm") is not None:
                 tube_values = (
                     f'<div class="device-field"><strong>{html.escape(t("Low-dose tube"))}</strong>'
-                    f"<span>{html.escape(str(item.get('tube_low_cpm', '—')))} CPM</span></div>"
+                    f"<span>{html.escape(localize_numeric_text(item.get('tube_low_cpm', '—'), language, group_plain_integers=True))} CPM</span></div>"
                     f'<div class="device-field"><strong>{html.escape(t("High-dose tube"))}</strong>'
-                    f"<span>{html.escape(str(item.get('tube_high_cpm', '—')))} CPM</span></div>"
+                    f"<span>{html.escape(localize_numeric_text(item.get('tube_high_cpm', '—'), language, group_plain_integers=True))} CPM</span></div>"
                 )
             diagnostics_values: list[str] = []
             for label, key in (
@@ -1324,7 +1331,7 @@ input[type="date"], input[type="week"], input[type="month"], input[type="datetim
             if item.get("voltage_v") is not None:
                 diagnostics_values.append(
                     f'<div class="device-field"><strong>{html.escape(t("Battery voltage"))}</strong>'
-                    f"<span>{float(item['voltage_v']):.2f} V</span></div>"
+                    f"<span>{format_number(float(item['voltage_v']), language, decimals=2)} V</span></div>"
                 )
             if item.get("device_time"):
                 diagnostics_values.append(
@@ -1335,7 +1342,7 @@ input[type="date"], input[type="week"], input[type="month"], input[type="datetim
                 offset = int(item["device_clock_offset_seconds"])
                 diagnostics_values.append(
                     f'<div class="device-field"><strong>{html.escape(t("Device clock offset"))}</strong>'
-                    f"<span>{offset:+d} s</span></div>"
+                    f"<span>{format_number(offset, language, grouping=True, sign=True)} s</span></div>"
                 )
             clock_status = str(item.get("device_clock_status", ""))
             clock_status_labels = {
@@ -1354,11 +1361,11 @@ input[type="date"], input[type="week"], input[type="month"], input[type="datetim
                 rolling_value = item.get("heartbeat_cpm_60s", "—")
                 diagnostics_values.append(
                     f'<div class="device-field"><strong>{html.escape(t("Live radiation CPS"))}</strong>'
-                    f"<span>{html.escape(str(cps_value))} CPS</span></div>"
+                    f"<span>{html.escape(localize_numeric_text(cps_value, language, group_plain_integers=True))} CPS</span></div>"
                 )
                 diagnostics_values.append(
                     f'<div class="device-field"><strong>{html.escape(t("Heartbeat rolling 60 s CPM"))}</strong>'
-                    f"<span>{html.escape(str(rolling_value))} CPM</span></div>"
+                    f"<span>{html.escape(localize_numeric_text(rolling_value, language, group_plain_integers=True))} CPM</span></div>"
                 )
             gyro_values = (item.get("gyro_x"), item.get("gyro_y"), item.get("gyro_z"))
             if all(value is not None for value in gyro_values):
@@ -1371,13 +1378,13 @@ input[type="date"], input[type="week"], input[type="month"], input[type="datetim
                             f'<div class="orientation-state {status_color}">'
                             f'<div class="orientation-state-copy"><strong>{html.escape(t("Device position"))} · {html.escape(t(status_key))}</strong>'
                             f"<span>{html.escape(t(orientation.position_key))}</span>"
-                            f"<small>{html.escape(t('Inclination'))}: {orientation.inclination_degrees:.1f}°</small></div></div>",
+                            f"<small>{html.escape(t('Inclination'))}: {format_number(orientation.inclination_degrees, language, decimals=1)}°</small></div></div>",
                             f'<div class="device-field"><strong>{html.escape(t("Roll angle"))}</strong>'
-                            f"<span>{orientation.roll_degrees:+.1f}°</span></div>",
+                            f"<span>{format_number(orientation.roll_degrees, language, decimals=1, sign=True)}°</span></div>",
                             f'<div class="device-field"><strong>{html.escape(t("Pitch angle"))}</strong>'
-                            f"<span>{orientation.pitch_degrees:+.1f}°</span></div>",
+                            f"<span>{format_number(orientation.pitch_degrees, language, decimals=1, sign=True)}°</span></div>",
                             f'<div class="device-field"><strong>{html.escape(t("Inclination"))}</strong>'
-                            f"<span>{orientation.inclination_degrees:.1f}°</span></div>",
+                            f"<span>{format_number(orientation.inclination_degrees, language, decimals=1)}°</span></div>",
                         ]
                     )
             device_diagnostics_values = "".join(diagnostics_values)
@@ -1423,8 +1430,8 @@ input[type="date"], input[type="week"], input[type="month"], input[type="datetim
                     f'<div class="gmcmap-grid">'
                     f"<div><strong>{html.escape(t('Counter ID'))}</strong><span>{html.escape(str(counter_id_masked))}</span></div>"
                     f"<div><strong>{html.escape(t('Last upload'))}</strong><span>{html.escape(str(last_map_upload))}</span></div>"
-                    f"<div><strong>{html.escape(t('Last uploaded CPM'))}</strong><span>{html.escape(str(item.get('gmcmap_last_cpm') if item.get('gmcmap_last_cpm') is not None else '—'))} CPM</span></div>"
-                    f"<div><strong>{html.escape(t('Last uploaded ACPM'))}</strong><span>{html.escape(str(item.get('gmcmap_last_average_cpm') if item.get('gmcmap_last_average_cpm') is not None else '—'))} ACPM</span></div>"
+                    f"<div><strong>{html.escape(t('Last uploaded CPM'))}</strong><span>{html.escape(localize_numeric_text(item.get('gmcmap_last_cpm') if item.get('gmcmap_last_cpm') is not None else '—', language, group_plain_integers=True))} CPM</span></div>"
+                    f"<div><strong>{html.escape(t('Last uploaded ACPM'))}</strong><span>{html.escape(localize_numeric_text(item.get('gmcmap_last_average_cpm') if item.get('gmcmap_last_average_cpm') is not None else '—', language, group_plain_integers=True))} ACPM</span></div>"
                     f'</div><small class="gmcmap-acpm-help">{html.escape(t("ACPM is a time-weighted rolling average of accepted CPM readings from the last 60 minutes; long data gaps are not bridged."))}</small>'
                     f"{map_error}</div>"
                 )
@@ -1448,26 +1455,26 @@ input[type="date"], input[type="week"], input[type="month"], input[type="datetim
             if pending_confirmations:
                 alerts.append(
                     f'<div class="device-alert warning"><strong>{html.escape(t("Suspicious CPM value is being verified"))}</strong>'
-                    f"<span>{pending_confirmations}/{required_confirmations} {html.escape(t('confirmations'))}</span></div>"
+                    f"<span>{format_number(pending_confirmations, language)}/{format_number(required_confirmations, language)} {html.escape(t('confirmations'))}</span></div>"
                 )
             discarded_peaks = int(item.get("cpm_discarded_peak_samples") or 0)
             if discarded_peaks:
                 alerts.append(
                     f'<div class="device-alert info"><strong>{html.escape(t("Discarded unconfirmed CPM peaks"))}</strong>'
-                    f"<span>{discarded_peaks:,} {html.escape(t('since the current bridge start'))}</span></div>"
+                    f"<span>{format_number(discarded_peaks, language, grouping=True)} {html.escape(t('since the current bridge start'))}</span></div>"
                 )
             serial_errors = int(item.get("serial_error_count") or 0)
             reconnects = int(item.get("serial_reconnect_count") or 0)
             if serial_errors or reconnects:
                 alerts.append(
                     f'<div class="device-alert info"><strong>{html.escape(t("Serial connection recovered"))}</strong>'
-                    f"<span>{serial_errors} {html.escape(t('errors'))} · {reconnects} {html.escape(t('reconnects'))}</span></div>"
+                    f"<span>{format_number(serial_errors, language, grouping=True)} {html.escape(t('errors'))} · {format_number(reconnects, language, grouping=True)} {html.escape(t('reconnects'))}</span></div>"
                 )
             history_errors = int(item.get("history_write_error_count") or 0)
             if history_errors:
                 alerts.append(
                     f'<div class="device-alert error"><strong>{html.escape(t("History storage warning"))}</strong>'
-                    f"<span>{history_errors} {html.escape(t('write errors since app start'))}</span></div>"
+                    f"<span>{format_number(history_errors, language, grouping=True)} {html.escape(t('write errors since app start'))}</span></div>"
                 )
             if clock_status == "warning":
                 alerts.append(
@@ -1599,7 +1606,7 @@ input[type="date"], input[type="week"], input[type="month"], input[type="datetim
                 "dose_number": dose_number,
                 "dose_unit": dose_unit,
                 "quality_stars": str(item.get("measurement_quality_star_text") or "☆☆☆☆☆"),
-                "latest_value": "—" if latest_cpm is None else f"{int(latest_cpm)} CPM",
+                "latest_value": "—" if latest_cpm is None else f"{format_number(int(latest_cpm), language, grouping=True)} CPM",
                 "health_summary": health_summary,
             })
         return {

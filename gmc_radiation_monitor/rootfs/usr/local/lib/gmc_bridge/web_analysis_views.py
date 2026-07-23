@@ -4,6 +4,7 @@ import html
 from collections.abc import Iterable
 from typing import Any, Protocol
 
+from .number_format import format_number, localize_numeric_text, translator_language
 from .presentation_models import (
     AnalysisEntity,
     AnalysisLevel,
@@ -50,7 +51,11 @@ _STATUS_TONE = {
 
 def _translated_message(message: AnalysisMessage, t: TranslatorLike) -> str:
     values = translated_template_values(dict(message.values), t)
-    return t(message.text_key, **values)
+    return localize_numeric_text(
+        t(message.text_key, **values),
+        translator_language(t),
+        group_plain_integers=True,
+    )
 
 
 def _render_messages(
@@ -83,7 +88,7 @@ def _render_table(table: AnalysisTable, t: TranslatorLike) -> str:
     header = "".join(f'<th>{html.escape(t(column.label_key))}</th>' for column in table.columns)
     rows = "".join(
         "<tr>" + "".join(
-            f'<td>{html.escape(str(row.get(column.key, "—")))}</td>'
+            f'<td>{html.escape(localize_numeric_text(row.get(column.key, "—"), translator_language(t), group_plain_integers=True))}</td>'
             for column in table.columns
         ) + "</tr>"
         for row in table.rows
@@ -97,7 +102,7 @@ def _render_table(table: AnalysisTable, t: TranslatorLike) -> str:
 def _render_generic_entity(entity: AnalysisEntity, t: TranslatorLike) -> str:
     metrics = "".join(render_metric_card(metric, t) for metric in entity.metrics)
     messages = _render_messages(entity.messages, t)
-    primary = f'<div class="assessment-state">{html.escape(entity.primary_value)}</div>' if entity.primary_value else ""
+    primary = f'<div class="assessment-state">{html.escape(localize_numeric_text(entity.primary_value, translator_language(t), group_plain_integers=True))}</div>' if entity.primary_value else ""
     return (
         f'<article class="assessment-card" data-analysis-tier="{entity.level.value}" '
         f'data-analysis-entity="{html.escape(entity.key, quote=True)}">'
@@ -152,7 +157,7 @@ def render_radiation_intelligence(result: AnalysisResult, t: TranslatorLike) -> 
         )
         return _render_result_card(result, t, card_id="radiation-intelligence", title_key=title, body=body)
     confidence_metric = next((metric for metric in result.metrics if metric.key == "radiation-confidence"), None)
-    confidence = "—" if confidence_metric is None else t(confidence_metric.value_key or confidence_metric.value)
+    confidence = "—" if confidence_metric is None else localize_numeric_text(t(confidence_metric.value_key or confidence_metric.value), translator_language(t), group_plain_integers=True)
     reasons = [item for item in result.messages if item.level == AnalysisLevel.ANALYSIS]
     expert = [item for item in result.messages if item.level == AnalysisLevel.EXPERT]
     body = (
@@ -188,18 +193,18 @@ def render_background_profile_entity(entity: AnalysisEntity, t: TranslatorLike) 
     if typical:
         detail_html = (
             f'{html.escape(detail)}<br><span class="background-profile-values">'
-            f'{html.escape(typical.value)}</span>'
+            f'{html.escape(localize_numeric_text(typical.value, translator_language(t), group_plain_integers=True))}</span>'
         )
     else:
         detail_html = html.escape(detail)
     meta_parts: list[str] = []
     for metric in entity.metrics:
         if metric.key.endswith("-confidence"):
-            meta_parts.append(f'{html.escape(t("Confidence"))}: {html.escape(t(metric.value_key or metric.value))}')
+            meta_parts.append(f'{html.escape(t("Confidence"))}: {html.escape(localize_numeric_text(t(metric.value_key or metric.value), translator_language(t), group_plain_integers=True))}')
         elif metric.key.endswith("-excluded"):
-            meta_parts.append(f'{html.escape(metric.value)} {html.escape(t("excluded measurements"))}')
+            meta_parts.append(f'{html.escape(localize_numeric_text(metric.value, translator_language(t), group_plain_integers=True))} {html.escape(t("excluded measurements"))}')
         elif metric.key.endswith("-pairs"):
-            meta_parts.append(f'{html.escape(metric.value)} {html.escape(t("valid paired samples"))}')
+            meta_parts.append(f'{html.escape(localize_numeric_text(metric.value, translator_language(t), group_plain_integers=True))} {html.escape(t("valid paired samples"))}')
     meta = f'<small>{" · ".join(meta_parts)}</small>' if meta_parts else ""
     current = next((metric for metric in entity.metrics if metric.key.endswith("-current")), None)
     current_html = "" if current is None else render_metric_card(current, t)
@@ -250,7 +255,7 @@ def _render_historical_section(section: AnalysisSection, t: TranslatorLike) -> s
     has_jumps = any(message.key.startswith("baseline-jump-") for message in jump_messages)
     jump_details = (
         f'<details class="inline-help"><summary>{html.escape(t("Detected baseline jumps"))}: '
-        f'{int(section.values.get("jump_count") or 0)}</summary><div class="group-body">'
+        f'{format_number(int(section.values.get("jump_count") or 0), translator_language(t), grouping=True)}</summary><div class="group-body">'
         f'{_render_messages(jump_messages, t, as_list=True, list_class="compact-list")}</div></details>'
         if has_jumps
         else _render_messages(jump_messages, t)
@@ -349,7 +354,8 @@ def _render_stability_entity(entity: AnalysisEntity, t: TranslatorLike) -> str:
     for metric in entity.metrics:
         if metric is status_metric:
             continue
-        value = t(metric.value_key, **translated_template_values(dict(metric.value_values), t)) if metric.value_key else metric.value
+        raw_value = t(metric.value_key, **translated_template_values(dict(metric.value_values), t)) if metric.value_key else metric.value
+        value = localize_numeric_text(raw_value, translator_language(t), group_plain_integers=True)
         gap_status_html = ""
         if metric.key.endswith("-gap") and metric.status in {AnalysisStatus.NOTICE, AnalysisStatus.WARNING}:
             gap_class = "critical" if metric.status == AnalysisStatus.WARNING else "warning"
@@ -364,7 +370,7 @@ def _render_stability_entity(entity: AnalysisEntity, t: TranslatorLike) -> str:
     meta = "".join(meta_parts)
     return (
         '<article class="assessment-card">'
-        f'<h3>{html.escape(entity.title)}</h3><div class="assessment-state">{html.escape(entity.primary_value or "—")}</div>'
+        f'<h3>{html.escape(entity.title)}</h3><div class="assessment-state">{html.escape(localize_numeric_text(entity.primary_value or "—", translator_language(t), group_plain_integers=True))}</div>'
         f'<strong class="stability-status"><span class="stability-dot {_STATUS_COLOR[entity.status]}" aria-hidden="true"></span>'
         f'<span>{html.escape(status_label)}</span></strong><small class="stability-meta">{meta}</small></article>'
     )
@@ -447,12 +453,12 @@ def render_absolute_safety(result: AnalysisResult, t: TranslatorLike) -> str:
         f'<div class="status-orb {html.escape(state, quote=True)}"></div><div>'
         f'<div class="assessment-state {html.escape(state, quote=True)}">{html.escape(t(result.headline_key))}</div>'
         f'<div class="assessment-detail"><strong>{html.escape(t(result.summary_key))}</strong><br>'
-        f'{html.escape(result.primary_value or "—")}<br><small>{html.escape(t("Evaluated by"))}: '
+        f'{html.escape(localize_numeric_text(result.primary_value or "—", translator_language(t), group_plain_integers=True))}<br><small>{html.escape(t("Evaluated by"))}: '
         f'{html.escape(t(str(metadata.get("basis_key") or "CPM")))}</small></div></div></div>'
         f'<div class="assessment-stat"><strong>{html.escape(t("Active threshold profile"))}</strong>'
         f'<div class="big">{html.escape(profile_value)}</div><small>{html.escape(t("Thresholds can be changed in the add-on configuration."))}</small></div>'
-        f'<div class="assessment-stat"><strong>{html.escape(t("Warning thresholds"))}</strong><div class="big">{html.escape(warning.value if warning else "—")}</div><small>{html.escape(warning_note)}</small></div>'
-        f'<div class="assessment-stat"><strong>{html.escape(t("Danger thresholds"))}</strong><div class="big">{html.escape(danger.value if danger else "—")}</div><small>{html.escape(danger_note)}</small></div></div>'
+        f'<div class="assessment-stat"><strong>{html.escape(t("Warning thresholds"))}</strong><div class="big">{html.escape(localize_numeric_text(warning.value if warning else "—", translator_language(t), group_plain_integers=True))}</div><small>{html.escape(warning_note)}</small></div>'
+        f'<div class="assessment-stat"><strong>{html.escape(t("Danger thresholds"))}</strong><div class="big">{html.escape(localize_numeric_text(danger.value if danger else "—", translator_language(t), group_plain_integers=True))}</div><small>{html.escape(danger_note)}</small></div></div>'
         f'<div class="assessment-note"><strong>{html.escape(t("What this assessment means"))}</strong>{html.escape(meaning)}</div></div>'
     )
 
@@ -472,16 +478,16 @@ def render_local_background(result: AnalysisResult, t: TranslatorLike) -> str:
             '<div class="learning"><div class="progress-track">'
             f'<div class="progress-bar" style="width:{float(metadata.get("readiness") or 0.0):.1f}%"></div></div>'
             f'<div class="progress-copy"><span>{html.escape(t("Learning progress"))} '
-            f'{float(metadata.get("readiness") or 0.0):.0f}%</span>'
-            f'<span>{int(metadata.get("collected_hours") or 0)} h {int(metadata.get("collected_minutes") or 0):02d} min · '
-            f'{html.escape(t("1 h coverage"))} {float(metadata.get("coverage_1h_percent") or 0.0):.1f}%</span></div></div>'
+            f'{format_number(float(metadata.get("readiness") or 0.0), translator_language(t), decimals=0)}%</span>'
+            f'<span>{format_number(int(metadata.get("collected_hours") or 0), translator_language(t))} h {int(metadata.get("collected_minutes") or 0):02d} min · '
+            f'{html.escape(t("1 h coverage"))} {format_number(float(metadata.get("coverage_1h_percent") or 0.0), translator_language(t), decimals=1)}%</span></div></div>'
         )
     meaning = _translated_message(result.messages[0], t) if result.messages else ""
     def stat(key: str, label: str) -> str:
         metric = metrics.get(key)
         if metric is None:
             return ""
-        shown = t(metric.value_key, **translated_template_values(dict(metric.value_values), t)) if metric.value_key else metric.value
+        shown = t(metric.value_key, **translated_template_values(dict(metric.value_values), t)) if metric.value_key else localize_numeric_text(metric.value, translator_language(t), group_plain_integers=True)
         note = t(metric.note_key, **translated_template_values(dict(metric.note_values), t)) if metric.note_key else ""
         return f'<div class="assessment-stat"><strong>{html.escape(t(label))}</strong><div class="big">{html.escape(shown)}</div><small>{html.escape(note)}</small></div>'
     return (
@@ -493,7 +499,7 @@ def render_local_background(result: AnalysisResult, t: TranslatorLike) -> str:
         f'<div class="status-orb {html.escape(state, quote=True)}"></div><div>'
         f'<div class="assessment-state {html.escape(state, quote=True)}">{html.escape(t(result.headline_key))}</div>'
         f'<div class="assessment-detail"><strong>{html.escape(t(result.summary_key))}</strong><br>'
-        f'{html.escape(result.primary_value or "—")} {html.escape(t("relative to baseline"))}</div></div></div>'
+        f'{html.escape(localize_numeric_text(result.primary_value or "—", translator_language(t), group_plain_integers=True))} {html.escape(t("relative to baseline"))}</div></div></div>'
         f'{stat("background-local-baseline", "Local baseline")}'
         f'{stat("background-current", "Current value")}'
         f'{stat("background-deviation", "Deviation")}'
@@ -559,13 +565,19 @@ def render_device_analysis(
     status_section = next((section for section in result.sections if section.key == "status-summary"), None)
 
     def status_item(metric: AnalysisMetric) -> str:
-        shown_value = t(metric.value_key, **translated_template_values(dict(metric.value_values), t)) if metric.value_key else metric.value
+        raw_value = t(metric.value_key, **translated_template_values(dict(metric.value_values), t)) if metric.value_key else metric.value
+        shown_value = localize_numeric_text(raw_value, translator_language(t), group_plain_integers=True)
         if metric.note_parts:
             note = " · ".join(_translated_message(part, t) for part in metric.note_parts)
         else:
-            note = t(metric.note_key, **translated_template_values(dict(metric.note_values), t)) if metric.note_key else ""
+            raw_note = t(metric.note_key, **translated_template_values(dict(metric.note_values), t)) if metric.note_key else ""
+            note = localize_numeric_text(raw_note, translator_language(t), group_plain_integers=True)
         if not note and metric.interpretation_key:
-            note = t(metric.interpretation_key, **translated_template_values(dict(metric.interpretation_values), t))
+            note = localize_numeric_text(
+                t(metric.interpretation_key, **translated_template_values(dict(metric.interpretation_values), t)),
+                translator_language(t),
+                group_plain_integers=True,
+            )
         color = "blue" if metric.key in {"status-mean-1h", "status-mean-7d"} else _STATUS_COLOR[metric.status]
         return (
             f'<div class="status-item {color}"><strong>{html.escape(t(metric.label_key, **translated_template_values(dict(metric.label_values), t)))}</strong>'
@@ -599,8 +611,9 @@ class _PeriodTranslator:
     def __call__(self, text: str, **values: object) -> str:
         if text == "{days} days":
             days = self._days if self._days is not None else values.get("days", "")
-            return f"{days} {self._translator('days')}"
+            return f"{format_number(days, translator_language(self._translator), grouping=True)} {self._translator('days')}"
         if text == "{note} · n={samples}":
             note = self._translator(str(values.get("note", "")))
-            return f"{note} · n={values.get('samples', 0)}"
+            samples = format_number(values.get("samples", 0), translator_language(self._translator), grouping=True)
+            return f"{note} · n={samples}"
         return self._translator(text, **values)
