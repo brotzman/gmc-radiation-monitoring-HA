@@ -92,9 +92,9 @@ def _runtime_translation_keys() -> set[str]:
 
 
 def test_release_version_and_notes() -> None:
-    assert APP_VERSION == "9.0.2"
-    assert "version: 9.0.2" in (ROOT / "config.yaml").read_text(encoding="utf-8")
-    assert (ROOT / "RELEASE_NOTES_9.0.2.md").is_file()
+    assert APP_VERSION == "9.0.3"
+    assert "version: 9.0.3" in (ROOT / "config.yaml").read_text(encoding="utf-8")
+    assert (ROOT / "RELEASE_NOTES_9.0.3.md").is_file()
 
 
 def test_every_runtime_translation_key_exists_in_every_catalogue() -> None:
@@ -188,5 +188,5 @@ def test_statistical_significance_reasons_are_fully_localized() -> None:
                 assert fragment not in rendered, f"{language} still exposes {fragment!r}"
 
     german = render_radiation_intelligence(result, Translator("de"))
-    assert "statistischen Sicherheit von 17.79 %" in german
-    assert "historisch etwa einmal in 2.6 Stunden" in german
+    assert "statistischen Sicherheit von 17,79 %" in german
+    assert "historisch etwa einmal in 2,6 Stunden" in german

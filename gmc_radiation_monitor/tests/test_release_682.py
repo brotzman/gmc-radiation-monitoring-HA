@@ -141,10 +141,9 @@ def test_status_strip_uses_readable_responsive_grid_without_ellipsis(tmp_path: P
     page = _app(tmp_path).render_index(language_override="de", mode_override="advanced").decode()
     css = Path("rootfs/usr/local/lib/gmc_bridge/static/dashboard.css").read_text(encoding="utf-8")
     assert ".dashboard-controls { position:sticky; top:0; z-index:50;" in page
-    assert (
-        ".status-strip { position:static; display:grid; grid-template-columns:repeat(3,minmax(0,1fr));"
-        in page
-    )
+    assert ".status-strip { position:static; display:block; }" in page
+    assert 'class="system-status-panel' in page
+    assert 'class="status-details-grid"' in page
     assert (
         ".status-strip-item strong,.status-strip-item small { display:block; white-space:normal; overflow-wrap:anywhere;"
         in css
@@ -154,5 +153,9 @@ def test_status_strip_uses_readable_responsive_grid_without_ellipsis(tmp_path: P
         not in css
     )
     status = page.split('<section class="status-strip"', 1)[1].split("</section>", 1)[0]
-    labels = re.findall(r"<strong>(.*?)</strong>", status)
+    details = status.split('<div class="status-details-grid">', 1)[1]
+    labels = re.findall(r"<strong>(.*?)</strong>", details)
     assert len(labels) == 6
+    assert all("…" not in label for label in labels)
+    assert "System läuft normal" in status
+    assert "Statusdetails anzeigen" in status

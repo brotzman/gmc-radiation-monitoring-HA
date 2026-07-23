@@ -115,4 +115,4 @@ def test_analysis_cards_are_progressively_grouped_and_history_is_integrated(tmp_
 
 
 def test_release_version_is_690() -> None:
-    assert APP_VERSION == "9.0.2"
+    assert APP_VERSION == "9.0.3"

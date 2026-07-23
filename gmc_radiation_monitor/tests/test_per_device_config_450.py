@@ -166,9 +166,9 @@ def test_dashboard_and_reports_use_selected_device_settings():
             language_override="de", device_override="SERIAL-B", report_device_override="SERIAL-B"
         ).decode("utf-8")
         assert "Wohnzimmer" in page
-        assert "115200" in page
-        assert "100.0" in page
-        assert "0.200 µSv/h" in page
+        assert "115.200" in page
+        assert "100,0" in page
+        assert "0,200 µSv/h" in page
 
 
 def test_all_languages_translate_every_per_device_field():

@@ -12,7 +12,7 @@ from gmc_bridge.version import APP_VERSION
 
 
 def test_version_801() -> None:
-    assert APP_VERSION == "9.0.2"
+    assert APP_VERSION == "9.0.3"
 
 
 def test_acpm_accumulator_uses_all_accepted_session_readings() -> None:
@@ -70,7 +70,7 @@ def test_gmcmap_dashboard_shows_translated_cpm_and_acpm() -> None:
         page = app.render_index(language_override="de", mode_override="advanced").decode()
         assert "Zuletzt übermitteltes CPM" in page
         assert "Zuletzt übermitteltes ACPM" in page
-        assert "18.2 ACPM" in page
+        assert "18,2 ACPM" in page
         assert "letzten 60 Minuten" in page
         assert "lange Datenlücken werden nicht überbrückt" in page
 

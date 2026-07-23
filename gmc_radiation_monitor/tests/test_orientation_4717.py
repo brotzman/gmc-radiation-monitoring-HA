@@ -103,7 +103,7 @@ def test_connected_device_card_shows_calibrated_angles(tmp_path, monkeypatch):
     page = app.render_index(language_override="de", device_override=serial).decode("utf-8")
     assert "Gerätelage" in page
     assert "Hochkant, USB rechts" in page
-    assert "Rollwinkel" in page and "+90." in page
+    assert "Rollwinkel" in page and "+90," in page
     assert "Flach" not in page  # this reference is upright
     assert "Hochkant" in page
     assert "Kalibrierte Beschleunigung" not in page

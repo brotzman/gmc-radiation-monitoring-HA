@@ -191,7 +191,7 @@ def test_847_browser_override_and_expert_measurement_markup(tmp_path: Path) -> N
 
 def test_847_public_defaults_are_installation_neutral() -> None:
     config = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
-    assert config["version"] == "9.0.2"
+    assert config["version"] == "9.0.3"
     analysis = config["options"]["analysis"]
     assert analysis["external_temperature_entity"] == ""
     assert analysis["external_temperature_name"] == ""

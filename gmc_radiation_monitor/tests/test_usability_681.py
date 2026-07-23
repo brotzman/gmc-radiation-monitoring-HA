@@ -157,4 +157,4 @@ def test_adaptive_background_values_start_on_a_new_line_after_time(tmp_path: Pat
         t=Translator("de"),
     )
     assert "Typisch für Donnerstag um 13:00 Uhr<br>" in block
-    assert '<span class="background-profile-values">15.0 CPM · +3.0%</span>' in block
+    assert '<span class="background-profile-values">15,0 CPM · +3,0%</span>' in block

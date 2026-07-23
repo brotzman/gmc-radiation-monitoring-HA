@@ -50,7 +50,7 @@ def test_global_report_header_uses_status_strip_and_collapsible_location():
     assert '<details class="location-details">' in rendered
     assert 'class="global-settings"' not in rendered
     assert 'class="global-setting"' not in rendered
-    assert "Koordinaten: 51.60176, 7.45410" in rendered
+    assert "Koordinaten: 51,60176, 7,45410" in rendered
     assert "Zeitzone: Europe/Berlin" in rendered
     assert "Die Standortdaten stammen" in rendered
 
@@ -63,7 +63,8 @@ def test_header_css_no_longer_contains_in_page_mode_or_language_controls():
     assert ".mode-link" not in rendered
     assert ".lang-link" not in rendered
     assert ".info-chips" not in rendered
-    assert "grid-template-columns:repeat(3,minmax(0,1fr))" in rendered
+    assert ".status-strip { position:static; display:block; }" in rendered
+    assert ".system-status-panel { display:block; width:100%; }" in rendered
 
 
 def test_new_header_renders_for_every_supported_language():
