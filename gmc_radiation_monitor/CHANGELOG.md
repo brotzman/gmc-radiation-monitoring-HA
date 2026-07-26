@@ -1,5 +1,12 @@
 # Changelog
 
+## 9.1.2
+
+- Added degree symbols and cardinal directions to the Home Assistant coordinate display.
+- Latitude and longitude now render in an unambiguous form such as `51,60176° N, 7,45410° E`.
+- Updated release metadata and user-manual version labels.
+- No database, measurement, alarm or protocol changes.
+
 ## 9.1.1
 
 - Reduced the value typography in the long-term overview to match the established metric-card scale used elsewhere in the dashboard.

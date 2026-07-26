@@ -6,6 +6,10 @@ A local Home Assistant App (formerly add-on) for compatible GQ GMC Geiger counte
 
 > **Safety notice:** This add-on is intended for monitoring and home automation. It is not a calibrated radiation-protection instrument. Derived dose rates, profiles, anomaly detection and recommendations do not replace official measurements, professional advice or emergency instructions.
 
+## Version 9.1.2: coordinate units and directions
+
+Version 9.1.2 displays Home Assistant latitude and longitude with degree symbols and cardinal directions, for example `51,60176° N, 7,45410° E`. This removes ambiguity while preserving the configured precision and all existing privacy behavior.
+
 ## Version 9.1.1: consistent long-term card typography
 
 Version 9.1.1 reduces the value typography in the long-term overview so it matches the established metric cards elsewhere in the dashboard. Multi-line readiness messages use a dedicated smaller size and increased line height. The long-term calculations, data model, alarms and Home Assistant entities are unchanged.
