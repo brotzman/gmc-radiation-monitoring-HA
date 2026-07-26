@@ -1,5 +1,17 @@
 # Changelog
 
+## 9.3.0
+
+- Adopted the Radon Monitoring 5.3.1 sidebar navigation model without changing GMC cards, charts, measurements or analytical outputs.
+- Added grouped desktop navigation for monitoring, evaluation, documentation and administration.
+- Added an Ingress-safe mobile drawer with dimmed overlay, outside-click closing, automatic closing after selection and Escape-key support.
+- Added single-view routing, direct hash links and browser persistence of the last selected view.
+- Added a persistent top bar with translated language and refresh controls.
+- Added keyboard focus states, `aria-current`, menu-state attributes, a skip link, safe-area handling and reduced-motion support.
+- Added responsive navigation regression coverage at 320, 390, 768 and 1440 px, including 200% text size.
+- Updated all eight interface catalogues and all eight user manuals to 36-page version 9.3.0 editions.
+- Kept database schema 8, serial acquisition, safety logic, statistics, stored history, MQTT identities and reports compatible.
+
 ## 9.2.0
 
 - Added a plain-language long-term assessment before method details and kept advanced statistical groups collapsed by default.

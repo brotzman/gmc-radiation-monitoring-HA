@@ -6,13 +6,11 @@ A local Home Assistant App (formerly add-on) for compatible GQ GMC Geiger counte
 
 > **Safety notice:** This add-on is intended for monitoring and home automation. It is not a calibrated radiation-protection instrument. Derived dose rates, profiles, anomaly detection and recommendations do not replace official measurements, professional advice or emergency instructions.
 
-## Version 9.2.0: clearer long-term evidence and field-test diagnostics
+## Version 9.3.0: Radon-style sidebar navigation
 
-Version 9.2.0 makes long-term results easier to interpret without duplicating the existing short-term baseline, alarm or device-comparison functions. A plain-language assessment appears first, while statistical method details remain available in collapsed Analysis and Expert sections.
+Version 9.3.0 adopts the proven navigation model from Radon Monitoring 5.3.1 while preserving the existing GMC design, cards, diagrams, measurements and analytical results. Desktop users receive a persistent grouped sidebar; mobile and tablet users receive an overlay drawer that closes after selection, by tapping outside it or with Escape.
 
-The release adds conservative evidence levels, minimum duration and coverage rules, practical trend magnitude, a 90-day minimum for annual projection, at least 100 paired values plus Benjamini-Hochberg correction for environmental associations, and an exportable long-term field-test protocol covering USB reconnects, serial/database errors, data gaps and GMCMap operation. Statistical signals never suppress the configured absolute warning and danger thresholds and are not presented as proof of a radiation source or environmental cause.
-
-All eight interface languages and all eight 35-page user manuals have been updated. Database schema 8, stored history, MQTT identities, detector profiles and serial protocols remain compatible.
+The destinations are grouped into Monitoring, Evaluation, Documentation and Administration. Only the selected view is displayed, direct hash links remain possible and the last view is stored in the browser. Summary, Analysis and Expert detail levels remain independent of navigation. All eight interface languages and all eight 36-page manuals have been updated. Database schema 8 and existing data remain compatible.
 
 ## Version 9.1.2: coordinate units and directions
 
