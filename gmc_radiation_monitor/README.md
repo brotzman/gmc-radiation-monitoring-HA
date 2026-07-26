@@ -6,9 +6,11 @@ A local Home Assistant App (formerly add-on) for compatible GQ GMC Geiger counte
 
 > **Safety notice:** This add-on is intended for monitoring and home automation. It is not a calibrated radiation-protection instrument. Derived dose rates, profiles, anomaly detection and recommendations do not replace official measurements, professional advice or emergency instructions.
 
-## Version 9.1.0: detector-aware long-term analysis
+## Version 9.1.1: consistent long-term card typography
 
-Version 9.1.0 adds a dedicated long-term analysis for each GMC counter. It uses real 24-hour, 7-day, 30-day, 90-day and 365-day windows with duration and coverage checks, robust local-background statistics, cumulative derived dose, effective sample size, block-bootstrap confidence intervals, Mann–Kendall/Sen trend analysis, persistent relative elevation episodes, calendar and monthly views, contextual EWMA/CUSUM diagnostics and lagged environmental associations. Existing live analysis, adaptive background and fleet comparisons remain separate and are not duplicated. New installations retain 730 days by default so annual analysis can mature; existing settings and schema-8 databases remain compatible.
+Version 9.1.1 reduces the value typography in the long-term overview so it matches the established metric cards elsewhere in the dashboard. Multi-line readiness messages use a dedicated smaller size and increased line height. The long-term calculations, data model, alarms and Home Assistant entities are unchanged.
+
+Version 9.1.0 introduced the detector-aware long-term analysis with real 24-hour, 7-day, 30-day, 90-day and 365-day windows, coverage checks, robust background statistics, cumulative derived dose, effective sample size, block-bootstrap intervals, Mann–Kendall/Sen trends, persistent elevation episodes, calendar and monthly views, seasonal profiles, EWMA/CUSUM diagnostics, environmental associations and Bland-Altman device comparison.
 
 ## Features
 

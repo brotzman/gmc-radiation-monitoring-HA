@@ -1,5 +1,13 @@
 # Changelog
 
+## 9.1.1
+
+- Reduced the value typography in the long-term overview to match the established metric-card scale used elsewhere in the dashboard.
+- Added a separate, smaller type scale for multi-line readiness messages such as “Not yet meaningful”.
+- Increased line height for wrapped long-term values so German and other long translations remain readable without collisions.
+- Kept all long-term calculations, thresholds, database schema, MQTT entities and stored data unchanged.
+- Added regression coverage for the long-term value-size limits and responsive wrapping.
+
 ## 9.1.0
 
 - Added detector-aware long-term analysis with real 24-hour, 7-day, 30-day, 90-day and 365-day windows and explicit duration/coverage readiness.
@@ -10,6 +18,8 @@
 - Added indexed SQL aggregation for long histories and changed the new-installation retention default to 730 days.
 - Added complete long-term wording in all eight interface languages and updated all eight user manuals.
 - Kept database schema 8, existing measurements, device identities, calibration profiles and MQTT entities compatible.
+- Rebuilt all eight user manuals as current 30-page 9.1.0 editions with practical guidance, scientific limitations, quick reference and glossary.
+- Added repository-root pytest configuration and a stable test working-directory fixture so the complete suite is independent of invocation location and test order.
 
 ## 9.0.3
 
