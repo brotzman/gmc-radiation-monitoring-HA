@@ -230,6 +230,12 @@ def build_fleet_snapshot(store: HistoryStore, *, window_seconds: int = 86400) ->
                 "confidence": confidence,
                 "mean_difference": robust_trimmed_mean(differences) or 0.0,
                 "bland_altman_available": bland_altman_available,
+                "bland_altman_minimum_pairs": 30,
+                "bland_altman_evidence": (
+                    "supported" if len(signed_differences) >= 100
+                    else "preliminary" if len(signed_differences) >= 30
+                    else "exploratory"
+                ),
                 "bland_altman_bias_cpm": bland_altman_bias,
                 "bland_altman_sd_cpm": bland_altman_sd,
                 "bland_altman_lower_cpm": bland_altman_lower,

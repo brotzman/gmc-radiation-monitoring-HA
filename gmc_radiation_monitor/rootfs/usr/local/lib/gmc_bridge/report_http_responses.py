@@ -14,11 +14,14 @@ class HttpResponseMixin:
         *,
         close_connection: bool = False,
         cache_control: str = "no-store",
+        content_disposition: str | None = None,
     ) -> None:
         self.send_response(status)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(payload)))
         self.send_header("Cache-Control", cache_control)
+        if content_disposition:
+            self.send_header("Content-Disposition", content_disposition)
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("Referrer-Policy", "same-origin")
         self.send_header("Permissions-Policy", "camera=(), microphone=(), geolocation=()")

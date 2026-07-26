@@ -19,6 +19,25 @@ WINDOWS: tuple[tuple[str, int], ...] = (
 )
 LAG_HOURS: tuple[int, ...] = (0, 3, 6, 12, 24)
 
+# Minimum evidence requirements. These thresholds are deliberately conservative
+# and govern wording/evidence levels rather than hiding the underlying data.
+WINDOW_MINIMUM_COVERAGE: dict[str, float] = {
+    "24h": 90.0,
+    "7d": 85.0,
+    "30d": 80.0,
+    "90d": 80.0,
+    "365d": 80.0,
+}
+
+MINIMUM_REQUIREMENTS: dict[str, dict[str, float]] = {
+    "trend": {"days": 30.0, "coverage_percent": 80.0, "effective_samples": 14.0},
+    "annual_projection": {"days": 90.0, "coverage_percent": 80.0},
+    "seasonal_exploratory": {"months": 6.0},
+    "seasonal_supported": {"months": 12.0},
+    "environment": {"pairs": 100.0},
+    "control_chart": {"days": 30.0},
+}
+
 
 def _quantile(values: list[float], fraction: float) -> float | None:
     if not values:
@@ -284,9 +303,92 @@ def _hourly_episodes(points: list[dict[str, Any]], threshold_cpm: float) -> dict
     }
 
 
+def _normal_two_sided_p(z_value: float) -> float:
+    """Conservative two-sided normal approximation used without scipy."""
+    return max(0.0, min(1.0, math.erfc(abs(float(z_value)) / math.sqrt(2.0))))
+
+
+def _correlation_p_value(correlation: float, pairs: int) -> float | None:
+    if pairs < 4 or abs(correlation) >= 1.0:
+        return 0.0 if abs(correlation) >= 1.0 and pairs >= 4 else None
+    denominator = max(1e-12, 1.0 - correlation * correlation)
+    statistic = correlation * math.sqrt(max(1.0, (pairs - 2) / denominator))
+    return _normal_two_sided_p(statistic)
+
+
+def _benjamini_hochberg(items: list[dict[str, Any]], *, alpha: float = 0.05) -> None:
+    """Attach FDR-adjusted p-values to a small set of exploratory tests."""
+    valid = [(index, float(item["p_value"])) for index, item in enumerate(items) if item.get("p_value") is not None]
+    if not valid:
+        return
+    ordered = sorted(valid, key=lambda pair: pair[1])
+    count = len(ordered)
+    adjusted = [1.0] * count
+    running = 1.0
+    for reverse_index in range(count - 1, -1, -1):
+        _original_index, p_value = ordered[reverse_index]
+        rank = reverse_index + 1
+        running = min(running, p_value * count / rank)
+        adjusted[reverse_index] = min(1.0, running)
+    for ordered_index, (original_index, _p_value) in enumerate(ordered):
+        items[original_index]["p_value_fdr"] = adjusted[ordered_index]
+        items[original_index]["significant_fdr"] = adjusted[ordered_index] < alpha
+
+
+def _evidence_level(
+    *,
+    duration_days: float,
+    coverage_percent: float,
+    effective_samples: float | None = None,
+    minimum_days: float = 0.0,
+    minimum_coverage: float = 0.0,
+    minimum_effective: float = 0.0,
+) -> dict[str, Any]:
+    reasons: list[str] = []
+    if duration_days < minimum_days:
+        reasons.append("duration")
+    if coverage_percent < minimum_coverage:
+        reasons.append("coverage")
+    if minimum_effective and (effective_samples is None or effective_samples < minimum_effective):
+        reasons.append("effective_sample_size")
+    if reasons:
+        return {"level": "not_evaluable", "reasons": reasons}
+    score = 0
+    score += 1 if duration_days >= minimum_days * 1.25 else 0
+    score += 1 if coverage_percent >= max(minimum_coverage, 90.0) else 0
+    if minimum_effective:
+        score += 1 if effective_samples is not None and effective_samples >= minimum_effective * 2.0 else 0
+    if score >= 3:
+        level = "well_supported"
+    elif score >= 2:
+        level = "supported"
+    elif score >= 1:
+        level = "preliminary"
+    else:
+        level = "exploratory"
+    return {"level": level, "reasons": []}
+
+
+def _trend_effect(slope_cpm_per_day: float | None, background_cpm: float | None) -> dict[str, Any]:
+    if slope_cpm_per_day is None or not background_cpm or background_cpm <= 0:
+        return {"level": "unknown", "percent_per_month": None}
+    percent_per_month = 100.0 * float(slope_cpm_per_day) * 30.4375 / float(background_cpm)
+    magnitude = abs(percent_per_month)
+    if magnitude < 1.0:
+        level = "very_small"
+    elif magnitude < 5.0:
+        level = "small"
+    elif magnitude < 15.0:
+        level = "moderate"
+    else:
+        level = "large"
+    return {"level": level, "percent_per_month": percent_per_month}
+
+
 def _best_lagged_environment(points: list[dict[str, Any]], field: str) -> dict[str, Any]:
     by_hour = {int(point["timestamp_utc"]): point for point in points}
     results: list[dict[str, Any]] = []
+    minimum_pairs = int(MINIMUM_REQUIREMENTS["environment"]["pairs"])
     for lag in LAG_HOURS:
         radiation: list[float] = []
         environment: list[float] = []
@@ -299,11 +401,43 @@ def _best_lagged_environment(points: list[dict[str, Any]], field: str) -> dict[s
             environment.append(float(source[field]))
         correlation = _spearman(radiation, environment)
         if correlation is not None:
-            results.append({"lag_hours": lag, "correlation": correlation, "pairs": len(radiation)})
-    if not results:
-        return {"available": False, "field": field, "results": []}
-    best = max(results, key=lambda item: abs(float(item["correlation"])))
-    return {"available": True, "field": field, "best": best, "results": results, "causal": False}
+            pairs = len(radiation)
+            results.append({
+                "lag_hours": lag,
+                "correlation": correlation,
+                "pairs": pairs,
+                "p_value": _correlation_p_value(correlation, pairs),
+                "meets_minimum_pairs": pairs >= minimum_pairs,
+            })
+    _benjamini_hochberg(results)
+    eligible = [item for item in results if item.get("meets_minimum_pairs")]
+    if not eligible:
+        maximum_pairs = max((int(item.get("pairs") or 0) for item in results), default=0)
+        return {
+            "available": False,
+            "field": field,
+            "results": results,
+            "minimum_pairs": minimum_pairs,
+            "maximum_pairs": maximum_pairs,
+            "evidence": {"level": "not_evaluable", "reasons": ["paired_samples"]},
+            "causal": False,
+        }
+    best = max(eligible, key=lambda item: abs(float(item["correlation"])))
+    evidence = {
+        "level": "preliminary" if bool(best.get("significant_fdr")) else "exploratory",
+        "reasons": [] if bool(best.get("significant_fdr")) else ["multiple_testing"],
+    }
+    return {
+        "available": True,
+        "field": field,
+        "best": best,
+        "results": results,
+        "minimum_pairs": minimum_pairs,
+        "tests": len(results),
+        "fdr_method": "Benjamini-Hochberg",
+        "evidence": evidence,
+        "causal": False,
+    }
 
 
 def _aggregate_daily(points: list[dict[str, Any]], timezone: ZoneInfo) -> list[dict[str, Any]]:
@@ -498,7 +632,10 @@ def build_long_term_analysis(
             points,
             latest_end_utc=end_utc,
             days=days,
-            minimum_coverage_percent=minimum_coverage_percent,
+            minimum_coverage_percent=max(
+                minimum_coverage_percent,
+                WINDOW_MINIMUM_COVERAGE.get(key, minimum_coverage_percent),
+            ),
             warning_cpm=warning_cpm,
             danger_cpm=danger_cpm,
         )
@@ -546,9 +683,9 @@ def build_long_term_analysis(
     total_dose_available = any(bool(point.get("dose_available")) for point in points)
     total_dose = sum(float(point.get("dose_usv") or 0.0) for point in points) if total_dose_available else None
     annual_projection = None
-    window_30d = windows["30d"]
-    if window_30d["ready"] and window_30d["dose_usv"] is not None and float(window_30d["covered_days"]) > 0:
-        annual_projection = float(window_30d["dose_usv"]) / float(window_30d["covered_days"]) * 365.25
+    window_90d = windows["90d"]
+    if window_90d["ready"] and window_90d["dose_usv"] is not None and float(window_90d["covered_days"]) > 0:
+        annual_projection = float(window_90d["dose_usv"]) / float(window_90d["covered_days"]) * 365.25
 
     by_month_of_year: dict[int, list[float]] = defaultdict(list)
     for item in qualifying_daily:
@@ -558,6 +695,39 @@ def build_long_term_analysis(
         for month, values in sorted(by_month_of_year.items())
         if values
     ]
+
+    overall_coverage = min(100.0, 100.0 * total_covered_seconds / max(1.0, end_utc - start_utc))
+    effective_value = float(effective.get("effective") or 0.0) if effective.get("available") else None
+    trend_evidence = _evidence_level(
+        duration_days=len(qualifying_daily),
+        coverage_percent=overall_coverage,
+        effective_samples=effective_value,
+        minimum_days=MINIMUM_REQUIREMENTS["trend"]["days"],
+        minimum_coverage=MINIMUM_REQUIREMENTS["trend"]["coverage_percent"],
+        minimum_effective=MINIMUM_REQUIREMENTS["trend"]["effective_samples"],
+    )
+    trend["evidence"] = trend_evidence
+    trend["effect"] = _trend_effect(trend.get("sen_slope_cpm_per_day"), background_median)
+    represented_months = len(seasonal)
+    seasonal_evidence = {
+        "level": (
+            "supported" if represented_months >= MINIMUM_REQUIREMENTS["seasonal_supported"]["months"]
+            else "exploratory" if represented_months >= MINIMUM_REQUIREMENTS["seasonal_exploratory"]["months"]
+            else "not_evaluable"
+        ),
+        "represented_months": represented_months,
+        "minimum_exploratory_months": int(MINIMUM_REQUIREMENTS["seasonal_exploratory"]["months"]),
+        "minimum_supported_months": int(MINIMUM_REQUIREMENTS["seasonal_supported"]["months"]),
+    }
+    control_evidence = _evidence_level(
+        duration_days=len(qualifying_daily),
+        coverage_percent=overall_coverage,
+        minimum_days=MINIMUM_REQUIREMENTS["control_chart"]["days"],
+        minimum_coverage=MINIMUM_REQUIREMENTS["trend"]["coverage_percent"],
+    )
+    control["evidence"] = control_evidence
+    environment_temperature = _best_lagged_environment(points, "temperature_c")
+    environment_pressure = _best_lagged_environment(points, "pressure_hpa")
 
     return {
         "available": True,
@@ -570,7 +740,7 @@ def build_long_term_analysis(
         "hourly_points": len(points),
         "daily_points": len(daily),
         "covered_days": total_covered_seconds / 86400.0,
-        "coverage_percent": min(100.0, 100.0 * total_covered_seconds / max(1.0, end_utc - start_utc)),
+        "coverage_percent": overall_coverage,
         "minimum_coverage_percent": minimum_coverage_percent,
         "windows": windows,
         "background": {
@@ -601,7 +771,7 @@ def build_long_term_analysis(
             "total_usv": total_dose,
             "covered_hours": total_covered_seconds / 3600.0,
             "annual_projection_usv": annual_projection,
-            "projection_basis_days": 30 if annual_projection is not None else None,
+            "projection_basis_days": 90 if annual_projection is not None else None,
             "derived": True,
         },
         "threshold_time": {
@@ -621,13 +791,22 @@ def build_long_term_analysis(
             ),
         },
         "environment": {
-            "temperature": _best_lagged_environment(points, "temperature_c"),
-            "pressure": _best_lagged_environment(points, "pressure_hpa"),
+            "temperature": environment_temperature,
+            "pressure": environment_pressure,
         },
         "daily": daily[-730:],
         "calendar": daily[-366:],
         "monthly": monthly[-36:],
         "seasonal": seasonal,
+        "seasonal_evidence": seasonal_evidence,
+        "evidence_levels": {
+            "trend": trend_evidence,
+            "seasonal": seasonal_evidence,
+            "control_chart": control_evidence,
+            "environment_temperature": environment_temperature.get("evidence") or {},
+            "environment_pressure": environment_pressure.get("evidence") or {},
+        },
+        "minimum_requirements": MINIMUM_REQUIREMENTS,
         "notes": {
             "dose_is_derived": True,
             "correlation_is_not_causation": True,

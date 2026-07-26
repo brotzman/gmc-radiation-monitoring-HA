@@ -4,7 +4,9 @@ import html
 import math
 from datetime import UTC, datetime
 from typing import Any, Protocol
+from urllib.parse import quote_plus
 
+from .field_test_protocol import build_field_test_protocol
 from .long_term_analysis import build_long_term_analysis
 from .number_format import format_number
 
@@ -227,12 +229,80 @@ def _episodes_table(episodes: dict[str, Any], timezone, t: TranslatorLike) -> st
 <tbody>{''.join(rows)}</tbody></table></div>'''
 
 
+def _evidence_label(level: str, t: TranslatorLike) -> str:
+    return t({
+        "not_evaluable": "Not evaluable",
+        "exploratory": "Exploratory",
+        "preliminary": "Preliminary",
+        "supported": "Supported",
+        "well_supported": "Well supported",
+    }.get(level, "Not evaluable"))
+
+
+def _evidence_badge(evidence: dict[str, Any], t: TranslatorLike) -> str:
+    level = str(evidence.get("level") or "not_evaluable")
+    return f'<span class="evidence-badge evidence-{html.escape(level, quote=True)}">{html.escape(_evidence_label(level, t))}</span>'
+
+
+def _effect_label(level: str, t: TranslatorLike) -> str:
+    return t({
+        "very_small": "Very small practical magnitude",
+        "small": "Small practical magnitude",
+        "moderate": "Moderate practical magnitude",
+        "large": "Large practical magnitude",
+        "unknown": "Practical magnitude not available",
+    }.get(level, "Practical magnitude not available"))
+
+
+def _plain_trend_text(trend: dict[str, Any], t: TranslatorLike) -> tuple[str, str]:
+    evidence = trend.get("evidence") or {}
+    if evidence.get("level") == "not_evaluable" or not trend.get("available"):
+        return t("No reliable long-term trend can be assessed yet"), t("At least 30 sufficiently complete days and an adequate effective sample size are required.")
+    direction = str(trend.get("direction") or "stable")
+    effect = trend.get("effect") or {}
+    percent = effect.get("percent_per_month")
+    if direction == "increasing":
+        headline = t("A rising long-term tendency is visible")
+    elif direction == "decreasing":
+        headline = t("A falling long-term tendency is visible")
+    else:
+        headline = t("No statistically clear long-term trend is visible")
+    detail = t(
+        "Estimated change {value}% per month · {magnitude}",
+        value=_num(percent, t.language, decimals=1),
+        magnitude=_effect_label(str(effect.get("level") or "unknown"), t),
+    )
+    return headline, detail
+
+
+def _field_test_cards(protocol: dict[str, Any], t: TranslatorLike) -> str:
+    runtime = protocol.get("runtime") or {}
+    history = protocol.get("history") or {}
+    gmcmap = protocol.get("gmcmap") or {}
+    uptime_seconds = runtime.get("uptime_seconds")
+    uptime_days = float(uptime_seconds) / 86400.0 if uptime_seconds is not None else None
+    longest_gap_hours = float(history.get("longest_gap_seconds") or 0) / 3600.0
+    export_url = './api/v1/field-test-protocol?device=' + quote_plus(str((protocol.get("device") or {}).get("serial") or ""))
+    return f'''<div class="long-term-grid field-test-grid">
+<article class="long-term-card"><strong>{html.escape(t('Runtime since service start'))}</strong><div class="long-term-value">{html.escape(_num(uptime_days, t.language, decimals=1, suffix=' d'))}</div><small>{html.escape(t('Cumulative counters reset when the service restarts.'))}</small></article>
+<article class="long-term-card"><strong>{html.escape(t('USB / serial recovery'))}</strong><div class="long-term-value">{html.escape(_num(runtime.get('serial_reconnect_count'), t.language, decimals=0))}</div><small>{html.escape(t('{errors} serial errors · {reconnects} reconnects', errors=int(runtime.get('serial_error_count') or 0), reconnects=int(runtime.get('serial_reconnect_count') or 0)))}</small></article>
+<article class="long-term-card"><strong>{html.escape(t('Longest data gap'))}</strong><div class="long-term-value">{html.escape(_num(longest_gap_hours, t.language, decimals=1, suffix=' h'))}</div><small>{html.escape(t('{count} detected gaps above the expected interval', count=int(history.get('gap_count') or 0)))}</small></article>
+<article class="long-term-card"><strong>{html.escape(t('Database write errors'))}</strong><div class="long-term-value">{html.escape(_num(runtime.get('history_write_error_count'), t.language, decimals=0))}</div><small>{html.escape(t('Stored samples: {count}', count=int(history.get('stored_samples') or 0)))}</small></article>
+<article class="long-term-card"><strong>{html.escape(t('GMCMap transmission'))}</strong><div class="long-term-value compact">{html.escape(t(str(gmcmap.get('status') or 'not configured')))}</div><small>{html.escape(t('{success} successful · {errors} failed uploads', success=int(gmcmap.get('successful_uploads') or 0), errors=int(gmcmap.get('upload_errors') or 0)))}</small></article>
+</div>
+<div class="field-test-actions"><a class="button" href="{html.escape(export_url, quote=True)}" download>{html.escape(t('Export field-test protocol (JSON)'))}</a></div>
+<div class="note"><strong>{html.escape(t('Field-test interpretation'))}</strong><br>{html.escape(t('These operational counters help assess long-term reliability. They do not certify detector calibration or measurement accuracy.'))}</div>'''
+
+
 def _environment_card(item: dict[str, Any], title: str, t: TranslatorLike) -> str:
+    evidence = item.get("evidence") or {}
     if not item.get("available"):
+        maximum_pairs = int(item.get("maximum_pairs") or 0)
+        minimum_pairs = int(item.get("minimum_pairs") or 100)
         return (
-            f'<article class="long-term-card pending"><strong>{html.escape(title)}</strong>'
-            f'<div class="long-term-value">{html.escape(t("Not enough paired data"))}</div>'
-            f'<small>{html.escape(t("No value is calculated until enough hourly pairs are available."))}</small></article>'
+            f'<article class="long-term-card pending"><div class="long-term-card-head"><strong>{html.escape(title)}</strong>{_evidence_badge(evidence, t)}</div>'
+            f'<div class="long-term-value compact">{html.escape(t("Not enough paired data"))}</div>'
+            f'<small>{html.escape(t("{available} of {required} required hourly pairs are available.", available=maximum_pairs, required=minimum_pairs))}</small></article>'
         )
     best = item.get("best") or {}
     correlation = float(best.get("correlation") or 0.0)
@@ -241,11 +311,13 @@ def _environment_card(item: dict[str, Any], title: str, t: TranslatorLike) -> st
         strength = t("strong")
     elif abs(correlation) >= 0.3:
         strength = t("moderate")
+    fdr = best.get("p_value_fdr")
+    fdr_text = t("FDR-adjusted p={value}", value=_num(fdr, t.language, decimals=3)) if fdr is not None else t("FDR-adjusted significance not available")
     return (
-        f'<article class="long-term-card"><strong>{html.escape(title)}</strong>'
+        f'<article class="long-term-card"><div class="long-term-card-head"><strong>{html.escape(title)}</strong>{_evidence_badge(evidence, t)}</div>'
         f'<div class="long-term-value">ρ = {html.escape(_num(correlation, t.language, decimals=2))}</div>'
         f'<small>{html.escape(t("Strongest at {lag} h lag · {pairs} pairs · {strength} association", lag=int(best.get("lag_hours") or 0), pairs=int(best.get("pairs") or 0), strength=strength))}</small>'
-        f'<small>{html.escape(t("Correlation does not prove causation."))}</small></article>'
+        f'<small>{html.escape(fdr_text)} · {html.escape(t("Correlation does not prove causation."))}</small></article>'
     )
 
 
@@ -271,7 +343,10 @@ def render_long_term_analysis(result: dict[str, Any], *, timezone, t: Translator
     episodes = result.get("episodes") or {}
     threshold_time = result.get("threshold_time") or {}
     environment = result.get("environment") or {}
+    field_test = result.get("field_test") or {}
+    seasonal_evidence = result.get("seasonal_evidence") or {}
 
+    trend_headline, trend_detail = _plain_trend_text(trend, t)
     trend_text = t("Not yet meaningful")
     if trend.get("available"):
         direction = t(str(trend.get("direction") or "stable"))
@@ -291,9 +366,9 @@ def render_long_term_analysis(result: dict[str, Any], *, timezone, t: Translator
 
     projection = dose.get("annual_projection_usv")
     projection_text = (
-        t("Annual projection from the last 30 days: {value} µSv", value=_num(projection, t.language, decimals=1))
+        t("Annual projection from the last 90 days: {value} µSv", value=_num(projection, t.language, decimals=1))
         if projection is not None
-        else t("Annual projection is not shown until a sufficiently complete 30-day period exists.")
+        else t("Annual projection is not shown until a sufficiently complete 90-day period exists.")
     )
     threshold_total = sum(
         float(threshold_time.get(key) or 0.0)
@@ -309,17 +384,24 @@ def render_long_term_analysis(result: dict[str, Any], *, timezone, t: Translator
 <section id="long-term-analysis" class="analysis-section long-term-analysis">
 <div class="analysis-heading"><span class="analysis-device-badge device-generic">LT</span><div><h2>{html.escape(heading)}</h2><p>{html.escape(t('Long-term background, cumulative dose, trend, recurring patterns and statistical process diagnostics'))}</p></div></div>
 <div data-analysis-tier="summary">
+<div class="plain-assessment" aria-label="{html.escape(t('Plain-language assessment'), quote=True)}">
+<div class="plain-assessment-head"><div><strong>{html.escape(t('Plain-language assessment'))}</strong><small>{html.escape(t('The main result first; method details remain available below.'))}</small></div>{_evidence_badge(trend.get('evidence') or {}, t)}</div>
+<div class="plain-assessment-grid">
+<article><strong>{html.escape(t('Long-term trend'))}</strong><span>{html.escape(trend_headline)}</span><small>{html.escape(trend_detail)}</small></article>
+<article><strong>{html.escape(t('Current background context'))}</strong><span>{html.escape(_num(background.get('recent_deviation_percent'), t.language, decimals=1, suffix='%'))}</span><small>{html.escape(t('Recent 7-day median relative to the robust long-term background'))}</small></article>
+<article><strong>{html.escape(t('Data basis'))}</strong><span>{html.escape(_num(result.get('coverage_percent'), t.language, decimals=1, suffix='%'))}</span><small>{html.escape(t('{days} covered days · {observed} daily observations', days=_num(result.get('covered_days'), t.language, decimals=1), observed=int(effective.get('observations') or 0)))}</small></article>
+</div></div>
 <details class="analysis-group long-term-group" open><summary><span class="summary-copy">{html.escape(t('Long-term overview'))}<small>{html.escape(t('Real time windows with duration and coverage checks'))}</small></span></summary><div class="group-body">
 <div class="long-term-window-grid">{window_cards}</div>
 <div class="long-term-grid">
 <article class="long-term-card"><strong>{html.escape(t('Robust local background'))}</strong><div class="long-term-value">{html.escape(_num(background.get('median_cpm'), t.language, decimals=2, suffix=' CPM'))}</div><small>{html.escape(t('Typical range P05–P95: {low}–{high} CPM', low=_num(background.get('p05_cpm'), t.language, decimals=1), high=_num(background.get('p95_cpm'), t.language, decimals=1)))}</small></article>
-<article class="long-term-card"><strong>{html.escape(t('Cumulative derived dose'))}</strong><div class="long-term-value">{html.escape(_num(dose.get('total_usv'), t.language, decimals=3, suffix=' µSv'))}</div><small>{html.escape(t('Based on {hours} covered hours', hours=_num(dose.get('covered_hours'), t.language, decimals=1)))}</small><small>{html.escape(projection_text)}</small></article>
-<article class="long-term-card"><strong>{html.escape(t('Long-term trend'))}</strong><div class="long-term-value compact">{html.escape(trend_text)}</div><small>{html.escape(t('Mann-Kendall test with Sen slope on sufficiently covered daily medians'))}</small></article>
-<article class="long-term-card"><strong>{html.escape(t('Effective sample size'))}</strong><div class="long-term-value">{html.escape(_num(effective.get('effective'), t.language, decimals=1))}</div><small>{html.escape(t('{observed} daily observations · correlation duration {duration} days', observed=int(effective.get('observations') or 0), duration=_num(effective.get('correlation_days'), t.language, decimals=1)))}</small></article>
+<article class="long-term-card"><strong>{html.escape(t('Integrated derived dose in the measured period'))}</strong><div class="long-term-value">{html.escape(_num(dose.get('total_usv'), t.language, decimals=3, suffix=' µSv'))}</div><small>{html.escape(t('Based on {hours} covered hours', hours=_num(dose.get('covered_hours'), t.language, decimals=1)))}</small><small>{html.escape(projection_text)}</small></article>
+<article class="long-term-card"><div class="long-term-card-head"><strong>{html.escape(t('Long-term trend'))}</strong>{_evidence_badge(trend.get('evidence') or {}, t)}</div><div class="long-term-value compact">{html.escape(trend_headline)}</div><small>{html.escape(trend_detail)}</small></article>
+<article class="long-term-card"><strong>{html.escape(t('Seasonal assessment'))}</strong><div class="long-term-value compact">{html.escape(_evidence_label(str(seasonal_evidence.get('level') or 'not_evaluable'), t))}</div><small>{html.escape(t('{months} represented calendar months', months=int(seasonal_evidence.get('represented_months') or 0)))}</small></article>
 </div></div></details>
 </div>
 <div data-analysis-tier="analysis">
-<details class="analysis-group long-term-group" open><summary><span class="summary-copy">{html.escape(t('Daily and monthly development'))}<small>{html.escape(t('Daily medians, rolling median and calendar view'))}</small></span></summary><div class="group-body">
+<details class="analysis-group long-term-group"><summary><span class="summary-copy">{html.escape(t('Daily and monthly development'))}<small>{html.escape(t('Daily medians, rolling median and calendar view'))}</small></span></summary><div class="group-body">
 {_trend_chart(result.get('daily') or [], t)}
 <div><h3>{html.escape(t('Calendar heat map'))}</h3>{_calendar_heatmap(result.get('calendar') or [], background, t)}</div>
 <div><h3>{html.escape(t('Monthly aggregates'))}</h3>{_monthly_table(result.get('monthly') or [], t)}</div>
@@ -336,23 +418,29 @@ def render_long_term_analysis(result: dict[str, Any], *, timezone, t: Translator
 </div></details>
 </div>
 <div data-analysis-tier="expert">
-<details class="analysis-group long-term-group"><summary><span class="summary-copy">{html.escape(t('Long-term statistical diagnostics'))}<small>{html.escape(t('Bootstrap uncertainty, distribution dispersion, EWMA and CUSUM'))}</small></span></summary><div class="group-body">
+<details class="analysis-group long-term-group"><summary><span class="summary-copy">{html.escape(t('Extended statistical methods'))}<small>{html.escape(t('Confidence intervals, effective sample size, test statistics and practical effect size'))}</small></span></summary><div class="group-body">
 <div class="long-term-grid">
+<article class="long-term-card"><strong>{html.escape(t('Effective sample size'))}</strong><div class="long-term-value">{html.escape(_num(effective.get('effective'), t.language, decimals=1))}</div><small>{html.escape(t('{observed} daily observations · correlation duration {duration} days', observed=int(effective.get('observations') or 0), duration=_num(effective.get('correlation_days'), t.language, decimals=1)))}</small></article>
+<article class="long-term-card"><strong>{html.escape(t('Trend method details'))}</strong><div class="long-term-value compact">{html.escape(trend_text)}</div><small>{html.escape(t('Mann-Kendall test with Sen slope on sufficiently covered daily medians'))}</small></article>
 <article class="long-term-card"><strong>{html.escape(t('95% block-bootstrap interval for mean'))}</strong><div class="long-term-value compact">{html.escape(bootstrap_mean)}</div><small>{html.escape(t('Moving blocks preserve short-range time dependence'))}</small></article>
 <article class="long-term-card"><strong>{html.escape(t('95% block-bootstrap interval for median'))}</strong><div class="long-term-value compact">{html.escape(bootstrap_median)}</div><small>{html.escape(t('{replicates} replicates · block length {block} days', replicates=int(bootstrap.get('replicates') or 0), block=int(bootstrap.get('block_length') or 0)))}</small></article>
+</div></div></details>
+<details class="analysis-group long-term-group"><summary><span class="summary-copy">{html.escape(t('Statistical process diagnostics'))}<small>{html.escape(t('EWMA, CUSUM and dispersion diagnostics; statistical context only'))}</small></span></summary><div class="group-body">
+<div class="long-term-grid">
 <article class="long-term-card {'notice' if control.get('ewma_signal') else ''}"><strong>EWMA</strong><div class="long-term-value">{html.escape(_num(control.get('ewma_cpm'), t.language, decimals=2, suffix=' CPM'))}</div><small>{html.escape(t('Statistical signal detected') if control.get('ewma_signal') else t('No persistent EWMA signal detected'))}</small></article>
 <article class="long-term-card {'notice' if control.get('cusum_signal') else ''}"><strong>CUSUM</strong><div class="long-term-value">{html.escape(_num(control.get('cusum_positive'), t.language, decimals=2))}</div><small>{html.escape(t('Statistical signal detected') if control.get('cusum_signal') else t('No persistent CUSUM signal detected'))}</small></article>
 <article class="long-term-card"><strong>{html.escape(t('Hourly dispersion ratio'))}</strong><div class="long-term-value">{html.escape(_num(overdispersion.get('fano_like_ratio'), t.language, decimals=2))}</div><small>{html.escape(t('Contextual Fano-like ratio; rolling CPM values are not independent Poisson counts'))}</small></article>
-<article class="long-term-card"><strong>{html.escape(t('Recent background deviation'))}</strong><div class="long-term-value">{html.escape(_num(background.get('recent_deviation_percent'), t.language, decimals=1, suffix='%'))}</div><small>{html.escape(t('Recent 7-day median relative to the robust long-term background'))}</small></article>
 </div>
 <div class="note"><strong>{html.escape(t('Scientific interpretation'))}</strong><br>{html.escape(t('EWMA, CUSUM, trend tests and relative event detection provide statistical context only. They do not identify a radiation source and do not replace calibrated radiation-protection measurements.'))}</div>
 </div></details>
-<details class="analysis-group long-term-group"><summary><span class="summary-copy">{html.escape(t('Lagged environmental associations'))}<small>{html.escape(t('Exploratory Spearman correlations at 0, 3, 6, 12 and 24 hour lags'))}</small></span></summary><div class="group-body"><div class="long-term-grid">
+<details class="analysis-group long-term-group"><summary><span class="summary-copy">{html.escape(t('Lagged environmental associations'))}<small>{html.escape(t('Exploratory Spearman correlations with false-discovery-rate correction'))}</small></span></summary><div class="group-body"><div class="long-term-grid">
 {_environment_card(environment.get('temperature') or {}, t('Temperature association'), t)}
 {_environment_card(environment.get('pressure') or {}, t('Air-pressure association'), t)}
-</div><div class="note">{html.escape(t('Environmental correlations are exploratory. They may reflect common time patterns, ventilation, weather or other confounding factors and do not prove causation.'))}</div></div></details>
+</div><div class="note">{html.escape(t('Environmental correlations are exploratory. Benjamini-Hochberg correction reduces false discoveries across tested lags, but no causal conclusion is justified.'))}</div></div></details>
+<details class="analysis-group long-term-group"><summary><span class="summary-copy">{html.escape(t('Long-term reliability field test'))}<small>{html.escape(t('Operational counters for USB, database continuity and GMCMap transmission'))}</small></span></summary><div class="group-body">{_field_test_cards(field_test, t)}</div></details>
 </div>
 </section>'''
+
 
 
 def render_cached_long_term_analysis(
@@ -396,8 +484,12 @@ def render_cached_long_term_analysis(
             maximum_days=min(3650, max(365, int(application.store.retention_days))),
         ),
     )
+    rendered_result = dict(result)
+    rendered_result["field_test"] = build_field_test_protocol(
+        application.store, device_serial=device_serial, timezone_name=application.timezone_name
+    )
     return render_long_term_analysis(
-        result, timezone=application.timezone, t=translator, device_label=device_label
+        rendered_result, timezone=application.timezone, t=translator, device_label=device_label
     )
 
 

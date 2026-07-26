@@ -1199,6 +1199,12 @@ def _run_device(
                                 "temperature_error_count": optional_error_counts["temperature"],
                                 "voltage_error_count": optional_error_counts["voltage"],
                                 "gyro_error_count": optional_error_counts["gyro"],
+                                "app_started_at": app_started_at,
+                                **{
+                                    key: value
+                                    for key, value in diagnostics.items()
+                                    if key.startswith("gmcmap_")
+                                },
                                 "cpm_gate_state": gate.state,
                                 "cpm_gate_pending_confirmations": gate.pending,
                                 "cpm_gate_required_confirmations": device_config.high_cpm_confirmations,

@@ -19,6 +19,7 @@ from .calibration_http import (
     persist_calibration_profile,
 )
 from .config_validation import validate_candidate_options
+from .field_test_protocol import field_test_protocol_json
 from .maintenance import diagnostics_json_bytes, full_history_zip_to_path, support_diagnostics_text
 from .number_format import format_number
 from .report_http_responses import HttpResponseMixin
@@ -156,6 +157,23 @@ class ReportRequestHandler(HttpResponseMixin, BaseHTTPRequestHandler):
                 self._send_bytes(
                     HTTPStatus.OK, "text/plain; charset=utf-8", payload,
                     cache_control="no-store",
+                )
+                return
+            if path == "/api/v1/field-test-protocol":
+                serial = self.app._known_device_serial(_optional_one(query, "device"))
+                if not serial:
+                    self._send_error(HTTPStatus.NOT_FOUND, t("No connected GMC device"))
+                    return
+                payload = field_test_protocol_json(
+                    self.app.store, device_serial=serial, timezone_name=self.app.timezone_name
+                )
+                filename = f"gmc-field-test-{slugify(serial)}-{int(time.time())}.json"
+                self._send_bytes(
+                    HTTPStatus.OK,
+                    "application/json; charset=utf-8",
+                    payload,
+                    cache_control="no-store",
+                    content_disposition=f'attachment; filename="{filename}"',
                 )
                 return
             if path == "/api/report-preview":

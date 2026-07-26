@@ -1204,3 +1204,90 @@ input,select,textarea { min-height:2.75rem; }
     flex-wrap:wrap;
   }
 }
+
+/* Evidence-led long-term presentation and field-test diagnostics 9.2.0 */
+.plain-assessment {
+  min-width:0;
+  display:grid;
+  gap:.8rem;
+  padding:1rem;
+  border:1px solid color-mix(in srgb,var(--blue) 24%,var(--border));
+  border-radius:14px;
+  background:color-mix(in srgb,var(--blue) 4%,var(--panel));
+}
+.plain-assessment-head {
+  min-width:0;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:.75rem;
+}
+.plain-assessment-head > div { min-width:0; display:grid; gap:.18rem; }
+.plain-assessment-head strong { font-size:clamp(1rem,1.3vw,1.15rem); line-height:1.25; }
+.plain-assessment-head small { color:var(--muted); line-height:1.4; overflow-wrap:anywhere; }
+.plain-assessment-grid {
+  min-width:0;
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:.75rem;
+}
+.plain-assessment-grid article {
+  min-width:0;
+  display:grid;
+  align-content:start;
+  gap:.3rem;
+  padding:.78rem;
+  border:1px solid var(--border);
+  border-radius:11px;
+  background:var(--panel);
+}
+.plain-assessment-grid strong,
+.plain-assessment-grid span,
+.plain-assessment-grid small { min-width:0; overflow-wrap:anywhere; }
+.plain-assessment-grid strong { color:var(--muted); font-size:.8rem; line-height:1.35; }
+.plain-assessment-grid span { font-weight:760; font-size:clamp(1rem,1.35vw,1.18rem); line-height:1.3; }
+.plain-assessment-grid small { color:var(--muted); line-height:1.4; }
+.evidence-badge {
+  flex:0 0 auto;
+  max-width:48%;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:.2rem .5rem;
+  border:1px solid var(--border);
+  border-radius:999px;
+  font-size:.72rem;
+  font-weight:750;
+  line-height:1.25;
+  text-align:center;
+  overflow-wrap:anywhere;
+  background:Canvas;
+}
+.evidence-not_evaluable { color:var(--muted); }
+.evidence-exploratory { color:var(--yellow-text,var(--text)); background:color-mix(in srgb,var(--yellow) 9%,Canvas); }
+.evidence-preliminary { color:var(--blue); background:color-mix(in srgb,var(--blue) 8%,Canvas); }
+.evidence-supported,.evidence-well_supported { color:var(--green); background:color-mix(in srgb,var(--green) 8%,Canvas); }
+.field-test-actions { display:flex; flex-wrap:wrap; gap:.65rem; margin-top:.75rem; }
+.field-test-actions .button { max-width:100%; white-space:normal; text-align:center; }
+.field-test-grid .long-term-value { font-variant-numeric:tabular-nums; }
+
+@media(max-width:900px){
+  .plain-assessment-grid { grid-template-columns:1fr; }
+}
+@media(max-width:620px){
+  .plain-assessment { padding:.78rem; }
+  .plain-assessment-head { display:grid; gap:.45rem; }
+  .evidence-badge { max-width:100%; width:max-content; }
+  .field-test-actions .button { width:100%; }
+}
+@media(max-width:390px){
+  .plain-assessment { gap:.65rem; padding:.68rem; }
+  .plain-assessment-grid { gap:.55rem; }
+  .plain-assessment-grid article { padding:.68rem; }
+}
+
+/* 9.2.0: keep expanded method groups inside the card at 200% text zoom. */
+details.analysis-group { min-width:0; max-width:100%; box-sizing:border-box; overflow:hidden; }
+details.analysis-group > summary { min-width:0; max-width:100%; box-sizing:border-box; }
+details.analysis-group > summary .summary-copy { min-width:0; max-width:100%; }
+details.analysis-group > summary::after { flex:0 0 auto; }
