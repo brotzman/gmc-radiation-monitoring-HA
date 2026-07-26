@@ -23,13 +23,13 @@ def _t(text: str, **values: object) -> str:
 
 def test_release_902_metadata_and_notes_are_current() -> None:
     config = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
-    assert APP_VERSION == "9.0.3"
-    assert config["version"] == "9.0.3"
+    assert APP_VERSION == "9.1.0"
+    assert config["version"] == "9.1.0"
     assert sorted(path.name for path in ROOT.glob("RELEASE_NOTES_*.md")) == [
-        "RELEASE_NOTES_9.0.3.md"
+        "RELEASE_NOTES_9.1.0.md"
     ]
     assert (ROOT / "CHANGELOG.md").read_text(encoding="utf-8").startswith(
-        "# Changelog\n\n## 9.0.3\n"
+        "# Changelog\n\n## 9.1.0\n"
     )
 
 
@@ -98,7 +98,7 @@ def test_measurement_freshness_is_independent_from_connection_state() -> None:
 class _SupportStore:
     def get_metadata(self) -> dict[str, object]:
         return {
-            "app_version": "9.0.3",
+            "app_version": "9.1.0",
             "report_timezone": "Europe/Berlin",
             "configured_ports": "/dev/ttyUSB0,/dev/serial/by-id/private-device",
             "mqtt_password": "top-secret",

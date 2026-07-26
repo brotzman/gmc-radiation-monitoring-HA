@@ -36,3 +36,7 @@ def test_fleet_snapshot_compares_two_devices(tmp_path: Path) -> None:
     assert snapshot["comparison"] is not None
     assert snapshot["comparison"]["pairs"] >= 10
     assert snapshot["comparison"]["correlation"] > 0.99
+    assert snapshot["comparison"]["bland_altman_available"] is True
+    assert snapshot["comparison"]["bland_altman_bias_cpm"] == -1.0
+    assert snapshot["comparison"]["bland_altman_lower_cpm"] == -1.0
+    assert snapshot["comparison"]["bland_altman_upper_cpm"] == -1.0

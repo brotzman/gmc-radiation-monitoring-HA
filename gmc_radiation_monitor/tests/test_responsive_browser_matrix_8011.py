@@ -132,6 +132,10 @@ def test_dashboard_browser_language_and_viewport_matrix(tmp_path: Path, engine: 
                     resources = _boxes(page, ".header-resource-links > *", 2)
                     language_links = _boxes(page, ".language-switcher > a", 2)
                     levels = _boxes(page, ".analysis-level-button", 3)
+                    # The status details are intentionally collapsed in the real UI. Open
+                    # them before measuring their responsive grid; hidden <details>
+                    # descendants have browser-dependent zero-sized layout boxes.
+                    page.locator(".system-status-panel").evaluate("el => { el.open = true; }")
                     statuses = _boxes(page, ".status-strip-item", 3)
 
                     if viewport["width"] >= 900:

@@ -500,7 +500,7 @@ class ReportWebTests(unittest.TestCase):
             self.assertIn("Custom period", page)
             self.assertIn("Overview", page)
             self.assertIn("Counting statistics", page)
-            self.assertIn("Long-term context", page)
+            self.assertIn("Recent baseline context", page)
             self.assertIn("Advanced diagnostics", page)
             self.assertIn("Not available yet", page)
             self.assertIn("Analysis PDF", page)
