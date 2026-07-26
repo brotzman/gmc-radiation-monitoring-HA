@@ -52,14 +52,14 @@ def _app(tmp_path: Path) -> ReportApplication:
 
 def test_release_903_metadata_and_manuals_are_current() -> None:
     config = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
-    assert APP_VERSION == "9.1.1"
-    assert config["version"] == "9.1.1"
+    assert APP_VERSION == "9.1.2"
+    assert config["version"] == "9.1.2"
     assert sorted(path.name for path in ROOT.glob("RELEASE_NOTES_*.md")) == [
-        "RELEASE_NOTES_9.1.1.md"
+        "RELEASE_NOTES_9.1.2.md"
     ]
     manuals = sorted((ROOT / "rootfs/usr/local/share/gmc-bridge/docs").glob("*.pdf"))
     assert len(manuals) == 8
-    assert all("9.1.1" in path.name for path in manuals)
+    assert all("9.1.2" in path.name for path in manuals)
 
 
 def test_german_number_formatter_preserves_identifiers() -> None:
@@ -68,8 +68,8 @@ def test_german_number_formatter_preserves_identifiers() -> None:
     assert localize_numeric_text("20.99 CPM · 1,364 samples", "de", group_plain_integers=True) == (
         "20,99 CPM · 1.364 samples"
     )
-    assert localize_numeric_text("9.1.1 · GMC-500+ Re 2.53", "de", group_plain_integers=True) == (
-        "9.1.1 · GMC-500+ Re 2.53"
+    assert localize_numeric_text("9.1.2 · GMC-500+ Re 2.53", "de", group_plain_integers=True) == (
+        "9.1.2 · GMC-500+ Re 2.53"
     )
     assert Translator("de")("Completeness: {value:.2f}%", value=12.5) == "Vollständigkeit: 12,50 %"
 

@@ -74,7 +74,7 @@ def test_location_is_rendered_in_croatian_without_external_lookup():
         rendered = app.render_index(language_override="hr").decode()
     assert "Lokacija Home Assistanta" in rendered
     assert "Dom" in rendered
-    assert "Koordinate: 45.81501, 15.98192" in rendered
+    assert "Koordinate: 45.81501° N, 15.98192° E" in rendered
     assert "Nadmorska visina: 122 m" in rendered
     assert "vanjskoj usluzi za geokodiranje" in rendered
 

@@ -34,9 +34,9 @@ def _start_server(tmp_path: Path) -> tuple[ThreadingHTTPServer, threading.Thread
 
 def test_release_901_metadata() -> None:
     config = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
-    assert APP_VERSION == "9.1.1"
-    assert config["version"] == "9.1.1"
-    assert (ROOT / "RELEASE_NOTES_9.1.1.md").is_file()
+    assert APP_VERSION == "9.1.2"
+    assert config["version"] == "9.1.2"
+    assert (ROOT / "RELEASE_NOTES_9.1.2.md").is_file()
 
 
 def test_report_preview_defaults_missing_period_to_daily(tmp_path: Path) -> None:

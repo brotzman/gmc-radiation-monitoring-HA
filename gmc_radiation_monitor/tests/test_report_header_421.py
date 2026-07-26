@@ -50,7 +50,7 @@ def test_global_report_header_uses_status_strip_and_collapsible_location():
     assert '<details class="location-details">' in rendered
     assert 'class="global-settings"' not in rendered
     assert 'class="global-setting"' not in rendered
-    assert "Koordinaten: 51,60176, 7,45410" in rendered
+    assert "Koordinaten: 51,60176° N, 7,45410° E" in rendered
     assert "Zeitzone: Europe/Berlin" in rendered
     assert "Die Standortdaten stammen" in rendered
 
@@ -77,3 +77,12 @@ def test_new_header_renders_for_every_supported_language():
         assert '<details class="location-details">' in rendered
         assert "Europe/Berlin" in rendered
         assert "Home" in rendered
+
+
+def test_coordinate_units_and_cardinal_directions_are_unambiguous():
+    from gmc_bridge.web_components import format_geographic_coordinate
+
+    assert format_geographic_coordinate(51.60176, "latitude", "de") == "51,60176° N"
+    assert format_geographic_coordinate(-33.86882, "latitude", "en") == "33.86882° S"
+    assert format_geographic_coordinate(7.45410, "longitude", "de") == "7,45410° E"
+    assert format_geographic_coordinate(-118.24368, "longitude", "en") == "118.24368° W"
