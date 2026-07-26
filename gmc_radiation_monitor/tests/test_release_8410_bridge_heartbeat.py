@@ -238,9 +238,9 @@ def test_8410_health_limits_are_validated_and_exported_to_bridge(tmp_path: Path)
 
 def test_8410_release_metadata_and_public_defaults() -> None:
     config = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
-    assert APP_VERSION == "9.1.0"
-    assert config["version"] == "9.1.0"
-    assert (ROOT / "RELEASE_NOTES_9.1.0.md").is_file()
+    assert APP_VERSION == "9.1.1"
+    assert config["version"] == "9.1.1"
+    assert (ROOT / "RELEASE_NOTES_9.1.1.md").is_file()
     system = config["options"]["system"]
     assert system["bridge_heartbeat_interval_seconds"] == 15
     assert system["health_startup_grace_seconds"] == 900

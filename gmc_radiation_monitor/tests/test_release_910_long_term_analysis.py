@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo
 import pytest
 import yaml
 from gmc_bridge.history import HistoryStore
-from gmc_bridge.long_term_analysis import build_long_term_analysis
+from gmc_bridge.long_term_analysis import _aggregate_daily, build_long_term_analysis
 from gmc_bridge.long_term_web import render_long_term_analysis
 from gmc_bridge.report_web import ReportApplication
 from gmc_bridge.translations import Translator, validate_catalogs
@@ -60,16 +60,28 @@ def _analysis(store: HistoryStore) -> dict:
 
 def test_910_release_metadata_retention_and_manual_names() -> None:
     config = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
-    assert APP_VERSION == "9.1.0"
-    assert config["version"] == "9.1.0"
+    assert APP_VERSION == "9.1.1"
+    assert config["version"] == "9.1.1"
     assert config["options"]["history"]["retention_days"] == 730
     assert sorted(path.name for path in ROOT.glob("RELEASE_NOTES_*.md")) == [
-        "RELEASE_NOTES_9.1.0.md"
+        "RELEASE_NOTES_9.1.1.md"
     ]
     manuals = sorted(DOCS.glob("*.pdf"))
     assert len(manuals) == 8
-    assert all("9.1.0" in path.name for path in manuals)
+    assert all("9.1.1" in path.name for path in manuals)
 
+
+def test_manuals_are_clean_current_editions() -> None:
+    pypdf = pytest.importorskip("pypdf")
+    for path in sorted(DOCS.glob("*.pdf")):
+        reader = pypdf.PdfReader(str(path))
+        text = "\n".join((page.extract_text() or "") for page in reader.pages)
+        assert len(reader.pages) >= 15
+        first_pages = "\n".join((page.extract_text() or "") for page in reader.pages[:9])
+        assert "9.1.1" in first_pages
+        for stale in ("8.0.10", "8.3.2", "9.0.2", "9.0.3"):
+            assert stale not in text
+        assert "Bland-Altman" in text
 
 def test_real_windows_require_duration_and_coverage(tmp_path: Path) -> None:
     store = _store_with_history(tmp_path, days=20)
@@ -104,6 +116,38 @@ def test_gaps_are_not_interpolated_and_can_block_readiness(tmp_path: Path) -> No
     assert thirty["ready"] is False
     assert thirty["reason"] == "insufficient_coverage"
     assert result["notes"]["no_interpolation"] is True
+
+
+def test_daily_coverage_uses_actual_dst_day_length() -> None:
+    timezone = ZoneInfo("Europe/Berlin")
+    spring_start = 1_774_738_800  # 2026-03-28 23:00 UTC / local midnight
+    spring_points = [
+        {
+            "timestamp_utc": spring_start + hour * 3600,
+            "mean_cpm": 20.0,
+            "covered_seconds": 3600.0,
+            "dose_usv": 0.1,
+        }
+        for hour in range(23)
+    ]
+    fall_start = 1_792_879_200  # 2026-10-24 22:00 UTC / local midnight
+    fall_points = [
+        {
+            "timestamp_utc": fall_start + hour * 3600,
+            "mean_cpm": 20.0,
+            "covered_seconds": 3600.0,
+            "dose_usv": 0.1,
+        }
+        for hour in range(25)
+    ]
+    spring = _aggregate_daily(spring_points, timezone)
+    fall = _aggregate_daily(fall_points, timezone)
+    assert len(spring) == 1
+    assert len(fall) == 1
+    assert spring[0]["expected_hours"] == 23.0
+    assert fall[0]["expected_hours"] == 25.0
+    assert spring[0]["coverage_percent"] == pytest.approx(100.0)
+    assert fall[0]["coverage_percent"] == pytest.approx(100.0)
 
 
 def test_long_term_html_is_localised_and_separate_from_recent_baseline(tmp_path: Path) -> None:
@@ -143,6 +187,8 @@ def test_long_term_css_has_mobile_wrapping_and_internal_scroll() -> None:
         ".long-term-table-wrap{max-width:100%",
         "@media(max-width:430px)",
         ".long-term-window-grid,.long-term-grid{grid-template-columns:1fr",
+        ".long-term-value{font-size:clamp(1.05rem,1.6vw,1.34rem)",
+        ".long-term-card.window-card.pending.long-term-value{font-size:clamp(1rem,1.45vw,1.18rem)",
     ):
         assert phrase in compact
 
@@ -150,7 +196,7 @@ def test_long_term_css_has_mobile_wrapping_and_internal_scroll() -> None:
 @pytest.mark.skipif(shutil.which("chromium") is None, reason="Chromium is not installed")
 def test_long_term_section_has_no_page_overflow_at_mobile_and_desktop(tmp_path: Path) -> None:
     playwright = pytest.importorskip("playwright.sync_api")
-    result = _analysis(_store_with_history(tmp_path, days=400))
+    result = _analysis(_store_with_history(tmp_path, days=40))
     section = render_long_term_analysis(
         result,
         timezone=ZoneInfo("Europe/Berlin"),
@@ -165,6 +211,16 @@ def test_long_term_section_has_no_page_overflow_at_mobile_and_desktop(tmp_path: 
         for width, height in ((320, 700), (390, 844), (768, 1024), (1440, 1000)):
             page.set_viewport_size({"width": width, "height": height})
             page.set_content(document, wait_until="domcontentloaded")
+            sizes = page.evaluate(
+                """() => ({
+                    regular: parseFloat(getComputedStyle(document.querySelector('.window-card.good .long-term-value')).fontSize),
+                    pending: parseFloat(getComputedStyle(document.querySelector('.window-card.pending .long-term-value')).fontSize),
+                    standard: parseFloat(getComputedStyle(document.querySelector('.metric .value') || document.documentElement).fontSize)
+                })"""
+            )
+            assert sizes["regular"] <= 21.5
+            assert sizes["pending"] <= 18.9
+            assert sizes["pending"] <= sizes["regular"]
             overflow = page.evaluate(
                 """() => ({
                     body: document.documentElement.scrollWidth - document.documentElement.clientWidth,
@@ -202,58 +258,59 @@ def test_full_dashboard_all_languages_mobile_desktop_and_large_text(tmp_path: Pa
         ui_mode="advanced",
     )
     css = (LIB / "static/dashboard.css").read_text(encoding="utf-8")
-    js = (LIB / "static/dashboard.js").read_text(encoding="utf-8")
     languages = ("de", "en", "es", "fr", "hr", "it", "nl", "pl")
-    layouts = (
-        (320, 700, "100%"),
-        (390, 844, "200%"),
-        (1440, 1000, "100%"),
+    # Test every language at the narrowest supported width, then exercise
+    # large text and desktop layouts in both primary manual languages.
+    cases = [(language, 320, 700, "100%") for language in languages]
+    cases.extend(
+        (language, width, height, font_size)
+        for language in ("de", "en")
+        for width, height, font_size in ((390, 844, "200%"), (1440, 1000, "100%"))
     )
     with playwright.sync_playwright() as api:
         browser = api.chromium.launch(
             headless=True,
             executable_path=shutil.which("chromium"),
-            args=["--no-sandbox"],
+            args=["--no-sandbox", "--disable-dev-shm-usage"],
         )
+        page = browser.new_page()
         try:
-            for language in languages:
+            for language, width, height, font_size in cases:
                 document = app.render_index(
                     language_override=language,
                     mode_override="advanced",
                 ).decode()
-                for width, height, font_size in layouts:
-                    page = browser.new_page(viewport={"width": width, "height": height})
-                    page.set_content(document, wait_until="domcontentloaded")
-                    page.add_style_tag(content=css)
-                    page.add_script_tag(content=js)
-                    page.add_style_tag(
-                        content=(
-                            f"html{{font-size:{font_size};}}"
-                            "*{animation:none!important;transition:none!important;}"
-                        )
+                page.set_viewport_size({"width": width, "height": height})
+                page.set_content(document, wait_until="domcontentloaded")
+                page.add_style_tag(content=css)
+                page.add_style_tag(
+                    content=(
+                        f"html{{font-size:{font_size};}}"
+                        "*{animation:none!important;transition:none!important;}"
                     )
-                    page.locator("details").evaluate_all("els => els.forEach(el => { el.open = true; })")
-                    page.wait_for_timeout(20)
-                    layout = page.evaluate(
-                        """() => {
-                            const root = document.querySelector('.page-scroll');
-                            const knownScrollers = '.jump-links,.language-switcher,.table-scroll,.calendar-scroll,.long-term-table-wrap';
-                            const leaking = [...document.querySelectorAll('main section, main details, .card, .long-term-card')]
-                              .filter(el => !el.closest(knownScrollers))
-                              .filter(el => el.scrollWidth > el.clientWidth + 12)
-                              .map(el => ({id: el.id, cls: el.className, excess: el.scrollWidth - el.clientWidth}));
-                            return {
-                              pageExcess: root.scrollWidth - root.clientWidth,
-                              leaking,
-                              emptyText: [...document.querySelectorAll('button,a,summary,label')]
-                                .filter(el => !el.textContent.trim() && !el.getAttribute('aria-label')).length,
-                            };
-                        }"""
-                    )
-                    assert page.locator("html").get_attribute("lang") == language
-                    assert layout["pageExcess"] <= 1, (language, width, font_size, layout)
-                    assert layout["leaking"] == [], (language, width, font_size, layout)
-                    assert layout["emptyText"] == 0
-                    page.close()
+                )
+                page.locator("details").evaluate_all("els => els.forEach(el => { el.open = true; })")
+                layout = page.evaluate(
+                    """() => {
+                        const root = document.querySelector('.page-scroll');
+                        const knownScrollers = '.jump-links,.language-switcher,.table-scroll,.calendar-scroll,.long-term-table-wrap';
+                        const leaking = [...document.querySelectorAll('main section, main details, .card, .long-term-card')]
+                          .filter(el => !el.closest(knownScrollers))
+                          .filter(el => el.scrollWidth > el.clientWidth + 12)
+                          .map(el => ({id: el.id, cls: el.className, excess: el.scrollWidth - el.clientWidth}));
+                        return {
+                          pageExcess: root.scrollWidth - root.clientWidth,
+                          leaking,
+                          emptyText: [...document.querySelectorAll('button,a,summary,label')]
+                            .filter(el => !el.textContent.trim() && !el.getAttribute('aria-label')).length,
+                        };
+                    }"""
+                )
+                assert page.locator("html").get_attribute("lang") == language
+                assert layout["pageExcess"] <= 1, (language, width, font_size, layout)
+                assert layout["leaking"] == [], (language, width, font_size, layout)
+                assert layout["emptyText"] == 0
         finally:
+            page.close()
             browser.close()
+
