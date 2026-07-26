@@ -934,7 +934,7 @@ input,select,textarea { min-height:2.75rem; }
   *, *::before, *::after { scroll-behavior:auto!important; transition-duration:.01ms!important; animation-duration:.01ms!important; animation-iteration-count:1!important; }
 }
 
-/* Long-term analysis 9.1.0 */
+/* Long-term analysis 9.1.1 */
 #long-term-analysis { scroll-margin-top:5rem; }
 .long-term-analysis { display:grid; gap:1rem; }
 .long-term-analysis .analysis-heading { align-items:flex-start; margin-bottom:0; }
@@ -954,8 +954,9 @@ input,select,textarea { min-height:2.75rem; }
 .long-term-card-head { min-width:0; display:flex; align-items:flex-start; justify-content:space-between; gap:.55rem; }
 .long-term-card-head strong { flex:1 1 auto; }
 .long-term-state { flex:0 0 auto; max-width:48%; padding:.16rem .46rem; border-radius:999px; font-size:.72rem; font-weight:750; text-align:center; background:Canvas; border:1px solid var(--border); overflow-wrap:anywhere; }
-.long-term-value { font-size:clamp(1.18rem,2.4vw,1.7rem); line-height:1.16; font-weight:780; letter-spacing:-.02em; }
-.long-term-value.compact { font-size:clamp(1rem,2vw,1.28rem); line-height:1.3; }
+.long-term-value { font-size:clamp(1.05rem,1.6vw,1.34rem); line-height:1.24; font-weight:760; letter-spacing:-.01em; }
+.long-term-value.compact { font-size:clamp(.96rem,1.35vw,1.15rem); line-height:1.34; }
+.long-term-card.window-card.pending .long-term-value { font-size:clamp(1rem,1.45vw,1.18rem); line-height:1.35; }
 .long-term-chart-wrap { min-width:0; padding:.75rem; border:1px solid var(--border); border-radius:12px; background:var(--panel); }
 .long-term-chart { display:block; width:100%; height:clamp(11rem,28vw,17rem); overflow:visible; }
 .chart-axis { stroke:var(--border); stroke-width:1.4; }
@@ -1067,7 +1068,7 @@ input,select,textarea { min-height:2.75rem; }
   .download-card { padding:.78rem; }
 }
 
-/* 9.1.0: text-only zoom and very narrow Ingress/WebView hardening. */
+/* 9.1.1: text-only zoom and very narrow Ingress/WebView hardening. */
 .calibration-wizard,
 .workflow-history-chart {
   max-width:100%;
@@ -1126,7 +1127,7 @@ input,select,textarea { min-height:2.75rem; }
 }
 
 
-/* 9.1.0: prevent text-zoom overflow in narrow Home Assistant Ingress views. */
+/* 9.1.1: prevent text-zoom overflow in narrow Home Assistant Ingress views. */
 @media (max-width:620px) {
   html, body, .page-scroll { max-width:100%; overflow-x:hidden; }
   main, main > *, main :where(section,details,article,form,fieldset,.card,.analysis-level-panel,.analysis-group,.group-body,.long-term-card) {
@@ -1173,7 +1174,7 @@ input,select,textarea { min-height:2.75rem; }
   .card-help { width:2.75rem; min-width:2.75rem; max-width:2.75rem; padding:0; }
 }
 
-/* 9.1.0: keep collapsible-card controls inside very narrow cards. */
+/* 9.1.1: keep collapsible-card controls inside very narrow cards. */
 @media (max-width:520px) {
   details.collapsible-card > summary {
     display:flex;

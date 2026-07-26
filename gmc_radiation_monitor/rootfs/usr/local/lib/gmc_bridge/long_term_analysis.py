@@ -4,7 +4,7 @@ import math
 import random
 import statistics
 from collections import defaultdict
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any, Iterable
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -319,6 +319,12 @@ def _aggregate_daily(points: list[dict[str, Any]], timezone: ZoneInfo) -> list[d
         weighted_cpm = sum(float(item["mean_cpm"]) * float(item["covered_seconds"]) for item in items) / covered
         hourly = [float(item["mean_cpm"]) for item in items]
         dose = sum(float(item.get("dose_usv") or 0.0) for item in items)
+        # A local civil day can contain 23 or 25 hours at a daylight-saving
+        # transition. Use the actual UTC duration between local midnights so a
+        # complete transition day is not incorrectly marked incomplete.
+        local_start = datetime.fromisoformat(day).replace(tzinfo=timezone)
+        local_end = (datetime.fromisoformat(day) + timedelta(days=1)).replace(tzinfo=timezone)
+        expected_seconds = max(1.0, (local_end.astimezone(UTC) - local_start.astimezone(UTC)).total_seconds())
         result.append({
             "date": day,
             "timestamp_utc": int(items[0]["timestamp_utc"]),
@@ -327,7 +333,8 @@ def _aggregate_daily(points: list[dict[str, Any]], timezone: ZoneInfo) -> list[d
             "p95_cpm": _quantile(hourly, 0.95),
             "minimum_cpm": min(hourly),
             "maximum_cpm": max(hourly),
-            "coverage_percent": min(100.0, 100.0 * covered / 86400.0),
+            "coverage_percent": min(100.0, 100.0 * covered / expected_seconds),
+            "expected_hours": expected_seconds / 3600.0,
             "covered_hours": covered / 3600.0,
             "dose_usv": dose,
         })
