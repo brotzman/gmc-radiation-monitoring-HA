@@ -5,3 +5,14 @@ It is installed as a Home Assistant App/add-on repository; it is not a `custom_c
 Measurements are published to Home Assistant through MQTT Discovery, while the local ingress dashboard provides live status, analysis, history, reports and maintenance tools.
 
 Add this repository to Home Assistant, then install **GMC Radiation Monitor** from the App Store.
+
+
+## Development test suite
+
+From the repository root, run:
+
+```bash
+python3 -m pytest
+```
+
+The root test configuration resolves the add-on package path and keeps legacy path-based tests anchored to the add-on directory, so test results do not depend on execution order.
