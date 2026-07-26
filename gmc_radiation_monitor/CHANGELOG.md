@@ -1,5 +1,16 @@
 # Changelog
 
+## 9.1.0
+
+- Added detector-aware long-term analysis with real 24-hour, 7-day, 30-day, 90-day and 365-day windows and explicit duration/coverage readiness.
+- Added robust local background, daily and monthly aggregates, calendar heat map, rolling median, cumulative derived dose and guarded annual projection.
+- Added effective sample size, moving-block bootstrap intervals, Mann–Kendall/Sen trend, contextual EWMA/CUSUM and hourly dispersion diagnostics.
+- Added persistent relative elevation episodes and lagged temperature/air-pressure associations without changing absolute radiation alarms.
+- Renamed the existing seven-day expert block to “Recent baseline context” to avoid duplicating the new long-term section.
+- Added indexed SQL aggregation for long histories and changed the new-installation retention default to 730 days.
+- Added complete long-term wording in all eight interface languages and updated all eight user manuals.
+- Kept database schema 8, existing measurements, device identities, calibration profiles and MQTT entities compatible.
+
 ## 9.0.3
 
 - Replaced the permanently expanded six-tile system overview with a compact status summary and collapsible diagnostic details.

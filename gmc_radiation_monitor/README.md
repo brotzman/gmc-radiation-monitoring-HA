@@ -6,9 +6,9 @@ A local Home Assistant App (formerly add-on) for compatible GQ GMC Geiger counte
 
 > **Safety notice:** This add-on is intended for monitoring and home automation. It is not a calibrated radiation-protection instrument. Derived dose rates, profiles, anomaly detection and recommendations do not replace official measurements, professional advice or emergency instructions.
 
-## Version 9.0.3: compact status and German number localisation
+## Version 9.1.0: detector-aware long-term analysis
 
-Version 9.0.3 replaces the permanently expanded six-tile system overview with a compact status summary and collapsible diagnostic details. It also applies German number formatting consistently across server-rendered dashboard values, analysis messages, reports, diagnostics and dynamically updated browser views. Existing schema-8 databases, measurements and scientific calculations remain compatible.
+Version 9.1.0 adds a dedicated long-term analysis for each GMC counter. It uses real 24-hour, 7-day, 30-day, 90-day and 365-day windows with duration and coverage checks, robust local-background statistics, cumulative derived dose, effective sample size, block-bootstrap confidence intervals, Mann–Kendall/Sen trend analysis, persistent relative elevation episodes, calendar and monthly views, contextual EWMA/CUSUM diagnostics and lagged environmental associations. Existing live analysis, adaptive background and fleet comparisons remain separate and are not duplicated. New installations retain 730 days by default so annual analysis can mature; existing settings and schema-8 databases remain compatible.
 
 ## Features
 
@@ -31,6 +31,7 @@ Version 9.0.3 replaces the permanently expanded six-tile system overview with a 
 - Restore disabled by default, streamed uploads and full integrity validation before import
 - Configurable safety profiles and completely custom CPM/µSv/h thresholds
 - Local baseline learning, anomaly detection, trend analysis and smart events
+- Dedicated long-term analysis with real windows, coverage checks, robust background, cumulative derived dose, trend diagnostics, calendar heat map and persistent elevation episodes
 - Clear separation between absolute threshold assessment and local-background analysis
 - Combined interpretation and practical action guidance in the analysis summary
 - Custom AppArmor profile and no vendor-cloud requirement
@@ -160,7 +161,7 @@ gmcmap:
   timeout: 10.0
 
 history:
-  retention_days: 90
+  retention_days: 730
   report_timezone: Europe/Berlin
   history_management_enabled: false
 
@@ -346,7 +347,7 @@ It is separate from the absolute safety assessment.
 
 ```yaml
 history:
-  retention_days: 90
+  retention_days: 730
   report_timezone: Europe/Berlin
   history_management_enabled: false
 
