@@ -6,9 +6,9 @@ A local Home Assistant App (formerly add-on) for compatible GQ GMC Geiger counte
 
 > **Safety notice:** This add-on is intended for monitoring and home automation. It is not a calibrated radiation-protection instrument. Derived dose rates, profiles, anomaly detection and recommendations do not replace official measurements, professional advice or emergency instructions.
 
-## Version 9.3.0: Radon-style sidebar navigation
+## Version 9.4.0: Radon-style sidebar navigation
 
-Version 9.3.0 adopts the proven navigation model from Radon Monitoring 5.3.1 while preserving the existing GMC design, cards, diagrams, measurements and analytical results. Desktop users receive a persistent grouped sidebar; mobile and tablet users receive an overlay drawer that closes after selection, by tapping outside it or with Escape.
+Version 9.4.0 adopts the proven navigation model from Radon Monitoring 5.3.1 while preserving the existing GMC design, cards, diagrams, measurements and analytical results. Desktop users receive a persistent grouped sidebar; mobile and tablet users receive an overlay drawer that closes after selection, by tapping outside it or with Escape.
 
 The destinations are grouped into Monitoring, Evaluation, Documentation and Administration. Only the selected view is displayed, direct hash links remain possible and the last view is stored in the browser. Summary, Analysis and Expert detail levels remain independent of navigation. All eight interface languages and all eight 36-page manuals have been updated. Database schema 8 and existing data remain compatible.
 

@@ -1,5 +1,17 @@
 # Changelog
 
+## 9.4.0
+
+- Moved the Summary, Analysis and Expert detail selector into a dedicated sidebar category and made the selection persist globally across all application views.
+- Prevented internal navigation from silently increasing the selected detail level.
+- Moved Intelligent radiation analysis, Adaptive background profile and Cosmic influence - statistical indication from Overview into the Long-term view without duplicating calculations.
+- Updated direct section routing for the relocated cards.
+- Harmonised sidebar colours with the dashboard's blue primary accent, including brand, active item, group labels, view-level controls and utility actions.
+- Added responsive sidebar-specific spacing, typography and wrapping for 320 px screens and 200% text zoom.
+- Added complete translations for the new global view wording and long-term interpretation context in all eight interface languages.
+- Updated all eight user manuals to version 9.4.0.
+- Kept database schema 8, stored measurements, serial acquisition, MQTT identities, reports and calibration data compatible.
+
 ## 9.3.0
 
 - Adopted the Radon Monitoring 5.3.1 sidebar navigation model without changing GMC cards, charts, measurements or analytical outputs.
