@@ -1,28 +1,11 @@
 # Changelog
 
-## 9.4.0
+## 10.0.0
 
-- Moved the Summary, Analysis and Expert detail selector into a dedicated sidebar category and made the selection persist globally across all application views.
-- Prevented internal navigation from silently increasing the selected detail level.
-- Moved Intelligent radiation analysis, Adaptive background profile and Cosmic influence - statistical indication from Overview into the Long-term view without duplicating calculations.
-- Updated direct section routing for the relocated cards.
-- Harmonised sidebar colours with the dashboard's blue primary accent, including brand, active item, group labels, view-level controls and utility actions.
-- Added responsive sidebar-specific spacing, typography and wrapping for 320 px screens and 200% text zoom.
-- Added complete translations for the new global view wording and long-term interpretation context in all eight interface languages.
-- Updated all eight user manuals to version 9.4.0.
-- Kept database schema 8, stored measurements, serial acquisition, MQTT identities, reports and calibration data compatible.
-
-## 9.3.0
-
-- Adopted the Radon Monitoring 5.3.1 sidebar navigation model without changing GMC cards, charts, measurements or analytical outputs.
-- Added grouped desktop navigation for monitoring, evaluation, documentation and administration.
-- Added an Ingress-safe mobile drawer with dimmed overlay, outside-click closing, automatic closing after selection and Escape-key support.
-- Added single-view routing, direct hash links and browser persistence of the last selected view.
-- Added a persistent top bar with translated language and refresh controls.
-- Added keyboard focus states, `aria-current`, menu-state attributes, a skip link, safe-area handling and reduced-motion support.
-- Added responsive navigation regression coverage at 320, 390, 768 and 1440 px, including 200% text size.
-- Updated all eight interface catalogues and all eight user manuals to 36-page version 9.3.0 editions.
-- Kept database schema 8, serial acquisition, safety logic, statistics, stored history, MQTT identities and reports compatible.
+- Raised all active application, add-on, asset, documentation and manual version references to 10.0.0.
+- Rebuilt and renamed all eight bundled user manuals for version 10.0.0.
+- Cleaned the distributed release archive of development-only tests, CI metadata, cache configuration, examples and an unused documentation logo.
+- Kept database schema 8, stored measurements, MQTT identities, detector profiles, safety thresholds and serial protocols compatible.
 
 ## 9.2.0
 
