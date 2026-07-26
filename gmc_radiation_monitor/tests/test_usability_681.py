@@ -127,16 +127,24 @@ def test_disabled_deletion_notice_occupies_the_maintenance_position(tmp_path: Pa
     assert 'action="?action=purge-all-history"' not in maintenance
 
 
-def test_status_stays_at_top_and_only_navigation_is_sticky(tmp_path: Path) -> None:
+def test_persistent_sidebar_and_topbar_replace_the_legacy_sticky_navigation(tmp_path: Path) -> None:
     page = _app(tmp_path).render_index(language_override="de", mode_override="advanced").decode()
     assert 'id="floating-dashboard-tools"' not in page
-    assert page.index('<section class="status-strip"') < page.index('<nav class="dashboard-controls"')
+    assert page.index('id="app-sidebar"') < page.index('class="app-topbar"')
+    assert page.index('class="app-topbar"') < page.index('id="page-scroll"')
+    assert page.index('id="view-overview"') < page.index('<section class="status-strip"')
+    assert 'id="dashboard-controls"' not in page
+    assert 'id="toggle-all-cards"' in page
     assert ".status-strip { position:static;" in page
-    assert ".dashboard-controls { position:sticky; top:0; z-index:50;" in page
-    assert ".dashboard-controls { position:-webkit-sticky; position:sticky;" in page
-    assert "top:env(safe-area-inset-top,0px)" in page
+    css = Path("rootfs/usr/local/lib/gmc_bridge/static/dashboard.css").read_text(encoding="utf-8")
+    assert ".app-sidebar {" in css
+    assert "position: relative;" in css
+    assert ".app-topbar {" in css
+    assert ".sidebar-backdrop.visible" in css
     script = Path("rootfs/usr/local/lib/gmc_bridge/static/dashboard.js").read_text(encoding="utf-8")
-    assert "dashboardControls.getBoundingClientRect().height + 12" in script
+    assert "setDashboardView" in script
+    assert "setSidebar" in script
+    assert "closeSidebar" in script
 
 
 def test_adaptive_background_values_start_on_a_new_line_after_time(tmp_path: Path) -> None:

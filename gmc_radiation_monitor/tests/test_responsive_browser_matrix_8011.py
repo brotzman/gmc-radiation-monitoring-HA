@@ -121,60 +121,62 @@ def test_dashboard_browser_language_and_viewport_matrix(tmp_path: Path, engine: 
                     page.add_style_tag(
                         content="*{animation:none!important;transition:none!important;caret-color:transparent!important}"
                     )
-                    page.wait_for_selector(".header-resource-links", timeout=10_000)
+                    page.wait_for_selector("#view-overview:not([hidden])", timeout=10_000)
 
                     overflow = page.locator(".page-scroll").evaluate(
                         "el => ({scrollWidth: el.scrollWidth, clientWidth: el.clientWidth})"
                     )
                     assert overflow["scrollWidth"] <= overflow["clientWidth"] + 1
                     assert page.locator("html").get_attribute("lang") == language
+                    assert page.locator(".dashboard-view:not([hidden])").count() == 1
+                    assert page.locator('.nav-item[aria-current="page"]').get_attribute("data-view") == "overview"
 
                     resources = _boxes(page, ".header-resource-links > *", 2)
-                    language_links = _boxes(page, ".language-switcher > a", 2)
                     levels = _boxes(page, ".analysis-level-button", 3)
-                    # The status details are intentionally collapsed in the real UI. Open
-                    # them before measuring their responsive grid; hidden <details>
-                    # descendants have browser-dependent zero-sized layout boxes.
                     page.locator(".system-status-panel").evaluate("el => { el.open = true; }")
                     statuses = _boxes(page, ".status-strip-item", 3)
 
                     if viewport["width"] >= 900:
+                        assert page.locator("#app-sidebar").is_visible()
+                        assert page.locator("#menu-button").is_hidden()
                         assert abs(resources[0]["y"] - resources[1]["y"]) < 2
-                        assert abs(language_links[0]["y"] - language_links[1]["y"]) < 2
                         assert abs(levels[0]["y"] - levels[1]["y"]) < 2
                         assert abs(statuses[0]["y"] - statuses[2]["y"]) < 2
                     elif viewport["width"] <= 620:
+                        assert page.locator("#menu-button").is_visible()
                         assert resources[1]["y"] > resources[0]["y"] + resources[0]["height"]
-                        assert abs(language_links[0]["y"] - language_links[1]["y"]) < 2
                         assert levels[1]["y"] > levels[0]["y"] + levels[0]["height"]
                         assert statuses[1]["y"] > statuses[0]["y"] + statuses[0]["height"]
+                        page.locator("#menu-button").click()
+                        assert "open" in (page.locator("#app-sidebar").get_attribute("class") or "")
+                        page.mouse.click(viewport["width"] - 4, 20)
+                        assert "open" not in (page.locator("#app-sidebar").get_attribute("class") or "")
+
+                    if viewport["width"] <= 860:
+                        page.locator("#menu-button").click()
+                    page.locator('.nav-item[data-view="reports"]').click()
+                    assert page.locator("#view-reports").is_visible()
+                    assert page.locator("#view-overview").is_hidden()
+                    assert page.evaluate("location.hash") == "#reports"
+                    report_form = page.locator("#custom-report-form")
+                    assert report_form.is_visible()
+                    form_box = report_form.bounding_box()
+                    period_box = page.locator("#custom-report-period").bounding_box()
+                    assert form_box is not None and period_box is not None
+                    assert period_box["x"] >= form_box["x"] - 0.5
+                    assert period_box["x"] + period_box["width"] <= form_box["x"] + form_box["width"] + 0.5
 
                     if language == "en":
+                        if viewport["width"] <= 860:
+                            page.locator("#menu-button").click()
+                        page.locator('.nav-item[data-view="overview"]').click()
                         screenshot = tmp_path / f"dashboard-{engine}-{name}.png"
                         page.screenshot(path=str(screenshot), full_page=False)
                         screenshots[name] = _assert_screenshot(screenshot, viewport)
 
-                    if viewport["width"] <= 800:
-                        assert page.locator("#dashboard-controls").evaluate(
-                            "el => getComputedStyle(el).position"
-                        ) == "sticky"
-                        page.locator("#reports").scroll_into_view_if_needed()
-                        page.wait_for_timeout(25)
-                        nav_box = page.locator("#dashboard-controls").bounding_box()
-                        assert nav_box is not None and nav_box["y"] <= 13
-                        period_select = page.locator("#custom-report-period")
-                        for period_value, selector in (("daily", "input[name=date]"), ("weekly", "input[name=week]")):
-                            period_select.select_option(period_value)
-                            page.wait_for_timeout(250)
-                            field_locator = page.locator(selector)
-                            assert field_locator.is_visible()
-                            field = field_locator.bounding_box()
-                            form = field_locator.locator("xpath=ancestor::form[1]").bounding_box()
-                            assert field is not None and form is not None
-                            assert field["x"] >= form["x"] - 0.5
-                            assert field["x"] + field["width"] <= form["x"] + form["width"] + 0.5
                     context.close()
         finally:
             browser.close()
 
     assert len(set(screenshots.values())) == len(VIEWPORTS)
+

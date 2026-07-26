@@ -113,9 +113,10 @@ def test_analysis_has_matching_device_badge_and_real_anchor(tmp_path: Path) -> N
     assert 'class="analysis-device-badge device-500"' in analysis
     assert ">500+<" in analysis
     assert "Analyse für GMC-500+ Re 2.53 · SERIAL-500" in analysis
-    assert '<a href="#analysis">Analyse</a>' in page
+    assert 'class="nav-item" data-view="analysis"' in page
     script = Path("rootfs/usr/local/lib/gmc_bridge/static/dashboard.js").read_text(encoding="utf-8")
-    assert "document.getElementById(selector.slice(1))" in script
+    assert "const targetId = selector.slice(1)" in script
+    assert "document.getElementById(targetId)" in script
 
 
 def test_obsolete_report_history_and_presets_are_removed(tmp_path: Path) -> None:
@@ -140,7 +141,8 @@ def test_obsolete_report_history_and_presets_are_removed(tmp_path: Path) -> None
 def test_status_strip_uses_readable_responsive_grid_without_ellipsis(tmp_path: Path) -> None:
     page = _app(tmp_path).render_index(language_override="de", mode_override="advanced").decode()
     css = Path("rootfs/usr/local/lib/gmc_bridge/static/dashboard.css").read_text(encoding="utf-8")
-    assert ".dashboard-controls { position:sticky; top:0; z-index:50;" in page
+    assert 'id="app-sidebar"' in page
+    assert 'class="app-topbar"' in page
     assert ".status-strip { position:static; display:block; }" in page
     assert 'class="system-status-panel' in page
     assert 'class="status-details-grid"' in page

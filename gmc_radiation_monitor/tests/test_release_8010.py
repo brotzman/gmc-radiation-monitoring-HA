@@ -11,14 +11,14 @@ REPO_ROOT = ROOT.parent
 
 
 def test_release_version_and_current_notes() -> None:
-    assert APP_VERSION == "9.2.0"
-    assert yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))["version"] == "9.2.0"
-    assert (ROOT / "RELEASE_NOTES_9.2.0.md").is_file()
+    assert APP_VERSION == "9.3.0"
+    assert yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))["version"] == "9.3.0"
+    assert (ROOT / "RELEASE_NOTES_9.3.0.md").is_file()
 
 
 def test_only_current_release_notes_are_distributed() -> None:
     notes = sorted(path.name for path in ROOT.glob("RELEASE_NOTES_*.md"))
-    assert notes == ["RELEASE_NOTES_9.2.0.md"]
+    assert notes == ["RELEASE_NOTES_9.3.0.md"]
 
 
 def test_all_eight_manuals_and_embedded_versions_are_current() -> None:
@@ -120,7 +120,7 @@ def test_dashboard_cleanup_keeps_status_overview_and_removes_duplicate_ui(tmp_pa
         )
         == 1
     )
-    assert 'href="#history"' in page
+    assert 'class="nav-item" data-view="history"' in page
     assert 'id="history"' in page
     assert "Ansicht" in page
     assert "Bestimmt, wie viele Details und Werkzeuge auf dieser Seite angezeigt werden." in page
@@ -132,7 +132,7 @@ def test_dashboard_cleanup_keeps_status_overview_and_removes_duplicate_ui(tmp_pa
     assert 'class="location-details manual-link"' in page
     assert 'href="./docs/user-manual.pdf?lang=de"' in page
     assert "Benutzerhandbuch" in page
-    assert "PDF · Version 9.2.0 · Deutsch" in page
+    assert "PDF · Version 9.3.0 · Deutsch" in page
     for language, native_name in {
         "en": "English",
         "es": "Español",
@@ -144,13 +144,16 @@ def test_dashboard_cleanup_keeps_status_overview_and_removes_duplicate_ui(tmp_pa
     }.items():
         localized_page = app.render_index(language_override=language, mode_override="advanced").decode()
         assert f'href="./docs/user-manual.pdf?lang={language}"' in localized_page
-        assert f"PDF · Version 9.2.0 · {native_name}" in localized_page
-    assert page.index('class="header-resource-links"') < page.index('id="analysis-level-panel"')
+        assert f"PDF · Version 9.3.0 · {native_name}" in localized_page
+    assert page.index('id="app-sidebar"') < page.index('class="app-topbar"')
+    assert page.index('id="analysis-level-panel"') < page.index('id="main-content"')
+    assert page.index('id="view-overview"') < page.index('class="header-resource-links"')
     assert page.index('class="location-details external-map-link"') < page.index(
         'class="location-details manual-link"'
     )
-    assert page.index('id="analysis-level-panel"') < page.index('class="status-strip"')
-    assert page.index('class="status-strip"') < page.index('id="dashboard-controls"')
+    assert page.index('class="header-resource-links"') < page.index('class="status-strip"')
+    assert 'id="dashboard-controls"' not in page
+    assert page.count('id="toggle-all-cards"') == 1
     assert page.index('id="history"') < page.index('id="workflow"') < page.index('id="reports"')
     assert 'id="toggle-all-cards"' in page
     assert 'id="expand-all-cards"' not in page
@@ -173,10 +176,9 @@ def test_dashboard_cleanup_css_preserves_spacing_and_single_line_desktop_control
 
     assert "grid-template-columns:minmax(270px,1.55fr) repeat(4,minmax(125px,1fr))" in DASHBOARD_CSS
     assert ".assessment-grid.baseline-grid .assessment-primary { padding-right:1.15rem; }" in DASHBOARD_CSS
-    assert (
-        ".dashboard-controls { position:sticky; top:0; z-index:50; display:flex; justify-content:space-between; align-items:center; gap:.75rem; flex-wrap:nowrap;"
-        in DASHBOARD_CSS
-    )
+    assert ".app-sidebar {" in DASHBOARD_CSS
+    assert ".nav-item.active {" in DASHBOARD_CSS
+    assert ".sidebar-utility {" in DASHBOARD_CSS
     assert (
         ".analysis-level-panel > div:first-child { display:grid; gap:.18rem; min-width:0; flex:1 1 22rem; }"
         in DASHBOARD_CSS

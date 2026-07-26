@@ -26,20 +26,24 @@ def _page(tmp_path: Path) -> str:
 
 def test_8412_release_metadata_is_current() -> None:
     config = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
-    assert APP_VERSION == "9.2.0"
-    assert config["version"] == "9.2.0"
+    assert APP_VERSION == "9.3.0"
+    assert config["version"] == "9.3.0"
     changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
     section = changelog.split("## 8.4.12", 1)[1].split("## 8.4.11", 1)[0]
     assert "floating dashboard navigation" in section
     assert "date, week, month and date-time fields" in section
 
 
-def test_mobile_navigation_remains_sticky_and_compact(tmp_path: Path) -> None:
+def test_mobile_navigation_uses_compact_overlay_sidebar(tmp_path: Path) -> None:
     page = _page(tmp_path)
-    assert ".dashboard-controls { position:-webkit-sticky; position:sticky;" in page
-    assert "top:env(safe-area-inset-top,0px)" in page
-    assert ".jump-links { flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden;" in page
-    assert ".dashboard-controls { position:static;" not in page
+    assert 'id="app-sidebar"' in page
+    assert 'id="menu-button"' in page
+    assert 'id="sidebar-backdrop"' in page
+    css = (ROOT / "rootfs/usr/local/lib/gmc_bridge/static/dashboard.css").read_text(encoding="utf-8")
+    assert "@media (max-width: 860px)" in css
+    assert ".app-sidebar.open { transform: translateX(0); }" in css
+    assert "body.sidebar-open::after" in css
+    assert "env(safe-area-inset-top)" in css
 
 
 def test_temporal_inputs_are_width_constrained(tmp_path: Path) -> None:

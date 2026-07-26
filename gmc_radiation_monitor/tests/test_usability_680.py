@@ -52,7 +52,7 @@ def _app(tmp_path: Path, *, restore_enabled: bool = True) -> ReportApplication:
 def test_dashboard_contains_persistent_usability_controls(tmp_path: Path) -> None:
     page = _app(tmp_path).render_index(language_override="de", mode_override="advanced").decode()
     assert 'class="status-strip"' in page
-    assert 'id="dashboard-controls"' in page
+    assert 'id="dashboard-controls"' not in page
     assert 'id="toggle-all-cards"' in page
     assert 'id="expand-all-cards"' not in page
     assert 'id="collapse-all-cards"' not in page
@@ -69,7 +69,15 @@ def test_dashboard_contains_persistent_usability_controls(tmp_path: Path) -> Non
     assert "gmc-recent-reports-v1" not in page
     assert "gmc-report-presets-v1" not in page
     assert "Letzte in diesem Browser angeforderte Sicherung" not in page
-    assert "IntersectionObserver" in script
+    assert 'id="app-sidebar"' in page
+    assert 'id="sidebar-backdrop"' in page
+    assert 'id="menu-button"' in page
+    assert 'id="view-overview"' in page
+    assert 'id="view-analysis"' in page
+    assert 'id="view-long-term"' in page
+    assert "setDashboardView" in script
+    assert "setSidebar" in script
+    assert "history.replaceState" in script
     assert "localStorage" in script
     assert "applyCardPreferences" in script
     assert 'class="device-card device-320' in page
