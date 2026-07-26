@@ -6,7 +6,7 @@ Measurements are published to Home Assistant through MQTT Discovery, while the l
 
 Add this repository to Home Assistant, then install **GMC Radiation Monitor** from the App Store.
 
-Current release: **9.4.0**, with the Radon Monitoring 5.3.1-style sidebar navigation while retaining the established GMC dashboard design and analytical outputs.
+Current release: **10.0.0**, with evidence-led long-term analysis, conservative interpretation thresholds and exportable endurance diagnostics.
 
 
 ## Development test suite
