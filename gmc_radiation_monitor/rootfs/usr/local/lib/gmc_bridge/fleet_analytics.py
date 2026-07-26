@@ -189,7 +189,15 @@ def build_fleet_snapshot(store: HistoryStore, *, window_seconds: int = 86400) ->
         if valid_pairs or pairing.pairs:
             xs = [float(left.cpm) for left, _ in valid_pairs]
             ys = [float(right.cpm) for _, right in valid_pairs]
-            differences = [abs(left - right) for left, right in zip(xs, ys, strict=True)]
+            signed_differences = [left - right for left, right in zip(xs, ys, strict=True)]
+            differences = [abs(value) for value in signed_differences]
+            pair_means = [(left + right) / 2.0 for left, right in zip(xs, ys, strict=True)]
+            bland_altman_available = len(signed_differences) >= 10
+            bland_altman_bias = statistics.fmean(signed_differences) if bland_altman_available else None
+            bland_altman_sd = statistics.stdev(signed_differences) if bland_altman_available and len(signed_differences) > 1 else None
+            bland_altman_lower = (bland_altman_bias - 1.96 * bland_altman_sd) if bland_altman_bias is not None and bland_altman_sd is not None else None
+            bland_altman_upper = (bland_altman_bias + 1.96 * bland_altman_sd) if bland_altman_bias is not None and bland_altman_sd is not None else None
+            proportional_bias = _pearson(pair_means, signed_differences) if bland_altman_available else None
             relative_differences = [
                 abs(left - right) / max(1.0, (left + right) / 2.0)
                 for left, right in zip(xs, ys, strict=True)
@@ -221,6 +229,12 @@ def build_fleet_snapshot(store: HistoryStore, *, window_seconds: int = 86400) ->
                 "minimum_pairs_for_correlation": 10,
                 "confidence": confidence,
                 "mean_difference": robust_trimmed_mean(differences) or 0.0,
+                "bland_altman_available": bland_altman_available,
+                "bland_altman_bias_cpm": bland_altman_bias,
+                "bland_altman_sd_cpm": bland_altman_sd,
+                "bland_altman_lower_cpm": bland_altman_lower,
+                "bland_altman_upper_cpm": bland_altman_upper,
+                "bland_altman_proportional_bias": proportional_bias,
                 "agreement_percent": agreement,
                 "current_difference": (
                     float(last_pair[0].cpm) - float(last_pair[1].cpm)

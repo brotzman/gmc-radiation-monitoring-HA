@@ -535,8 +535,8 @@ def build_detailed_analysis_result(
         level_status = AnalysisStatus.NEUTRAL
     long_term = AnalysisSection(
         key="long-term-context",
-        title_key="Long-term context",
-        subtitle_key="Baseline deviation, drift and sustained relative events",
+        title_key="Recent baseline context",
+        subtitle_key="Seven-day baseline deviation, drift and sustained relative events",
         level=AnalysisLevel.EXPERT,
         metrics=(
             _metric("7 d baseline", _value(analysis, "mean_7d", 2, " CPM"), key="long-term-baseline", note_key=coverage_7d_key, note_values=coverage_7d_values, level=AnalysisLevel.EXPERT),
@@ -1363,6 +1363,8 @@ def build_fleet_intelligence_result(snapshot: dict[str, Any]) -> AnalysisResult:
             _metric("Comparison confidence", confidence, value_key=confidence, key="fleet-comparison-confidence"),
             _metric("Correlation", correlation, key="fleet-correlation", note_key=correlation_note, note_values=correlation_values),
             _metric("Mean absolute difference", f"{float(comparison.get('mean_difference') or 0.0):.2f} CPM", key="fleet-mean-difference"),
+            _metric("Bland-Altman bias", "—" if comparison.get("bland_altman_bias_cpm") is None else f"{float(comparison['bland_altman_bias_cpm']):+.2f} CPM", key="fleet-bland-altman-bias", note_key="Mean signed difference A minus B", level=AnalysisLevel.EXPERT),
+            _metric("95% limits of agreement", "—" if comparison.get("bland_altman_lower_cpm") is None or comparison.get("bland_altman_upper_cpm") is None else f"{float(comparison['bland_altman_lower_cpm']):+.2f} to {float(comparison['bland_altman_upper_cpm']):+.2f} CPM", key="fleet-bland-altman-limits", note_key="Exploratory paired-device agreement; correlation alone does not establish agreement.", level=AnalysisLevel.EXPERT),
             _metric("Current difference", current_shown, key="fleet-current-difference"),
             _metric("Robust one-hour values", hour_shown, key="fleet-hour-values", note_key="CPM"),
         )

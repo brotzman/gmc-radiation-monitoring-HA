@@ -70,7 +70,7 @@ def runtime_environment(options: dict[str, Any], service: str) -> dict[str, str]
         "SCAN_INTERVAL": _value(first, "scan_interval", 60),
         "CPM_PER_USVH": _value(first, "cpm_per_usvh", 154.0),
         "READ_GYRO": _text(any(bool(item.get("read_gyro", False)) for item in devices)),
-        "HISTORY_RETENTION_DAYS": _value(history, "retention_days", 90),
+        "HISTORY_RETENTION_DAYS": _value(history, "retention_days", 730),
         "REPORT_TIMEZONE": _value(history, "report_timezone", "Europe/Berlin"),
         "LOG_LEVEL": _value(system, "log_level", "info"),
         "UI_LANGUAGE": _value(interface, "ui_language", "auto"),

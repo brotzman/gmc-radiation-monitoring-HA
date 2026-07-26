@@ -390,7 +390,7 @@ class Settings:
     heartbeat_enabled: bool = False
     ports: tuple[str, ...] = ()
     devices: tuple[DeviceConfig, ...] = ()
-    history_retention_days: int = 90
+    history_retention_days: int = 730
     report_timezone: str = "UTC"
     smart_alerts_enabled: bool = True
     rapid_rise_percent: float = 50.0

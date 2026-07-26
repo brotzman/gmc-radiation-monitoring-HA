@@ -81,7 +81,7 @@ class HistoryStore:
         self,
         path: str | Path = DEFAULT_DB_PATH,
         *,
-        retention_days: int = 90,
+        retention_days: int = 730,
         busy_timeout_ms: int = 5000,
     ) -> None:
         self.path = Path(path)
@@ -1075,6 +1075,71 @@ class HistoryStore:
                     (int(start_utc), int(end_utc)),
                 ).fetchall()
         return [HistoryRow(**dict(row)) for row in rows]
+
+    def aggregate_range(
+        self,
+        start_utc: int,
+        end_utc: int,
+        *,
+        bucket_seconds: int,
+        expected_interval_seconds: int,
+        device_serial: str | None = None,
+    ) -> list[dict[str, Any]]:
+        """Return compact time-bucket aggregates for long-running analyses.
+
+        The query deliberately aggregates in SQLite so multi-year dashboards do
+        not load millions of raw polling rows into memory. Only accepted quality
+        states are included. ``occupied_slots`` counts distinct expected cadence
+        slots and is used by the long-term analysis to estimate data coverage
+        without letting dense polling bursts conceal gaps.
+        """
+        if end_utc <= start_utc:
+            raise ValueError("end_utc must be greater than start_utc")
+        bucket = max(60, int(bucket_seconds))
+        cadence = max(1, int(expected_interval_seconds))
+        if not self.path.exists():
+            return []
+        serial = device_serial or self.get_metadata().get("serial")
+        if not serial:
+            return []
+        with closing(self._connect(read_only=True)) as connection:
+            rows = connection.execute(
+                """
+                SELECT
+                    (timestamp_utc / ?) * ? AS timestamp_utc,
+                    COUNT(*) AS samples,
+                    COUNT(DISTINCT (timestamp_utc / ?)) AS occupied_slots,
+                    AVG(cpm) AS mean_cpm,
+                    MIN(cpm) AS minimum_cpm,
+                    MAX(cpm) AS maximum_cpm,
+                    AVG(temperature_c) AS temperature_c,
+                    AVG(pressure_hpa) AS pressure_hpa,
+                    AVG(voltage_v) AS voltage_v,
+                    AVG(derived_dose_usvh) AS mean_derived_dose_usvh,
+                    SUM(CASE WHEN derived_dose_usvh IS NOT NULL THEN 1 ELSE 0 END) AS dose_samples,
+                    MIN(timestamp_utc) AS first_sample_utc,
+                    MAX(timestamp_utc) AS last_sample_utc
+                FROM measurements
+                WHERE device_serial = ?
+                  AND timestamp_utc >= ?
+                  AND timestamp_utc < ?
+                  AND cpm >= 0
+                  AND cpm <= 100000000
+                  AND LOWER(COALESCE(cpm_quality, 'normal')) IN ('normal', 'confirmed_high')
+                GROUP BY (timestamp_utc / ?)
+                ORDER BY timestamp_utc ASC
+                """,
+                (
+                    bucket,
+                    bucket,
+                    cadence,
+                    serial,
+                    int(start_utc),
+                    int(end_utc),
+                    bucket,
+                ),
+            ).fetchall()
+        return [dict(row) for row in rows]
 
     def query_all(self, *, device_serial: str | None = None) -> list[HistoryRow]:
         if not self.path.exists():

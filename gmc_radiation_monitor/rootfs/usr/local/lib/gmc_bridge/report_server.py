@@ -25,7 +25,7 @@ def run_report_server() -> None:
     )
     timezone_name = os.environ.get("REPORT_TIMEZONE", "UTC")
     scan_interval = int(os.environ.get("SCAN_INTERVAL", "60"))
-    retention_days = int(os.environ.get("HISTORY_RETENTION_DAYS", "90"))
+    retention_days = int(os.environ.get("HISTORY_RETENTION_DAYS", "730"))
     read_gyro = os.environ.get("READ_GYRO", "false").strip().lower() == "true"
     history_management_enabled = (
         os.environ.get(

@@ -259,7 +259,7 @@ def validate_options(payload: object) -> ValidationResult:
     history = payload.get("history", {})
     if isinstance(history, dict):
         try:
-            retention = int(history.get("retention_days", 90))
+            retention = int(history.get("retention_days", 730))
             if not 7 <= retention <= 3650:
                 _issue(
                     issues,

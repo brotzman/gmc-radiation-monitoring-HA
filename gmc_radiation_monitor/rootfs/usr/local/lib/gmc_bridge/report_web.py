@@ -48,6 +48,7 @@ from .historical_presentation import trend_symbol
 from .history import DEFAULT_DB_PATH, HistoryStore
 from .home_assistant import HomeAssistantConfigClient, HomeAssistantPressureClient
 from .intelligence import build_radiation_intelligence
+from .long_term_web import render_cached_long_term_analysis
 from .number_format import format_number, localize_numeric_text
 from .orientation import calculate_orientation, orientation_status
 from .report_web_http import ReportRequestHandler, _localized_exception_message
@@ -93,7 +94,11 @@ from .web_analysis_views import (
     render_recommendation,
 )
 from .web_assets import render_dashboard_bootstrap
-from .web_components import render_analysis_level_controls, render_collapsible_card
+from .web_components import (
+    render_analysis_level_controls,
+    render_collapsible_card,
+    render_home_assistant_location,
+)
 from .web_security import CsrfTokenManager
 from .web_server import BoundedThreadingHTTPServer
 from .workflow import (
@@ -292,7 +297,6 @@ class ReportApplication(WorkflowApplicationMixin):
                 "barometric_hint": barometric_hint,
             }
         return self.analysis_cache.get_or_build(key, build)
-
     def status(self) -> dict[str, Any]:
         count = self.store.count(all_devices=True)
         first, last = self.store.bounds()
@@ -335,7 +339,6 @@ class ReportApplication(WorkflowApplicationMixin):
             "devices": devices,
             "home_assistant_location": home_location,
         }
-
     def render_index(
         self,
         *,
@@ -391,51 +394,14 @@ class ReportApplication(WorkflowApplicationMixin):
             scan_interval_seconds=selected_scan_interval,
             cpm_per_usvh=selected_cpm_per_usvh,
         )
-        selected_device_label = (
-            f"{selected_device.get('configured_name') or normalize_device_version_display(str(selected_device.get('device_model', 'GMC')))} · {selected_serial}"
-            if selected_device
-            else ""
-        )
+        selected_device_label = (f"{selected_device.get('configured_name') or normalize_device_version_display(str(selected_device.get('device_model', 'GMC')))} · {selected_serial}" if selected_device else "")
         timezone_text = str(self.timezone_name)
         timezone_name = html.escape(timezone_text)
         count = int(status["measurements"])
         home_location = status.get("home_assistant_location") or {}
-        if home_location.get("available"):
-            location_name = str(home_location.get("location_name") or t("Configured location"))
-            latitude = home_location.get("latitude")
-            longitude = home_location.get("longitude")
-            elevation = home_location.get("elevation")
-            country = str(home_location.get("country") or "")
-            location_parts: list[str] = []
-            if latitude is not None and longitude is not None:
-                location_parts.append(f"{t('Coordinates')}: {format_number(float(latitude), language, decimals=5)}, {format_number(float(longitude), language, decimals=5)}")
-            if elevation is not None:
-                location_parts.append(f"{t('Elevation')}: {format_number(float(elevation), language, trim=True)} m")
-            if country:
-                location_parts.append(f"{t('Country')}: {country}")
-            location_parts.append(f"{t('Timezone')}: {timezone_text}")
-            location_details = " · ".join(location_parts)
-            location_details_html = (
-                '<details class="location-details">'
-                f'<summary><span class="details-summary-icon">📍</span><span><strong>{html.escape(t("Home Assistant location"))}</strong>'
-                f"<small>{html.escape(location_name)}</small></span></summary>"
-                '<div class="location-details-body">'
-                f'<div class="location-details-values"><strong>{html.escape(location_name)}</strong>'
-                f"<span>{html.escape(location_details)}</span></div>"
-                f"<p>{html.escape(t('Location data comes from the Home Assistant general settings and is not sent to an external geocoding service.'))}</p>"
-                "</div></details>"
-            )
-        else:
-            location_name = t("Location unavailable")
-            location_details_html = (
-                '<details class="location-details">'
-                f'<summary><span class="details-summary-icon">📍</span><span><strong>{html.escape(t("Home Assistant location"))}</strong>'
-                f"<small>{html.escape(t('Location unavailable'))}</small></span></summary>"
-                '<div class="location-details-body">'
-                f'<div class="location-details-values"><span>{html.escape(t("Timezone"))}: {timezone_name}</span></div>'
-                f"<p>{html.escape(t('Check the Home Assistant general settings and restart the add-on.'))}</p>"
-                "</div></details>"
-            )
+        location_details_html = render_home_assistant_location(
+            home_location, timezone_text=timezone_text, language=language, translator=t
+        )
         current_local_date = datetime.now(self.timezone).date()
         today = current_local_date.isoformat()
         yesterday = (current_local_date - timedelta(days=1)).isoformat()
@@ -528,6 +494,7 @@ class ReportApplication(WorkflowApplicationMixin):
 <a href="#devices">{html.escape(t("Devices"))}</a>
 <a href="#radiation-intelligence">{html.escape(t("Intelligence"))}</a>
 <a href="#analysis">{html.escape(t("Analysis"))}</a>
+<a href="#long-term-analysis">{html.escape(t("Long-term"))}</a>
 <a href="#history">{html.escape(t("History"))}</a>
 <a href="#workflow">{html.escape(t("Workflows"))}</a>
 <a href="#calibration-management">{html.escape(t("Calibration profiles"))}</a>
@@ -626,6 +593,10 @@ class ReportApplication(WorkflowApplicationMixin):
             t=t,
             device_label=selected_device_label,
             device_model=str((selected_device or {}).get("device_model") or ""),
+        )
+        long_term_analysis_html = render_cached_long_term_analysis(
+            self, device_serial=selected_serial, scan_interval_seconds=selected_scan_interval,
+            cpm_per_usvh=selected_cpm_per_usvh, device_label=selected_device_label, translator=t,
         )
 
         fleet_context = self._fleet_context_cached(selected_serial=selected_serial, devices=devices)
@@ -963,6 +934,7 @@ input[type="date"], input[type="week"], input[type="month"], input[type="datetim
 {fleet_intelligence_html}
 </div>
 {analysis_html}
+{long_term_analysis_html}
 {history_html}
 {workflow_html}
 {calibration_management_html}

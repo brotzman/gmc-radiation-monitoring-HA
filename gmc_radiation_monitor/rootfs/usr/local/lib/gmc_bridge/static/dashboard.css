@@ -933,3 +933,273 @@ input,select,textarea { min-height:2.75rem; }
   .device-freshness::before { animation:none!important; }
   *, *::before, *::after { scroll-behavior:auto!important; transition-duration:.01ms!important; animation-duration:.01ms!important; animation-iteration-count:1!important; }
 }
+
+/* Long-term analysis 9.1.0 */
+#long-term-analysis { scroll-margin-top:5rem; }
+.long-term-analysis { display:grid; gap:1rem; }
+.long-term-analysis .analysis-heading { align-items:flex-start; margin-bottom:0; }
+.long-term-analysis .analysis-heading > div { min-width:0; }
+.long-term-analysis .analysis-heading p { margin:.28rem 0 0; color:var(--muted); line-height:1.45; overflow-wrap:anywhere; }
+.long-term-group { margin-bottom:1rem; }
+.long-term-group > summary { align-items:start; }
+.long-term-window-grid,
+.long-term-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,12.5rem),1fr)); gap:.8rem; }
+.long-term-card { min-width:0; display:grid; align-content:start; gap:.34rem; padding:.9rem; border:1px solid var(--border); border-radius:12px; background:var(--panel); }
+.long-term-card.good { border-color:color-mix(in srgb,var(--green) 42%,var(--border)); }
+.long-term-card.pending { border-style:dashed; }
+.long-term-card.notice { border-color:color-mix(in srgb,var(--yellow) 62%,var(--border)); background:color-mix(in srgb,var(--yellow) 7%,var(--panel)); }
+.long-term-card strong,.long-term-card small,.long-term-value { min-width:0; overflow-wrap:anywhere; word-break:normal; }
+.long-term-card strong { line-height:1.3; }
+.long-term-card small { color:var(--muted); line-height:1.42; }
+.long-term-card-head { min-width:0; display:flex; align-items:flex-start; justify-content:space-between; gap:.55rem; }
+.long-term-card-head strong { flex:1 1 auto; }
+.long-term-state { flex:0 0 auto; max-width:48%; padding:.16rem .46rem; border-radius:999px; font-size:.72rem; font-weight:750; text-align:center; background:Canvas; border:1px solid var(--border); overflow-wrap:anywhere; }
+.long-term-value { font-size:clamp(1.18rem,2.4vw,1.7rem); line-height:1.16; font-weight:780; letter-spacing:-.02em; }
+.long-term-value.compact { font-size:clamp(1rem,2vw,1.28rem); line-height:1.3; }
+.long-term-chart-wrap { min-width:0; padding:.75rem; border:1px solid var(--border); border-radius:12px; background:var(--panel); }
+.long-term-chart { display:block; width:100%; height:clamp(11rem,28vw,17rem); overflow:visible; }
+.chart-axis { stroke:var(--border); stroke-width:1.4; }
+.chart-series { fill:none; stroke-linejoin:round; stroke-linecap:round; vector-effect:non-scaling-stroke; }
+.chart-series.raw { stroke:color-mix(in srgb,var(--blue) 38%,var(--muted)); stroke-width:1.15; opacity:.78; }
+.chart-series.smooth { stroke:var(--blue); stroke-width:2.45; }
+.long-term-chart-legend,.long-term-chart-dates,.calendar-legend { display:flex; align-items:center; gap:.65rem; flex-wrap:wrap; color:var(--muted); font-size:.78rem; }
+.long-term-chart-legend { margin-top:.45rem; }
+.long-term-chart-dates { justify-content:space-between; margin-top:.28rem; }
+.legend-line { display:inline-block; width:1.4rem; height:.16rem; margin-right:.28rem; vertical-align:middle; border-radius:999px; }
+.legend-line.raw { background:color-mix(in srgb,var(--blue) 42%,var(--muted)); }
+.legend-line.smooth { background:var(--blue); }
+.calendar-scroll { max-width:100%; overflow-x:auto; padding:.3rem .15rem .55rem; border-radius:10px; scrollbar-width:thin; }
+.calendar-grid { display:grid; grid-template-rows:repeat(7,.72rem); grid-auto-flow:column; grid-auto-columns:.72rem; gap:.18rem; width:max-content; min-width:100%; }
+.calendar-cell,.calendar-legend i { display:block; border-radius:2px; background:color-mix(in srgb,var(--muted) 14%,Canvas); border:1px solid color-mix(in srgb,var(--border) 75%,transparent); }
+.calendar-cell { width:.72rem; height:.72rem; }
+.calendar-cell:focus-visible { outline:2px solid var(--blue); outline-offset:2px; }
+.calendar-cell.level-0,.calendar-legend .level-0 { background:color-mix(in srgb,var(--blue) 18%,Canvas); }
+.calendar-cell.level-1,.calendar-legend .level-1 { background:color-mix(in srgb,var(--green) 28%,Canvas); }
+.calendar-cell.level-2,.calendar-legend .level-2 { background:color-mix(in srgb,var(--green) 58%,Canvas); }
+.calendar-cell.level-3,.calendar-legend .level-3 { background:color-mix(in srgb,var(--yellow) 68%,Canvas); }
+.calendar-cell.level-4,.calendar-legend .level-4 { background:color-mix(in srgb,var(--red) 72%,Canvas); }
+.calendar-cell.missing { background:transparent; border-style:dashed; }
+.calendar-legend { margin-top:.35rem; }
+.calendar-legend i { width:.76rem; height:.76rem; }
+.long-term-table-wrap { max-width:100%; border:1px solid var(--border); border-radius:11px; }
+.long-term-table { width:100%; min-width:43rem; border-collapse:collapse; }
+.long-term-table th,.long-term-table td { padding:.62rem .7rem; border-bottom:1px solid var(--border); text-align:left; vertical-align:top; white-space:normal; overflow-wrap:anywhere; }
+.long-term-table th { position:sticky; top:0; z-index:1; background:Canvas; font-size:.8rem; }
+.long-term-table tbody tr:last-child td { border-bottom:0; }
+
+@media (max-width:760px) {
+  .long-term-analysis .analysis-heading { display:grid; grid-template-columns:auto minmax(0,1fr); gap:.65rem; }
+  .long-term-window-grid,.long-term-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .long-term-card { padding:.78rem; }
+  .long-term-card-head { display:grid; gap:.35rem; }
+  .long-term-state { max-width:100%; width:max-content; }
+  .long-term-chart-wrap { padding:.55rem; }
+}
+@media (max-width:430px) {
+  .long-term-window-grid,.long-term-grid { grid-template-columns:1fr; }
+  .long-term-card { gap:.4rem; }
+  .long-term-chart { height:12rem; }
+  .long-term-table { min-width:39rem; }
+  .calendar-grid { grid-template-rows:repeat(7,.66rem); grid-auto-columns:.66rem; gap:.16rem; }
+  .calendar-cell { width:.66rem; height:.66rem; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .long-term-analysis * { scroll-behavior:auto!important; }
+}
+
+.long-term-subgroup { margin-top:.9rem; border:1px solid var(--border); border-radius:11px; background:color-mix(in srgb,CanvasText 2%,transparent); }
+.long-term-subgroup > summary { padding:.72rem .8rem; }
+.long-term-subgroup > .group-body { padding:.8rem; }
+.seasonal-table:not(.empty-state) { min-width:28rem; }
+.seasonal-table.empty-state { width:100%; min-width:0; max-width:100%; }
+@media(max-width:430px){ .long-term-subgroup > .group-body { padding:.65rem; } .seasonal-table:not(.empty-state) { min-width:24rem; } }
+
+/* Horizontal scrollers must remain inside their own cards on narrow Home Assistant views. */
+.jump-links,
+.language-switcher,
+.table-scroll,
+.calendar-scroll {
+  min-width:0;
+  max-width:100%;
+  overflow-x:auto;
+  overflow-y:hidden;
+  contain:inline-size;
+}
+.long-term-analysis > *,
+.long-term-group,
+.long-term-group > .group-body,
+.long-term-subgroup,
+.long-term-subgroup > .group-body {
+  min-width:0;
+  max-width:100%;
+}
+.long-term-table-wrap {
+  overflow-x:auto;
+  overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;
+  contain:inline-size;
+}
+
+/* Narrow-screen text and action containment. */
+.actions,
+.actions > *,
+.download-columns,
+.download-columns > *,
+.download-card,
+.orientation-state-copy,
+.assessment-card > * {
+  min-width:0;
+  max-width:100%;
+}
+.actions a,
+.download-card a,
+.download-card strong,
+.download-card small,
+.orientation-state-copy strong,
+.orientation-state-copy span,
+.orientation-state-copy small {
+  white-space:normal;
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
+@media (max-width:520px) {
+  .stability-meta-line { white-space:normal; overflow-wrap:anywhere; }
+  .download-card { padding:.78rem; }
+}
+
+/* 9.1.0: text-only zoom and very narrow Ingress/WebView hardening. */
+.calibration-wizard,
+.workflow-history-chart {
+  max-width:100%;
+  overflow-x:auto;
+  overflow-y:hidden;
+  contain:inline-size;
+}
+@media (max-width:520px) {
+  .page-scroll { padding:calc(12px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left)); }
+  header, section { padding:14px; }
+  main *, main *::before, main *::after { min-width:0; }
+  main :where(h1,h2,h3,h4,p,li,dt,dd,strong,small,span,label,button,a,summary,div) {
+    overflow-wrap:anywhere;
+    word-break:normal;
+  }
+  details > summary,
+  details.collapsible-card > summary { padding:12px; }
+  details.collapsible-card > .collapsible-card-body { padding:0 12px 12px; }
+  .group-body { padding:0 12px 12px; }
+  .analysis-level-panel { padding:12px; }
+  .analysis-level-buttons,
+  .report-period-presets,
+  .measurement-size-options,
+  .custom-periods,
+  .download-columns,
+  .calibration-grid,
+  .tube-profile-grid,
+  .tube-profile-card dl,
+  .detector-tube-grid,
+  .detector-tube-card dl { grid-template-columns:1fr; }
+  .analysis-level-button,
+  button,
+  .button,
+  a.button { width:100%; min-width:0; white-space:normal; }
+  .orientation-state,
+  .combined-interpretation,
+  .assessment-primary { grid-template-columns:1fr; }
+  .orientation-state::before { display:none; }
+  .calibration-panel,
+  .assessment-note,
+  .interpretation,
+  .note,
+  .device-ok,
+  .report-target-card,
+  .calibration-history-list { max-width:100%; }
+  .compact-list,
+  .calibration-warnings { padding-left:1.15em; }
+  .calibration-warnings { padding-right:.5em; }
+  .measurement-size-options .custom-font-size { display:grid; grid-template-columns:1fr; gap:.35rem; justify-content:stretch; }
+  .custom-font-size input { width:100%; max-width:100%; }
+  .device-status-stack { max-width:100%; align-items:flex-start; justify-items:start; }
+  .device-freshness { max-width:100%; text-align:left; justify-content:flex-start; }
+  .calibration-manager-grid { grid-template-columns:1fr; }
+  .calibration-profile-card dl div { display:grid; grid-template-columns:1fr; }
+  .actions { grid-template-columns:1fr; }
+}
+
+
+/* 9.1.0: prevent text-zoom overflow in narrow Home Assistant Ingress views. */
+@media (max-width:620px) {
+  html, body, .page-scroll { max-width:100%; overflow-x:hidden; }
+  main, main > *, main :where(section,details,article,form,fieldset,.card,.analysis-level-panel,.analysis-group,.group-body,.long-term-card) {
+    min-width:0;
+    max-width:100%;
+    box-sizing:border-box;
+  }
+  main :where(h1,h2,h3,h4,p,li,dt,dd,strong,small,span,label,button,a,summary) {
+    max-width:100%;
+    overflow-wrap:anywhere;
+    word-break:normal;
+    hyphens:auto;
+  }
+  .header-intro h1 { overflow-wrap:anywhere; }
+  .analysis-level-panel,
+  .analysis-heading,
+  .card-header,
+  .section-heading,
+  .header-actions {
+    flex-wrap:wrap;
+  }
+  .analysis-level-buttons {
+    width:100%;
+    max-width:100%;
+    grid-template-columns:1fr;
+  }
+  input, select, textarea, button, .button, a.button {
+    min-width:0;
+    max-width:100%;
+    box-sizing:border-box;
+  }
+  pre, code { max-width:100%; overflow-x:auto; white-space:pre-wrap; overflow-wrap:anywhere; }
+}
+@media (max-width:520px) {
+  details.collapsible-card > summary {
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto auto;
+    align-items:start;
+    column-gap:8px;
+  }
+  .card-summary-actions { width:auto; min-width:max-content; margin-left:0; flex-wrap:nowrap; }
+  .card-summary-actions button,
+  .card-pin,
+  .card-help { width:2.75rem; min-width:2.75rem; max-width:2.75rem; padding:0; }
+}
+
+/* 9.1.0: keep collapsible-card controls inside very narrow cards. */
+@media (max-width:520px) {
+  details.collapsible-card > summary {
+    display:flex;
+    flex-wrap:wrap;
+    align-items:flex-start;
+    gap:8px;
+    position:relative;
+    padding-right:3rem;
+  }
+  details.collapsible-card > summary::after {
+    position:absolute;
+    top:14px;
+    right:14px;
+    margin:0;
+  }
+  details.collapsible-card > summary h2 {
+    flex:1 1 10rem;
+    min-width:0;
+    max-width:100%;
+  }
+  .card-summary-actions {
+    flex:0 1 auto;
+    width:auto;
+    min-width:0;
+    max-width:100%;
+    margin-left:0;
+    flex-wrap:wrap;
+  }
+}

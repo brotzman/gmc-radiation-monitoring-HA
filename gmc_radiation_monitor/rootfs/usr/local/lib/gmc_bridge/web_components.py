@@ -194,3 +194,48 @@ def render_inline_explanation(code: str, translator: TranslatorLike) -> str:
         f'<details class="inline-help explanation"><summary>{html.escape(title)}</summary>'
         f'<div class="group-body"><p>{html.escape(body)}</p>{action_html}</div></details>'
     )
+
+
+def render_home_assistant_location(
+    home_location: dict[str, object], *, timezone_text: str, language: str, translator: TranslatorLike
+) -> str:
+    """Render the collapsible Home Assistant location summary in one reusable component."""
+    t = translator
+    timezone_name = html.escape(timezone_text)
+    if home_location.get("available"):
+        location_name = str(home_location.get("location_name") or t("Configured location"))
+        latitude = home_location.get("latitude")
+        longitude = home_location.get("longitude")
+        elevation = home_location.get("elevation")
+        country = str(home_location.get("country") or "")
+        parts: list[str] = []
+        if latitude is not None and longitude is not None:
+            parts.append(
+                f"{t('Coordinates')}: {format_number(float(latitude), language, decimals=5)}, "
+                f"{format_number(float(longitude), language, decimals=5)}"
+            )
+        if elevation is not None:
+            parts.append(f"{t('Elevation')}: {format_number(float(elevation), language, trim=True)} m")
+        if country:
+            parts.append(f"{t('Country')}: {country}")
+        parts.append(f"{t('Timezone')}: {timezone_text}")
+        details = " · ".join(parts)
+        return (
+            '<details class="location-details">'
+            f'<summary><span class="details-summary-icon">📍</span><span><strong>{html.escape(t("Home Assistant location"))}</strong>'
+            f"<small>{html.escape(location_name)}</small></span></summary>"
+            '<div class="location-details-body">'
+            f'<div class="location-details-values"><strong>{html.escape(location_name)}</strong>'
+            f"<span>{html.escape(details)}</span></div>"
+            f"<p>{html.escape(t('Location data comes from the Home Assistant general settings and is not sent to an external geocoding service.'))}</p>"
+            "</div></details>"
+        )
+    return (
+        '<details class="location-details">'
+        f'<summary><span class="details-summary-icon">📍</span><span><strong>{html.escape(t("Home Assistant location"))}</strong>'
+        f"<small>{html.escape(t('Location unavailable'))}</small></span></summary>"
+        '<div class="location-details-body">'
+        f'<div class="location-details-values"><span>{html.escape(t("Timezone"))}: {timezone_name}</span></div>'
+        f"<p>{html.escape(t('Check the Home Assistant general settings and restart the add-on.'))}</p>"
+        "</div></details>"
+    )
