@@ -1,11 +1,27 @@
 # Changelog
 
+## 9.2.0
+
+- Added a plain-language long-term assessment before method details and kept advanced statistical groups collapsed by default.
+- Added evidence levels based on duration, coverage and effective sample size.
+- Added practical monthly trend magnitude alongside Mann–Kendall and Sen statistics.
+- Raised the 24-hour readiness requirement to 90% coverage and retained conservative requirements for longer windows.
+- Delayed annual dose projection until a sufficiently complete 90-day window exists.
+- Required at least 100 hourly pairs for environmental associations and applied Benjamini-Hochberg false-discovery-rate correction across tested lags.
+- Clarified that correlation, EWMA, CUSUM and other statistical signals neither prove causation nor identify a radiation source.
+- Added a downloadable field-test protocol with service uptime, serial errors, reconnects, database write errors, data gaps and GMCMap counters.
+- Corrected gap diagnostics so one missing expected sample is counted as a gap.
+- Hardened collapsible analysis groups against narrow-view and 200% text-zoom overflow.
+- Updated all eight interface catalogues and all eight 35-page user manuals.
+- Retained coordinate degree/cardinal-direction formatting from 9.1.2.
+- Kept database schema 8, measurement acquisition, serial protocols, MQTT identities, safety thresholds and stored data compatible.
+
 ## 9.1.2
 
 - Added degree symbols and cardinal directions to the Home Assistant coordinate display.
-- Latitude and longitude now render in an unambiguous form such as `51,60176° N, 7,45410° E`.
-- Updated release metadata and user-manual version labels.
-- No database, measurement, alarm or protocol changes.
+- Latitude and longitude render in an unambiguous form such as `51,60176° N, 7,45410° E`.
+- Negative latitude and longitude use `S` and `W` respectively.
+- Kept location precision, privacy behavior, calculations and database schema unchanged.
 
 ## 9.1.1
 

@@ -6,6 +6,14 @@ A local Home Assistant App (formerly add-on) for compatible GQ GMC Geiger counte
 
 > **Safety notice:** This add-on is intended for monitoring and home automation. It is not a calibrated radiation-protection instrument. Derived dose rates, profiles, anomaly detection and recommendations do not replace official measurements, professional advice or emergency instructions.
 
+## Version 9.2.0: clearer long-term evidence and field-test diagnostics
+
+Version 9.2.0 makes long-term results easier to interpret without duplicating the existing short-term baseline, alarm or device-comparison functions. A plain-language assessment appears first, while statistical method details remain available in collapsed Analysis and Expert sections.
+
+The release adds conservative evidence levels, minimum duration and coverage rules, practical trend magnitude, a 90-day minimum for annual projection, at least 100 paired values plus Benjamini-Hochberg correction for environmental associations, and an exportable long-term field-test protocol covering USB reconnects, serial/database errors, data gaps and GMCMap operation. Statistical signals never suppress the configured absolute warning and danger thresholds and are not presented as proof of a radiation source or environmental cause.
+
+All eight interface languages and all eight 35-page user manuals have been updated. Database schema 8, stored history, MQTT identities, detector profiles and serial protocols remain compatible.
+
 ## Version 9.1.2: coordinate units and directions
 
 Version 9.1.2 displays Home Assistant latitude and longitude with degree symbols and cardinal directions, for example `51,60176° N, 7,45410° E`. This removes ambiguity while preserving the configured precision and all existing privacy behavior.
@@ -38,6 +46,8 @@ Version 9.1.0 introduced the detector-aware long-term analysis with real 24-hour
 - Configurable safety profiles and completely custom CPM/µSv/h thresholds
 - Local baseline learning, anomaly detection, trend analysis and smart events
 - Dedicated long-term analysis with real windows, coverage checks, robust background, cumulative derived dose, trend diagnostics, calendar heat map and persistent elevation episodes
+- Evidence-led long-term interpretation with practical effect size, FDR-corrected environmental associations and conservative minimum requirements
+- Exportable field-test protocol with uptime, reconnect, data-gap, database and GMCMap endurance diagnostics
 - Clear separation between absolute threshold assessment and local-background analysis
 - Combined interpretation and practical action guidance in the analysis summary
 - Custom AppArmor profile and no vendor-cloud requirement
