@@ -196,6 +196,18 @@ def render_inline_explanation(code: str, translator: TranslatorLike) -> str:
     )
 
 
+def format_geographic_coordinate(value: float, axis: str, language: str) -> str:
+    """Format one geographic coordinate with degrees and a cardinal direction."""
+    normalized_axis = axis.lower().strip()
+    if normalized_axis == "latitude":
+        direction = "N" if value >= 0 else "S"
+    elif normalized_axis == "longitude":
+        direction = "E" if value >= 0 else "W"
+    else:
+        raise ValueError(f"Unsupported coordinate axis: {axis}")
+    return f"{format_number(abs(float(value)), language, decimals=5)}° {direction}"
+
+
 def render_home_assistant_location(
     home_location: dict[str, object], *, timezone_text: str, language: str, translator: TranslatorLike
 ) -> str:
@@ -211,8 +223,9 @@ def render_home_assistant_location(
         parts: list[str] = []
         if latitude is not None and longitude is not None:
             parts.append(
-                f"{t('Coordinates')}: {format_number(float(latitude), language, decimals=5)}, "
-                f"{format_number(float(longitude), language, decimals=5)}"
+                f"{t('Coordinates')}: "
+                f"{format_geographic_coordinate(float(latitude), 'latitude', language)}, "
+                f"{format_geographic_coordinate(float(longitude), 'longitude', language)}"
             )
         if elevation is not None:
             parts.append(f"{t('Elevation')}: {format_number(float(elevation), language, trim=True)} m")
