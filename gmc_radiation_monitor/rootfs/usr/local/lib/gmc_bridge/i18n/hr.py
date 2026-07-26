@@ -2185,3 +2185,6 @@ CATALOG.update({'Not evaluable': 'Nije moguće procijeniti', 'Exploratory': 'Ist
 
 # Sidebar navigation and responsive application shell 9.3.0
 CATALOG.update({'Main navigation': 'Glavna navigacija', 'Monitoring': 'Nadzor', 'Evaluation': 'Procjena', 'Documentation': 'Dokumentacija', 'Administration': 'Administracija', 'Close navigation': 'Zatvori navigaciju', 'Skip to content': 'Prijeđi na sadržaj', 'Menu': 'Izbornik', 'Refresh': 'Osvježi'})
+
+# Global view control and long-term interpretation context 9.4.0
+CATALOG.update({'Choose how many details and tools are shown across all sections. The selection is stored in this browser.': 'Određuje koliko se pojedinosti i alata prikazuje u svim odjeljcima. Odabir se sprema u ovom pregledniku.', 'Long-term interpretation context': 'Kontekst dugoročne interpretacije', 'Intelligent analysis, adaptive background and cosmic-influence context for the selected detector.': 'Inteligentna analiza, prilagodljiva pozadina i statistički kontekst kozmičkog utjecaja za odabrani detektor.'})

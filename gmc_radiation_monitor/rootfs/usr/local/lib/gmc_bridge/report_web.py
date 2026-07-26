@@ -876,6 +876,7 @@ class ReportApplication(WorkflowApplicationMixin):
     <span class="sidebar-brand-icon" aria-hidden="true">☢</span>
     <div><strong>GMC Radiation Monitor</strong><small>v{html.escape(APP_VERSION)}</small></div>
   </div>
+  {analysis_level_controls_html}
   <nav class="side-nav">
     <div class="nav-group"><span class="nav-group-label">{html.escape(t("Monitoring"))}</span>
       <button type="button" class="nav-item active" data-view="overview"><span class="nav-icon" aria-hidden="true">⌂</span><span>{html.escape(t("Overview"))}</span></button>
@@ -926,7 +927,6 @@ input[type="date"], input[type="week"], input[type="month"], input[type="datetim
 <div class="top-actions"><div class="top-status {status_state}" aria-label="{html.escape(t("Live system status"), quote=True)}"><span class="status-dot"></span><span>{html.escape(status_headline)}</span></div><label class="top-language"><span class="visually-hidden">{html.escape(t("Language"))}</span><select id="language-select" aria-label="{html.escape(t("Language"), quote=True)}">{language_select_options}</select></label><button type="button" class="topbar-icon" id="refresh-dashboard" aria-label="{html.escape(t("Refresh"), quote=True)}" title="{html.escape(t("Refresh"), quote=True)}">↻</button></div>
 </header>
 <div class="page-scroll" id="page-scroll">
-{analysis_level_controls_html}
 <main id="main-content" tabindex="-1">
 <section class="dashboard-view active" id="view-overview" data-view="overview">
 <header class="report-header">
@@ -952,14 +952,13 @@ input[type="date"], input[type="week"], input[type="month"], input[type="datetim
 {status_strip_html}
 <div id="primary-dashboard" class="primary-dashboard">
 {multi_device_html}
-{radiation_intelligence_html}
-{adaptive_background_html}
-{cosmic_influence_html}
 {fleet_intelligence_html}
 </div>
 </section>
 <section class="dashboard-view" id="view-analysis" data-view="analysis" hidden>{analysis_html}</section>
-<section class="dashboard-view" id="view-long-term" data-view="long-term" hidden>{long_term_analysis_html}</section>
+<section class="dashboard-view" id="view-long-term" data-view="long-term" hidden>{long_term_analysis_html}
+<section class="analysis-section long-term-context-section" id="long-term-context"><div class="analysis-heading"><span class="analysis-device-badge device-generic">CTX</span><div><h2>{html.escape(t("Long-term interpretation context"))}</h2><p>{html.escape(t("Intelligent analysis, adaptive background and cosmic-influence context for the selected detector."))}</p></div></div>
+<div class="long-term-context-stack">{radiation_intelligence_html}{adaptive_background_html}{cosmic_influence_html}</div></section></section>
 <section class="dashboard-view" id="view-history" data-view="history" hidden>{history_html}</section>
 <section class="dashboard-view" id="view-workflow" data-view="workflow" hidden>{workflow_html}</section>
 <section class="dashboard-view" id="view-calibration" data-view="calibration" hidden>{calibration_management_html}</section>

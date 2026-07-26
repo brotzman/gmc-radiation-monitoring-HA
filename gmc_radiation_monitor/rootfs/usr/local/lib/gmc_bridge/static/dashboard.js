@@ -119,8 +119,9 @@
   }
   const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true;
   const viewAliases = {
-    overview: 'overview', devices: 'overview', 'radiation-intelligence': 'overview',
-    'adaptive-background': 'overview', 'cosmic-influence': 'overview', 'fleet-intelligence': 'overview',
+    overview: 'overview', devices: 'overview',
+    'fleet-intelligence': 'overview',
+    'radiation-intelligence': 'long-term', 'adaptive-background': 'long-term', 'cosmic-influence': 'long-term',
     analysis: 'analysis', 'long-term': 'long-term', 'long-term-analysis': 'long-term',
     history: 'history', workflow: 'workflow', 'calibration-management': 'calibration',
     calibration: 'calibration', reports: 'reports', maintenance: 'maintenance'
@@ -183,7 +184,6 @@
       setDashboardView(view, { persist: true, updateHash: true, resetScroll: true });
       return true;
     }
-    if (target.classList.contains('advanced-only') && document.body.dataset.analysisLevel === 'summary') setAnalysisLevel('analysis');
     let parent = target.parentElement;
     while (parent) { if (parent instanceof HTMLDetailsElement) parent.open = true; parent = parent.parentElement; }
     window.requestAnimationFrame(() => {

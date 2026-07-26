@@ -2282,3 +2282,6 @@ CATALOG.update({'{available} of {required} required hourly pairs are available.'
 
 # Sidebar navigation and responsive application shell 9.3.0
 CATALOG.update({'Main navigation': 'Main navigation', 'Monitoring': 'Monitoring', 'Evaluation': 'Evaluation', 'Documentation': 'Documentation', 'Administration': 'Administration', 'Close navigation': 'Close navigation', 'Skip to content': 'Skip to content', 'Menu': 'Menu', 'Refresh': 'Refresh'})
+
+# Global view control and long-term interpretation context 9.4.0
+CATALOG.update({'Choose how many details and tools are shown across all sections. The selection is stored in this browser.': 'Choose how many details and tools are shown across all sections. The selection is stored in this browser.', 'Long-term interpretation context': 'Long-term interpretation context', 'Intelligent analysis, adaptive background and cosmic-influence context for the selected detector.': 'Intelligent analysis, adaptive background and cosmic-influence context for the selected detector.'})

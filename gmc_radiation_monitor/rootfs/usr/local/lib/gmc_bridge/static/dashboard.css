@@ -1705,3 +1705,131 @@ details.analysis-group > summary::after { flex:0 0 auto; }
   word-break: normal;
   hyphens: auto;
 }
+
+/* 9.4.0: harmonise the sidebar with the dashboard's blue primary accent and
+   make the analysis level a persistent, global sidebar category. */
+:root {
+  --app-accent: var(--blue);
+  --app-accent-soft: color-mix(in srgb, var(--app-accent) 9%, Canvas);
+  --app-accent-strong: color-mix(in srgb, var(--app-accent) 78%, CanvasText);
+}
+.app-sidebar {
+  background: color-mix(in srgb, var(--app-accent) 3%, Canvas);
+}
+.sidebar-brand-icon {
+  color: var(--app-accent-strong);
+  background: color-mix(in srgb, var(--app-accent) 13%, Canvas);
+  border: 1px solid color-mix(in srgb, var(--app-accent) 58%, var(--border));
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--app-accent) 18%, transparent);
+}
+.nav-group-label { color: color-mix(in srgb, var(--app-accent) 72%, var(--muted)); }
+.nav-item:hover {
+  background: color-mix(in srgb, var(--app-accent) 7%, Canvas);
+  color: CanvasText;
+}
+.nav-item.active {
+  color: var(--app-accent-strong);
+  background: color-mix(in srgb, var(--app-accent) 13%, Canvas);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--app-accent) 52%, transparent),
+              0 6px 16px color-mix(in srgb, var(--app-accent) 13%, transparent);
+}
+.nav-item.active .nav-icon { color: var(--app-accent); }
+.sidebar-utility {
+  border-color: color-mix(in srgb, var(--app-accent) 30%, var(--border));
+  background: color-mix(in srgb, var(--app-accent) 6%, Canvas);
+}
+
+.app-sidebar .analysis-level-panel {
+  flex: 0 0 auto;
+  display: grid;
+  align-items: stretch;
+  justify-content: stretch;
+  gap: .62rem;
+  min-width: 0;
+  margin: 0 .05rem .85rem;
+  padding: .72rem;
+  border: 1px solid color-mix(in srgb, var(--app-accent) 34%, var(--border));
+  border-radius: .78rem;
+  background: color-mix(in srgb, var(--app-accent) 5%, Canvas);
+}
+.app-sidebar .analysis-level-copy {
+  display: grid;
+  gap: .22rem;
+  min-width: 0;
+  flex: none;
+}
+.app-sidebar .analysis-level-copy strong {
+  color: color-mix(in srgb, var(--app-accent) 78%, CanvasText);
+  font-size: .69rem;
+  line-height: 1.3;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.app-sidebar .analysis-level-copy small {
+  color: CanvasText;
+  font-size: .76rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.app-sidebar .analysis-level-copy > span {
+  color: var(--muted);
+  font-size: .68rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.app-sidebar .analysis-level-buttons {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: .34rem;
+  min-width: 0;
+  width: 100%;
+}
+.app-sidebar .analysis-level-button {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.25rem;
+  justify-content: flex-start;
+  padding: .42rem .58rem;
+  border-radius: .62rem;
+  border-color: color-mix(in srgb, var(--app-accent) 24%, var(--border));
+  background: Canvas;
+  white-space: normal;
+  text-align: left;
+  font-size: .77rem;
+  line-height: 1.25;
+}
+.app-sidebar .analysis-level-button:hover {
+  border-color: var(--app-accent);
+  background: color-mix(in srgb, var(--app-accent) 7%, Canvas);
+}
+.app-sidebar .analysis-level-button[aria-pressed="true"] {
+  color: var(--app-accent-strong);
+  border-color: var(--app-accent);
+  background: color-mix(in srgb, var(--app-accent) 13%, Canvas);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--app-accent) 22%, transparent);
+}
+.app-sidebar .analysis-level-symbol {
+  color: var(--app-accent);
+  flex: 0 0 1.05rem;
+}
+
+/* The interpretation cards now belong to the long-term view. */
+.long-term-context-section {
+  margin-top: 1rem;
+  min-width: 0;
+}
+.long-term-context-section > .analysis-heading { margin-bottom: 1rem; }
+.long-term-context-stack {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+.long-term-context-stack > .collapsible-card { margin-bottom: 0; }
+
+@media (max-width: 860px) {
+  .app-sidebar .analysis-level-panel { margin-bottom: .75rem; }
+}
+@media (max-width: 390px) {
+  .app-sidebar .analysis-level-copy small { font-size: .73rem; }
+  .app-sidebar .analysis-level-copy > span { font-size: .65rem; }
+}

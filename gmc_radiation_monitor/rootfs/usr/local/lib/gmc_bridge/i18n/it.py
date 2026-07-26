@@ -2373,3 +2373,6 @@ CATALOG.update({'Not evaluable': 'Non valutabile', 'Exploratory': 'Esplorativo',
 
 # Sidebar navigation and responsive application shell 9.3.0
 CATALOG.update({'Main navigation': 'Navigazione principale', 'Monitoring': 'Monitoraggio', 'Evaluation': 'Valutazione', 'Documentation': 'Documentazione', 'Administration': 'Amministrazione', 'Close navigation': 'Chiudi navigazione', 'Skip to content': 'Vai al contenuto', 'Menu': 'Menu', 'Refresh': 'Aggiorna'})
+
+# Global view control and long-term interpretation context 9.4.0
+CATALOG.update({'Choose how many details and tools are shown across all sections. The selection is stored in this browser.': 'Determina quanti dettagli e strumenti vengono mostrati in tutte le sezioni. La selezione viene salvata in questo browser.', 'Long-term interpretation context': 'Contesto di interpretazione a lungo termine', 'Intelligent analysis, adaptive background and cosmic-influence context for the selected detector.': 'Analisi intelligente, fondo adattivo e contesto statistico dell’influenza cosmica per il rilevatore selezionato.'})
