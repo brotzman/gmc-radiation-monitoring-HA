@@ -92,9 +92,9 @@ def _runtime_translation_keys() -> set[str]:
 
 
 def test_release_version_and_notes() -> None:
-    assert APP_VERSION == "9.3.0"
-    assert "version: 9.3.0" in (ROOT / "config.yaml").read_text(encoding="utf-8")
-    assert (ROOT / "RELEASE_NOTES_9.3.0.md").is_file()
+    assert APP_VERSION == "9.4.0"
+    assert "version: 9.4.0" in (ROOT / "config.yaml").read_text(encoding="utf-8")
+    assert (ROOT / "RELEASE_NOTES_9.4.0.md").is_file()
 
 
 def test_every_runtime_translation_key_exists_in_every_catalogue() -> None:

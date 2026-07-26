@@ -140,7 +140,8 @@ def test_dashboard_browser_language_and_viewport_matrix(tmp_path: Path, engine: 
                         assert page.locator("#app-sidebar").is_visible()
                         assert page.locator("#menu-button").is_hidden()
                         assert abs(resources[0]["y"] - resources[1]["y"]) < 2
-                        assert abs(levels[0]["y"] - levels[1]["y"]) < 2
+                        assert abs(levels[0]["x"] - levels[1]["x"]) < 2
+                        assert levels[1]["y"] >= levels[0]["y"] + levels[0]["height"]
                         assert abs(statuses[0]["y"] - statuses[2]["y"]) < 2
                     elif viewport["width"] <= 620:
                         assert page.locator("#menu-button").is_visible()

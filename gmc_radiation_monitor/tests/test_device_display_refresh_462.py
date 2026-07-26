@@ -56,7 +56,7 @@ def test_device_cards_refresh_with_compact_json_and_retry_backoff():
         )
         script = Path("rootfs/usr/local/lib/gmc_bridge/static/dashboard.js").read_text(encoding="utf-8")
 
-        assert 'src="./assets/dashboard.js?v=9.3.0"' in page
+        assert 'src="./assets/dashboard.js?v=9.4.0"' in page
         assert "resolveDashboardUrl('./api/live-devices')" in script
         assert "updateLiveCard" in script
         assert "liveRefreshDelayMs = Math.min(120000" in script

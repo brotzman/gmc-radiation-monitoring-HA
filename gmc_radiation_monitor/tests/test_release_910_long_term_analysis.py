@@ -60,15 +60,15 @@ def _analysis(store: HistoryStore) -> dict:
 
 def test_910_release_metadata_retention_and_manual_names() -> None:
     config = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
-    assert APP_VERSION == "9.3.0"
-    assert config["version"] == "9.3.0"
+    assert APP_VERSION == "9.4.0"
+    assert config["version"] == "9.4.0"
     assert config["options"]["history"]["retention_days"] == 730
     assert sorted(path.name for path in ROOT.glob("RELEASE_NOTES_*.md")) == [
-        "RELEASE_NOTES_9.3.0.md"
+        "RELEASE_NOTES_9.4.0.md"
     ]
     manuals = sorted(DOCS.glob("*.pdf"))
     assert len(manuals) == 8
-    assert all("9.3.0" in path.name for path in manuals)
+    assert all("9.4.0" in path.name for path in manuals)
 
 
 def test_manuals_are_clean_current_editions() -> None:
@@ -78,7 +78,7 @@ def test_manuals_are_clean_current_editions() -> None:
         text = "\n".join((page.extract_text() or "") for page in reader.pages)
         assert len(reader.pages) >= 15
         first_pages = "\n".join((page.extract_text() or "") for page in reader.pages[:9])
-        assert "9.3.0" in first_pages
+        assert "9.4.0" in first_pages
         for stale in ("8.0.10", "8.3.2", "9.0.2", "9.0.3"):
             assert stale not in text
         assert "Bland-Altman" in text

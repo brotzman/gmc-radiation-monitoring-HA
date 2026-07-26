@@ -11,7 +11,7 @@ REPORT_RUN = ROOT / "rootfs/etc/services.d/gmc-reports/run"
 
 def test_visible_configuration_has_only_devices_and_shared_sections():
     config = yaml.safe_load((ROOT / "config.yaml").read_text())
-    assert config["version"] == "9.3.0"
+    assert config["version"] == "9.4.0"
     assert list(config["options"]) == [
         "devices",
         "dual_tube_devices",

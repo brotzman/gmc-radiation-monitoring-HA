@@ -37,7 +37,7 @@ def test_preconfigured_devices_expose_frame_debug_options() -> None:
     import yaml
 
     config = yaml.safe_load(Path("config.yaml").read_text())
-    assert config["version"] == "9.3.0"
+    assert config["version"] == "9.4.0"
     assert config["options"]["system"]["serial_scheduler_enabled"] is True
     assert config["options"]["system"]["serial_scheduler_gap_seconds"] == 2.0
     devices = config["options"]["devices"] + config["options"]["dual_tube_devices"]

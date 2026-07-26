@@ -25,7 +25,7 @@ def test_intelligence_rises_for_shared_signal():
 
 def test_config_version_and_fields():
     text = (Path(__file__).resolve().parents[1] / "config.yaml").read_text()
-    assert "version: 9.3.0" in text
+    assert "version: 9.4.0" in text
     assert "firmware_reference_version" not in text
     assert "firmware_information_url" not in text
 

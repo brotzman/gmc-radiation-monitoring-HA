@@ -26,8 +26,8 @@ def _page(tmp_path: Path) -> str:
 
 def test_8412_release_metadata_is_current() -> None:
     config = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
-    assert APP_VERSION == "9.3.0"
-    assert config["version"] == "9.3.0"
+    assert APP_VERSION == "9.4.0"
+    assert config["version"] == "9.4.0"
     changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
     section = changelog.split("## 8.4.12", 1)[1].split("## 8.4.11", 1)[0]
     assert "floating dashboard navigation" in section
