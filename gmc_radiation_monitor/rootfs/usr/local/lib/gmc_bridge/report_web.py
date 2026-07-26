@@ -418,7 +418,6 @@ class ReportApplication(WorkflowApplicationMixin):
         db_size_bytes = int(database.get("size_bytes", 0))
         db_size = f"{format_number(db_size_bytes / (1024 * 1024), language, decimals=2)} MiB"
         now_epoch = int(datetime.now(UTC).timestamp())
-
         def _dashboard_timestamp(value: object, fallback: str | None = None) -> str:
             if value in (None, "", 0):
                 return fallback or t("No data")
@@ -487,23 +486,6 @@ class ReportApplication(WorkflowApplicationMixin):
 <a class="status-strip-item {db_state_class}" href="#maintenance"><span class="status-dot"></span><span><strong>{html.escape(t("Database"))}: {html.escape(db_integrity)}</strong><small>{html.escape(db_size)}</small></span></a>
 </div>
 </details></section>
-"""
-        dashboard_controls_html = f"""
-<nav class="dashboard-controls" id="dashboard-controls" aria-label="{html.escape(t("Dashboard navigation"), quote=True)}">
-<div class="jump-links">
-<a href="#devices">{html.escape(t("Devices"))}</a>
-<a href="#radiation-intelligence">{html.escape(t("Intelligence"))}</a>
-<a href="#analysis">{html.escape(t("Analysis"))}</a>
-<a href="#long-term-analysis">{html.escape(t("Long-term"))}</a>
-<a href="#history">{html.escape(t("History"))}</a>
-<a href="#workflow">{html.escape(t("Workflows"))}</a>
-<a href="#calibration-management">{html.escape(t("Calibration profiles"))}</a>
-<a href="#reports">{html.escape(t("Reports"))}</a>
-</div>
-<div class="dashboard-actions">
-<button type="button" class="compact-action" id="toggle-all-cards" aria-expanded="false">{html.escape(t("Expand all"))}</button>
-</div>
-</nav>
 """
         purge_controls = (
             f'<div class="note"><strong>{html.escape(t("Deletion is disabled by default."))}</strong><br>'
@@ -883,6 +865,39 @@ class ReportApplication(WorkflowApplicationMixin):
             + "".join(language_links)
             + "</nav>"
         )
+        language_select_options = "".join(
+            f'<option value="{html.escape(code, quote=True)}"'
+            f'{" selected" if code == language_preference else ""}>{html.escape(name)}</option>'
+            for code, name in language_options
+        )
+        sidebar_navigation_html = f"""
+<aside class="app-sidebar" id="app-sidebar" aria-label="{html.escape(t("Main navigation"), quote=True)}">
+  <div class="sidebar-brand">
+    <span class="sidebar-brand-icon" aria-hidden="true">☢</span>
+    <div><strong>GMC Radiation Monitor</strong><small>v{html.escape(APP_VERSION)}</small></div>
+  </div>
+  <nav class="side-nav">
+    <div class="nav-group"><span class="nav-group-label">{html.escape(t("Monitoring"))}</span>
+      <button type="button" class="nav-item active" data-view="overview"><span class="nav-icon" aria-hidden="true">⌂</span><span>{html.escape(t("Overview"))}</span></button>
+      <button type="button" class="nav-item" data-view="history"><span class="nav-icon" aria-hidden="true">≋</span><span>{html.escape(t("History"))}</span></button>
+    </div>
+    <div class="nav-group"><span class="nav-group-label">{html.escape(t("Evaluation"))}</span>
+      <button type="button" class="nav-item" data-view="analysis"><span class="nav-icon" aria-hidden="true">⌁</span><span>{html.escape(t("Analysis"))}</span></button>
+      <button type="button" class="nav-item" data-view="long-term"><span class="nav-icon" aria-hidden="true">↗</span><span>{html.escape(t("Long-term"))}</span></button>
+    </div>
+    <div class="nav-group"><span class="nav-group-label">{html.escape(t("Documentation"))}</span>
+      <button type="button" class="nav-item" data-view="workflow"><span class="nav-icon" aria-hidden="true">✓</span><span>{html.escape(t("Workflows"))}</span></button>
+      <button type="button" class="nav-item" data-view="calibration"><span class="nav-icon" aria-hidden="true">◎</span><span>{html.escape(t("Calibration profiles"))}</span></button>
+      <button type="button" class="nav-item" data-view="reports"><span class="nav-icon" aria-hidden="true">▤</span><span>{html.escape(t("Reports"))}</span></button>
+    </div>
+    <div class="nav-group"><span class="nav-group-label">{html.escape(t("Administration"))}</span>
+      <button type="button" class="nav-item" data-view="maintenance"><span class="nav-icon" aria-hidden="true">⚙</span><span>{html.escape(t("History management"))}</span></button>
+    </div>
+  </nav>
+  <button type="button" class="sidebar-utility" id="toggle-all-cards" aria-expanded="false"><span aria-hidden="true">⇅</span><span>{html.escape(t("Expand all"))}</span></button>
+  <div class="sidebar-footer {connection_state_class}"><span class="status-dot"></span><span>{html.escape(connection_summary)}</span></div>
+</aside>
+"""
         page = f"""<!doctype html>
 <html lang="{language}">
 <head>
@@ -894,15 +909,26 @@ class ReportApplication(WorkflowApplicationMixin):
 .page-scroll {{ width:100%; height:100%; min-height:0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; touch-action: pan-y; padding-bottom:env(safe-area-inset-bottom,0px); }}
 .status-strip {{ position:static; display:block; }}
 .system-status-panel {{ display:block; width:100%; }}
-.dashboard-controls {{ position:sticky; top:0; z-index:50; display:flex; justify-content:space-between; align-items:center; gap:.75rem; flex-wrap:nowrap; }}
-.dashboard-controls {{ position:-webkit-sticky; position:sticky; top:env(safe-area-inset-top,0px); }}
-.jump-links {{ flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden; }}
 .form-grid > *, label {{ min-width:0; max-width:100%; }}
 input[type="date"], input[type="week"], input[type="month"], input[type="datetime-local"] {{ min-inline-size:0; max-inline-size:100%; }}
 @media (max-width:620px) {{ .report-format-guide {{ grid-template-columns:1fr; }} }}
 </style>
 </head>
-<body class="mode-{mode}" data-analysis-level="{"summary" if mode == "simple" else "analysis"}" data-main-value-size="{html.escape(self.main_value_size, quote=True)}" data-custom-value-font-size-px="{self.custom_value_font_size_px}" style="--custom-main-value-font-size:{self.custom_value_font_size_px}px"><div class="page-scroll" id="page-scroll"><main>
+<body class="mode-{mode}" data-analysis-level="{"summary" if mode == "simple" else "analysis"}" data-main-value-size="{html.escape(self.main_value_size, quote=True)}" data-custom-value-font-size-px="{self.custom_value_font_size_px}" style="--custom-main-value-font-size:{self.custom_value_font_size_px}px">
+<a class="skip-link" href="#main-content">{html.escape(t("Skip to content"))}</a>
+<div class="app-layout">
+{sidebar_navigation_html}
+<div class="content-shell">
+<button type="button" class="sidebar-backdrop" id="sidebar-backdrop" tabindex="-1" aria-hidden="true" aria-label="{html.escape(t("Close navigation"), quote=True)}"></button>
+<header class="app-topbar">
+<button type="button" class="topbar-icon menu-button" id="menu-button" aria-label="{html.escape(t("Menu"), quote=True)}" aria-expanded="false" aria-controls="app-sidebar">☰</button>
+<div class="page-brand"><h1>{html.escape(t("GMC Radiation Monitoring"))}</h1><p>{html.escape(t("Local monitoring for GQ GMC Geiger counters"))}</p></div>
+<div class="top-actions"><div class="top-status {status_state}" aria-label="{html.escape(t("Live system status"), quote=True)}"><span class="status-dot"></span><span>{html.escape(status_headline)}</span></div><label class="top-language"><span class="visually-hidden">{html.escape(t("Language"))}</span><select id="language-select" aria-label="{html.escape(t("Language"), quote=True)}">{language_select_options}</select></label><button type="button" class="topbar-icon" id="refresh-dashboard" aria-label="{html.escape(t("Refresh"), quote=True)}" title="{html.escape(t("Refresh"), quote=True)}">↻</button></div>
+</header>
+<div class="page-scroll" id="page-scroll">
+{analysis_level_controls_html}
+<main id="main-content" tabindex="-1">
+<section class="dashboard-view active" id="view-overview" data-view="overview">
 <header class="report-header">
 <div class="header-intro">
 <h1>{html.escape(t("GMC Radiation Monitoring"))}</h1>
@@ -923,9 +949,7 @@ input[type="date"], input[type="week"], input[type="month"], input[type="datetim
 </a>
 </div>
 </header>
-{analysis_level_controls_html}
 {status_strip_html}
-{dashboard_controls_html}
 <div id="primary-dashboard" class="primary-dashboard">
 {multi_device_html}
 {radiation_intelligence_html}
@@ -933,11 +957,13 @@ input[type="date"], input[type="week"], input[type="month"], input[type="datetim
 {cosmic_influence_html}
 {fleet_intelligence_html}
 </div>
-{analysis_html}
-{long_term_analysis_html}
-{history_html}
-{workflow_html}
-{calibration_management_html}
+</section>
+<section class="dashboard-view" id="view-analysis" data-view="analysis" hidden>{analysis_html}</section>
+<section class="dashboard-view" id="view-long-term" data-view="long-term" hidden>{long_term_analysis_html}</section>
+<section class="dashboard-view" id="view-history" data-view="history" hidden>{history_html}</section>
+<section class="dashboard-view" id="view-workflow" data-view="workflow" hidden>{workflow_html}</section>
+<section class="dashboard-view" id="view-calibration" data-view="calibration" hidden>{calibration_management_html}</section>
+<section class="dashboard-view" id="view-reports" data-view="reports" hidden>
 <section id="reports">
 <h2>{html.escape(t("Reports"))}</h2>
 <div class="report-target-card active-report-context">
@@ -1039,7 +1065,9 @@ input[type="date"], input[type="week"], input[type="month"], input[type="datetim
 </div>
 </details>
 </section>
+</section>
 
+<section class="dashboard-view" id="view-maintenance" data-view="maintenance" hidden>
 <section class="advanced-only history-management-section" id="maintenance">
 <div class="history-section-heading"><div><h2>{html.escape(t("History management"))}</h2><p>{html.escape(t("Export, back up, restore or deliberately remove stored radiation history from one protected workspace."))}</p></div></div>
 {history_management_banner}
@@ -1053,7 +1081,8 @@ input[type="date"], input[type="week"], input[type="month"], input[type="datetim
 <details class="analysis-group history-management-tool" id="history-restore"><summary><span class="summary-copy">{html.escape(t("Restore history"))}<small>{html.escape(t("Preview and merge a compatible SQLite backup"))}</small></span></summary><div class="group-body">{restore_controls}</div></details>
 <details class="analysis-group history-management-tool" id="history-delete"><summary><span class="summary-copy">{html.escape(t("Delete history"))}<small>{html.escape(t("Permanently remove app and Recorder history after explicit confirmation"))}</small></span></summary><div class="group-body">{purge_controls}</div></details>
 </section>
-</main></div>
+</section>
+</main></div></div></div>
 <script nonce="{html.escape(script_nonce, quote=True)}">{render_dashboard_bootstrap(selected_serial=selected_serial, language=language, translator=t)}</script><script src="./assets/dashboard.js?v={html.escape(APP_VERSION, quote=True)}" defer></script></body></html>"""
         # Bind every download server-side to the device currently shown in Analysis.
         # JavaScript is only a progressive enhancement; Ingress-safe links work without it.

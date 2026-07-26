@@ -22,7 +22,7 @@
   function writeJson(key, value) {
     try { localStorage.setItem(key, JSON.stringify(value)); } catch (_error) {}
   }
-  const preferences = readJson(uiStorageKey, { cards: {}, groups: {}, pinned: [], reportForms: {}, lastSection: '', analysisLevel: '' });
+  const preferences = readJson(uiStorageKey, { cards: {}, groups: {}, pinned: [], reportForms: {}, lastSection: '', view: 'overview', analysisLevel: '' });
   const allowedMainValueSizes = new Set(['small', 'medium', 'large', 'custom']);
   const appMainValueSize = allowedMainValueSizes.has(document.body.dataset.mainValueSize)
     ? document.body.dataset.mainValueSize
@@ -118,39 +118,101 @@
     updateToggleAllButton();
   }
   const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true;
+  const viewAliases = {
+    overview: 'overview', devices: 'overview', 'radiation-intelligence': 'overview',
+    'adaptive-background': 'overview', 'cosmic-influence': 'overview', 'fleet-intelligence': 'overview',
+    analysis: 'analysis', 'long-term': 'long-term', 'long-term-analysis': 'long-term',
+    history: 'history', workflow: 'workflow', 'calibration-management': 'calibration',
+    calibration: 'calibration', reports: 'reports', maintenance: 'maintenance'
+  };
+  const appSidebar = document.getElementById('app-sidebar');
+  const sidebarBackdrop = document.getElementById('sidebar-backdrop');
+  const menuButton = document.getElementById('menu-button');
+  const pageScroller = document.getElementById('page-scroll');
+  function closeSidebar({ restoreFocus = false } = {}) {
+    appSidebar?.classList.remove('open');
+    sidebarBackdrop?.classList.remove('visible');
+    sidebarBackdrop?.setAttribute('aria-hidden', 'true');
+    menuButton?.setAttribute('aria-expanded', 'false');
+    document.body.classList.remove('sidebar-open');
+    if (restoreFocus) menuButton?.focus();
+  }
+  function setSidebar(open) {
+    appSidebar?.classList.toggle('open', open);
+    sidebarBackdrop?.classList.toggle('visible', open);
+    sidebarBackdrop?.setAttribute('aria-hidden', String(!open));
+    menuButton?.setAttribute('aria-expanded', String(open));
+    document.body.classList.toggle('sidebar-open', open);
+  }
+  function normaliseView(value) {
+    const key = String(value || '').replace(/^#/, '');
+    return viewAliases[key] || (document.getElementById(`view-${key}`) ? key : 'overview');
+  }
+  function setDashboardView(requestedView, { persist = true, updateHash = true, focus = false, resetScroll = true } = {}) {
+    const view = normaliseView(requestedView);
+    document.querySelectorAll('.dashboard-view').forEach((section) => {
+      const active = section.dataset.view === view;
+      section.hidden = !active;
+      section.classList.toggle('active', active);
+    });
+    document.querySelectorAll('.nav-item[data-view]').forEach((button) => {
+      const active = button.dataset.view === view;
+      button.classList.toggle('active', active);
+      if (active) button.setAttribute('aria-current', 'page'); else button.removeAttribute('aria-current');
+    });
+    if (resetScroll && pageScroller) pageScroller.scrollTop = 0;
+    if (persist) {
+      preferences.view = view;
+      preferences.lastSection = `#${view}`;
+      writeJson(uiStorageKey, preferences);
+    }
+    if (updateHash) {
+      try { history.replaceState(null, '', `#${view}`); } catch (_error) {}
+    }
+    closeSidebar();
+    if (focus) window.setTimeout(() => document.getElementById('main-content')?.focus({preventScroll:true}), 0);
+    return view;
+  }
   function jumpToSection(selector) {
     if (!selector || selector.charAt(0) !== '#') return false;
-    const target = document.getElementById(selector.slice(1));
-    if (!target) return false;
-    if (target.classList.contains('advanced-only') && document.body.dataset.analysisLevel === 'summary') {
-      setAnalysisLevel('analysis');
+    const targetId = selector.slice(1);
+    const target = document.getElementById(targetId);
+    const view = normaliseView(targetId);
+    setDashboardView(view, { persist: true, updateHash: false, resetScroll: true });
+    if (!target) {
+      setDashboardView(view, { persist: true, updateHash: true, resetScroll: true });
+      return true;
     }
+    if (target.classList.contains('advanced-only') && document.body.dataset.analysisLevel === 'summary') setAnalysisLevel('analysis');
     let parent = target.parentElement;
-    while (parent) {
-      if (parent instanceof HTMLDetailsElement) parent.open = true;
-      parent = parent.parentElement;
-    }
-    const scroller = document.getElementById('page-scroll');
-    if (scroller) {
-      const dashboardControls = document.getElementById('dashboard-controls');
-      const stickyOffset = dashboardControls && getComputedStyle(dashboardControls).position === 'sticky'
-        ? dashboardControls.getBoundingClientRect().height + 12
-        : 12;
-      const targetTop = target.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - stickyOffset;
-      scroller.scrollTo({ top: Math.max(0, targetTop), behavior: reduceMotion ? 'auto' : 'smooth' });
-    } else {
-      target.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
-    }
+    while (parent) { if (parent instanceof HTMLDetailsElement) parent.open = true; parent = parent.parentElement; }
+    window.requestAnimationFrame(() => {
+      if (pageScroller) {
+        const targetTop = target.getBoundingClientRect().top - pageScroller.getBoundingClientRect().top + pageScroller.scrollTop - 12;
+        pageScroller.scrollTo({ top: Math.max(0, targetTop), behavior: reduceMotion ? 'auto' : 'smooth' });
+      } else target.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+    });
+    preferences.view = view;
     preferences.lastSection = selector;
     writeJson(uiStorageKey, preferences);
-    try {
-      const nextUrl = new URL(window.location.href);
-      nextUrl.hash = selector;
-      history.replaceState(null, '', nextUrl.pathname + nextUrl.search + nextUrl.hash);
-    } catch (_error) {}
+    try { history.replaceState(null, '', selector); } catch (_error) {}
     return true;
   }
+
   document.addEventListener('click', (event) => {
+    if (document.body.classList.contains('sidebar-open') && !event.target.closest('#app-sidebar') && !event.target.closest('#menu-button')) {
+      event.preventDefault();
+      closeSidebar({restoreFocus:true});
+      return;
+    }
+    const navButton = event.target.closest('.nav-item[data-view]');
+    if (navButton) { event.preventDefault(); setDashboardView(navButton.dataset.view || 'overview', {focus:true}); return; }
+    const menuToggle = event.target.closest('#menu-button');
+    if (menuToggle) { event.preventDefault(); setSidebar(!appSidebar?.classList.contains('open')); return; }
+    const backdrop = event.target.closest('#sidebar-backdrop');
+    if (backdrop) { event.preventDefault(); closeSidebar({restoreFocus:true}); return; }
+    const refreshButton = event.target.closest('#refresh-dashboard');
+    if (refreshButton) { event.preventDefault(); window.location.reload(); return; }
     const levelButton = event.target.closest('.analysis-level-button');
     if (levelButton) { event.preventDefault(); setAnalysisLevel(levelButton.dataset.analysisLevel || 'analysis'); return; }
     const toggleAll = event.target.closest('#toggle-all-cards');
@@ -281,17 +343,28 @@
   document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && helpPopover) { event.preventDefault(); closeHelp({restoreFocus:true}); } });
   document.getElementById('page-scroll')?.addEventListener('scroll', () => closeHelp(), {passive:true});
   const jumpLinks = [...document.querySelectorAll('.jump-links a')];
-  if (!window.location.hash && preferences.lastSection) {
-    requestAnimationFrame(() => jumpToSection(preferences.lastSection));
+  const requestedHash = (window.location.hash || '').replace(/^#/, '');
+  const initialView = normaliseView(requestedHash || preferences.view || preferences.lastSection || 'overview');
+  setDashboardView(initialView, {persist:false, updateHash:false, resetScroll:false});
+  if (requestedHash && document.getElementById(requestedHash) && requestedHash !== initialView) {
+    window.requestAnimationFrame(() => jumpToSection(`#${requestedHash}`));
   }
-  if ('IntersectionObserver' in window) {
-    const observer = new IntersectionObserver((entries) => {
-      const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-      if (!visible) return;
-      jumpLinks.forEach((link) => link.classList.toggle('active', link.getAttribute('href') === `#${visible.target.id}`));
-    }, { root: document.getElementById('page-scroll'), rootMargin: '-20% 0px -65% 0px', threshold: [0.05, 0.25] });
-    ['devices','radiation-intelligence','analysis','history','workflow','reports','maintenance'].forEach((id) => { const node = document.getElementById(id); if (node) observer.observe(node); });
-  }
+  window.addEventListener('hashchange', () => {
+    const target = (window.location.hash || '#overview');
+    jumpToSection(target);
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    if (helpPopover) return;
+    if (appSidebar?.classList.contains('open')) { event.preventDefault(); closeSidebar({restoreFocus:true}); }
+  });
+  const languageSelect = document.getElementById('language-select');
+  languageSelect?.addEventListener('change', () => {
+    const nextUrl = new URL(window.location.href);
+    nextUrl.searchParams.set('lang', languageSelect.value || 'auto');
+    nextUrl.hash = preferences.view || initialView || 'overview';
+    window.location.assign(nextUrl.toString());
+  });
 
   document.querySelectorAll('form.report-preset-source').forEach((form) => {
     const kind = form.dataset.presetKind || 'custom';
