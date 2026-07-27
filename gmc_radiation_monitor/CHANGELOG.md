@@ -1,5 +1,14 @@
 # Changelog
 
+## 10.0.7
+
+- Fixed a race condition between periodic bridge-heartbeat writes and immediate supervisor status updates that shared one PID-based temporary path.
+- Serialized the complete heartbeat snapshot/write/replace sequence so a stale snapshot cannot overwrite a newer state.
+- Switched to a unique mode-0600 temporary file for every write, with flush, `fsync()` and atomic replacement in the destination directory.
+- Added regression coverage for unique temporary paths, cleanup and 24 concurrent heartbeat updates.
+- Increased the repeatable unit/integration suite to 21 tests.
+- Kept database schema 8, stored measurements, MQTT identities, detector profiles, alarm thresholds, scientific calculations, serial protocols and responsive navigation compatible.
+
 ## 10.0.6
 
 - Restored the dashboard navigation tile as a sticky/floating control on mobile Home Assistant views, matching the intended always-available navigation behavior.

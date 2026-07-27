@@ -6,6 +6,12 @@ A local Home Assistant App (formerly add-on) for compatible GQ GMC Geiger counte
 
 > **Safety notice:** This add-on is intended for monitoring and home automation. It is not a calibrated radiation-protection instrument. Derived dose rates, profiles, anomaly detection and recommendations do not replace official measurements, professional advice or emergency instructions.
 
+## Version 10.0.7: race-free bridge heartbeat
+
+Version 10.0.7 fixes a concurrency error in the atomic bridge-heartbeat writer. Periodic liveness writes and immediate supervisor status updates could previously use the same PID-based temporary file at the same time. One writer could move that file before the other called `os.replace()`, producing a transient `No such file or directory` warning and a briefly stale health record.
+
+Heartbeat writes are now serialized and each write uses a unique mode-0600 temporary file in `/data`, followed by flush, `fsync()` and atomic replacement. Two regression tests verify unique temporary paths, cleanup and concurrent writes. Database schema 8, measurements, MQTT identities, detector profiles, thresholds, scientific calculations, serial protocols and the sticky mobile navigation remain unchanged.
+
 ## Version 10.0.6: persistent mobile navigation
 
 Version 10.0.6 restores the dashboard navigation tile as a sticky floating control on mobile Home Assistant views. The section links remain available while the user scrolls, but are arranged in a compact four-column, two-row grid instead of a horizontal scroller. Long translated labels wrap inside their buttons and the tile remains inside the viewport.
