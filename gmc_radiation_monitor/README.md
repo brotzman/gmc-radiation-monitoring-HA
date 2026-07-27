@@ -6,6 +6,12 @@ A local Home Assistant App (formerly add-on) for compatible GQ GMC Geiger counte
 
 > **Safety notice:** This add-on is intended for monitoring and home automation. It is not a calibrated radiation-protection instrument. Derived dose rates, profiles, anomaly detection and recommendations do not replace official measurements, professional advice or emergency instructions.
 
+## Version 10.0.2: stability and maintainability
+
+Version 10.0.2 is a maintenance release. It consolidates the responsive CSS contract so mobile controls wrap instead of becoming horizontal scrollers, and it verifies the layout automatically at widths from 320 to 800 pixels and at 200% text size.
+
+The report web application now separates status/cache handling and device/analysis rendering into dedicated mixins. Translation registration and validation are centralized, while the 10.0.1 wording additions are stored once in a structured release catalogue instead of being duplicated across eight language modules. Measurement algorithms, database schema 8, stored history, MQTT identities, detector profiles, thresholds and serial protocols are unchanged.
+
 ## Version 10.0.1: clearer long-term evidence and field-test diagnostics
 
 Version 10.0.1 makes long-term results easier to interpret without duplicating the existing short-term baseline, alarm or device-comparison functions. A plain-language assessment appears first, while statistical method details remain available in collapsed Analysis and Expert sections.

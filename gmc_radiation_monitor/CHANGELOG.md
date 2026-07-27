@@ -1,5 +1,15 @@
 # Changelog
 
+## 10.0.2
+
+- Consolidated the responsive CSS rules into one mobile layout contract and removed contradictory horizontal navigation/language scrollers.
+- Kept status messages, badges, tables, calendar views, calibration workflows and long technical values inside 320-800 px Home Assistant views, including 200% text size.
+- Added an automated Chromium/Playwright mobile regression check covering eight viewport widths and two text-size levels.
+- Split report status/cache handling and device/analysis rendering out of the central `report_web.py` module into focused mixins.
+- Centralized language registration and translation validation, including deterministic placeholder and untranslated-fallback checks.
+- Moved the 10.0.1 translation additions into one structured release catalogue instead of duplicated per-language update blocks.
+- Kept database schema 8, measurements, reports, MQTT identities, detector profiles, alarm thresholds and serial protocols compatible.
+
 ## 10.0.1
 
 - Raised all active add-on, runtime, asset, documentation and bundled-manual version references to 10.0.1.
