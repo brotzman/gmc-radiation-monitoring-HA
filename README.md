@@ -6,7 +6,7 @@ Measurements are published to Home Assistant through MQTT Discovery, while the l
 
 Add this repository to Home Assistant, then install **GMC Radiation Monitor** from the App Store.
 
-Current release: **10.0.8**, adding a compact header language dropdown and an explicit refresh button while preserving the sticky mobile navigation and existing measurement behavior.
+Current release: **10.0.9**, adding a compact header language dropdown and an explicit refresh button while preserving the sticky mobile navigation and existing measurement behavior.
 
 
 ## Release quality checks
