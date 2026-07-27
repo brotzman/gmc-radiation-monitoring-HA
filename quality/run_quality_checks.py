@@ -111,7 +111,7 @@ def main() -> int:
                 return 1
 
     print(
-        "Quality checks passed: compilation, 19 unit/integration tests, module splits, "
+        "Quality checks passed: compilation, 21 unit/integration tests, module splits, "
         "single-source translations and sticky responsive browser regressions"
     )
     return 0

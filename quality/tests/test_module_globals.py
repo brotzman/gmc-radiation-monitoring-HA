@@ -9,6 +9,7 @@ import unittest
 
 
 SPLIT_MODULES = (
+    "gmc_bridge.bridge_heartbeat",
     "gmc_bridge.history_models",
     "gmc_bridge.report_periods",
     "gmc_bridge.service_metrology",
