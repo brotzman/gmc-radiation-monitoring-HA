@@ -1,5 +1,16 @@
 # Changelog
 
+## 10.0.3
+
+- Added 17 unit and integration tests for count-rate metrology, gap-aware dose integration, dual-tube selection, adaptive high-CPM confirmation, report periods, database migration/history behavior, simulated serial failures and MQTT retained-state synchronization.
+- Added a full application Chromium test backed by a populated SQLite database with two devices, more than 4,000 measurements, events, annotations and long technical identifiers.
+- Verified the real dashboard in all eight interface languages at narrow viewports and the complete German interface at 320-800 px with 100% and 200% text size.
+- Corrected text-zoom overflow in the custom report button, analysis-level controls, assessment cards, header resources and report-format/action grids by stacking or wrapping content instead of permitting sideways scrolling.
+- Replaced eight generated Python language modules and chained release overrides with one canonical `i18n/catalogs.json` runtime source.
+- Moved report-period handling to `report_periods.py`, history row/timestamp models to `history_models.py` and live service metrology enrichment to `service_metrology.py`, preserving existing imports and behavior.
+- Extended `quality/run_quality_checks.py` to execute compilation, unit/integration tests, translation-source validation, module-boundary checks, the compact responsive fixture and the populated full-app browser regression.
+- Kept database schema 8, measurements, MQTT identities, detector profiles, alarm thresholds, scientific calculations and serial protocols compatible.
+
 ## 10.0.2
 
 - Consolidated the responsive CSS rules into one mobile layout contract and removed contradictory horizontal navigation/language scrollers.

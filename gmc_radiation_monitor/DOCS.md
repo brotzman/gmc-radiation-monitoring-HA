@@ -6,11 +6,13 @@ A local Home Assistant App (formerly add-on) for compatible GQ GMC Geiger counte
 
 > **Safety notice:** This add-on is intended for monitoring and home automation. It is not a calibrated radiation-protection instrument. Derived dose rates, profiles, anomaly detection and recommendations do not replace official measurements, professional advice or emergency instructions.
 
-## Version 10.0.2: stability and maintainability
+## Version 10.0.3: verified measurement logic and single-source maintenance
 
-Version 10.0.2 is a maintenance release. It consolidates the responsive CSS contract so mobile controls wrap instead of becoming horizontal scrollers, and it verifies the layout automatically at widths from 320 to 800 pixels and at 200% text size.
+Version 10.0.3 is a verification and maintainability release. It adds 17 repeatable unit and integration tests for dead-time correction, dose integration with gaps, dual-tube selection, adaptive CPM filtering, database migrations, report periods, simulated serial failures and retained MQTT state synchronization.
 
-The report web application now separates status/cache handling and device/analysis rendering into dedicated mixins. Translation registration and validation are centralized, while the 10.0.1 wording additions are stored once in a structured release catalogue instead of being duplicated across eight language modules. Measurement algorithms, database schema 8, stored history, MQTT identities, detector profiles, thresholds and serial protocols are unchanged.
+The browser quality check now renders the real advanced dashboard from a populated SQLite fixture with two devices, more than 4,000 measurements, long identifiers, events and annotations. It checks all eight interface languages at narrow widths and validates the complete German layout from 320 to 800 pixels at normal and 200% text size. Issues exposed only by the full page - including the custom-report download button, text-zoom card widths, report-format tiles and analysis-level controls - now stack or wrap without horizontal scrolling.
+
+Translation runtime data is loaded from one canonical `i18n/catalogs.json` file. The eight generated Python language modules and chained release override files are no longer runtime sources. Report-period handling, history row models and service metrology enrichment have also moved into focused modules while their existing public imports remain compatible. Database schema 8, stored history, MQTT entity identities, detector profiles, thresholds, scientific algorithms and serial protocols are unchanged.
 
 ## Version 10.0.1: clearer long-term evidence and field-test diagnostics
 
