@@ -6,7 +6,7 @@ Measurements are published to Home Assistant through MQTT Discovery, while the l
 
 Add this repository to Home Assistant, then install **GMC Radiation Monitor** from the App Store.
 
-Current release: **10.0.7**, fixing concurrent bridge-heartbeat writes while preserving the persistent mobile navigation and all existing measurement behavior.
+Current release: **10.0.8**, adding a compact header language dropdown and an explicit refresh button while preserving the sticky mobile navigation and existing measurement behavior.
 
 
 ## Release quality checks
@@ -17,4 +17,4 @@ From the repository root, run:
 python3 quality/run_quality_checks.py
 ```
 
-The checks compile the runtime package, run 21 unit/integration tests, validate the canonical translation source, confirm the module-boundary contracts, run the compact responsive fixture and render the real application against a populated SQLite database in every interface language. Chromium is tested at 320-800 px and at 100%/200% text size. Playwright and Chromium are required for browser checks; use `--skip-browser` for compilation, translation and unit/integration checks only.
+The checks compile the runtime package, run 23 unit/integration tests, validate the canonical translation source, confirm the module-boundary contracts, run the compact responsive fixture and render the real application against a populated SQLite database in every interface language. Chromium is tested at 320-800 px and at 100%/200% text size. Playwright and Chromium are required for browser checks; use `--skip-browser` for compilation, translation and unit/integration checks only.

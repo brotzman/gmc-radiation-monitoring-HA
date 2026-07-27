@@ -13,8 +13,10 @@ VIEWPORT_WIDTHS = (320, 360, 390, 430, 520, 620, 768, 800)
 FIXTURE_BODY = r'''
 <div class="page-scroll"><main>
 <header class="report-header">
-  <div class="header-intro"><h1>GMC Radiation Monitor responsive regression</h1><p>Sehr lange mobile Überschrift und Beschreibung für die Überprüfung der Darstellung.</p></div>
-  <div class="language-switcher"><a>Deutsch</a><a>English</a><a>Français</a><a>Hrvatski</a><a>Nederlands</a><a>Polski</a></div>
+  <div class="header-topline">
+    <div class="header-intro"><h1>GMC Radiation Monitor responsive regression</h1><p>Sehr lange mobile Überschrift und Beschreibung für die Überprüfung der Darstellung.</p></div>
+    <div class="header-tools"><form class="language-select-form"><label class="language-select-label"><span>Sprache</span><select id="language-select"><option>Automatisch</option><option selected>Deutsch</option><option>English</option></select></label></form><button class="header-tool-button reload-button" id="reload-dashboard"><span class="header-tool-icon">↻</span><span>Aktualisieren</span></button></div>
+  </div>
 </header>
 <nav class="dashboard-controls">
   <div class="jump-links"><a>Verbundene Geräte</a><a>Strahlungsintelligenz</a><a>Langzeitanalyse und Entwicklung</a><a>Wartung und Diagnose</a></div>
@@ -64,7 +66,7 @@ def run(css_path: Path, *, chromium_path: str | None = None) -> list[dict[str, o
                     """async () => {
                       const viewport = window.innerWidth;
                       const pageScroll = document.querySelector('.page-scroll');
-                      const selectors = ['main','header','section','.dashboard-controls','.jump-links','.language-switcher','.system-status-panel','.device-card','.table-wrap','.long-term-table-wrap','.calendar-scroll','.calibration-wizard'];
+                      const selectors = ['main','header','section','.dashboard-controls','.jump-links','.header-topline','.header-tools','.language-select-form','.language-select-label','.system-status-panel','.device-card','.table-wrap','.long-term-table-wrap','.calendar-scroll','.calibration-wizard'];
                       const outside = [];
                       for (const selector of selectors) {
                         for (const node of document.querySelectorAll(selector)) {

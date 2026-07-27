@@ -193,6 +193,9 @@ def _inspect(page: Any, width: int, zoom: int) -> dict[str, Any]:
           const scroller = document.querySelector('.page-scroll');
           const dashboard = document.querySelector('.dashboard-controls');
           const jumpLinks = document.querySelector('.jump-links');
+          const languageSelect = document.querySelector('#language-select');
+          const reloadButton = document.querySelector('#reload-dashboard');
+          const headerTools = document.querySelector('.header-tools');
           const dashboardStyle = getComputedStyle(dashboard);
           const jumpStyle = getComputedStyle(jumpLinks);
           const jumpColumnCount = jumpStyle.gridTemplateColumns.split(' ').filter(Boolean).length;
@@ -221,7 +224,12 @@ def _inspect(page: Any, width: int, zoom: int) -> dict[str, Any]:
             dashboardRight: afterBox.right,
             dashboardLeft: afterBox.left,
             jumpLinksOverflowX: jumpStyle.overflowX,
-            jumpLinksColumns: jumpColumnCount
+            jumpLinksColumns: jumpColumnCount,
+            languageSelectPresent: Boolean(languageSelect),
+            languageSelected: languageSelect ? languageSelect.value : '',
+            reloadButtonPresent: Boolean(reloadButton),
+            headerToolsWidth: headerTools ? headerTools.scrollWidth : 0,
+            headerToolsClientWidth: headerTools ? headerTools.clientWidth : 0
           };
         }"""
     )
@@ -274,6 +282,10 @@ def run(package_root: Path, *, chromium_path: str | None = None) -> list[dict[st
                 and result["dashboardRight"] <= width + 1
                 and result["jumpLinksOverflowX"] == "visible"
                 and result["jumpLinksColumns"] == 4
+                and result["languageSelectPresent"]
+                and result["languageSelected"] == language
+                and result["reloadButtonPresent"]
+                and result["headerToolsWidth"] <= result["headerToolsClientWidth"] + 1
             )
             if not ok:
                 failures.append({"language": language, "width": width, "zoom": zoom, **result})
