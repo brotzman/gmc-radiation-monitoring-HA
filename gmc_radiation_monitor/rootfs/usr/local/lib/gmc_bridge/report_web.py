@@ -724,7 +724,7 @@ class ReportApplication(ReportStatusMixin, ReportDeviceViewMixin, WorkflowApplic
 <select name="lang" id="language-select" title="{html.escape(t("Language"), quote=True)}">{''.join(language_select_options)}</select></label>
 <noscript><button type="submit" class="header-tool-button">{html.escape(t("Apply"))}</button></noscript>
 </form>
-<button type="button" class="header-tool-button reload-button" id="reload-dashboard" aria-label="{html.escape(t("Refresh page"), quote=True)}" title="{html.escape(t("Refresh page"), quote=True)}"><span class="header-tool-icon" aria-hidden="true">↻</span><span>{html.escape(t("Refresh"))}</span></button>
+<button type="button" class="header-tool-button reload-button" id="reload-dashboard" aria-label="{html.escape(t("Refresh page"), quote=True)}" title="{html.escape(t("Refresh page"), quote=True)}"><span class="header-tool-icon" aria-hidden="true">↻</span><span class="header-tool-label visually-hidden">{html.escape(t("Refresh"))}</span></button>
 </div>
 """
         page = f"""<!doctype html>
