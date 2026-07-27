@@ -15,6 +15,15 @@
     catch (_error) { return new URL(value, 'http://localhost/'); }
   }
 
+  const languageSelect = document.getElementById('language-select');
+  languageSelect?.addEventListener('change', () => {
+    const form = document.getElementById('language-select-form');
+    if (form instanceof HTMLFormElement) form.requestSubmit();
+  });
+  document.getElementById('reload-dashboard')?.addEventListener('click', () => {
+    window.location.reload();
+  });
+
   function readJson(key, fallback) {
     try { return JSON.parse(localStorage.getItem(key) || '') || fallback; }
     catch (_error) { return fallback; }

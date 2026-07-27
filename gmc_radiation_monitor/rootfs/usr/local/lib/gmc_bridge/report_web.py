@@ -707,28 +707,26 @@ class ReportApplication(ReportStatusMixin, ReportDeviceViewMixin, WorkflowApplic
             ("nl", "Nederlands"),
             ("pl", "Polski"),
         )
-        language_links = []
+        language_select_options = []
         for language_code, language_name in language_options:
-            current = ' aria-current="page"' if language_code == language_preference else ""
-            language_attribute = (
-                f' lang="{html.escape(language_code, quote=True)}"'
-                if language_code != "auto"
-                else ""
+            selected = ' selected' if language_code == language_preference else ""
+            option_label = t("Automatic") if language_code == "auto" else language_name
+            language_select_options.append(
+                f'<option value="{html.escape(language_code, quote=True)}"{selected}>'
+                f'{html.escape(option_label)}</option>'
             )
-            title = (
-                f' title="{html.escape(t("Use the browser or system language"), quote=True)}"'
-                if language_code == "auto"
-                else ""
-            )
-            language_links.append(
-                f'<a href="?lang={quote_plus(language_code)}{language_query_suffix}"'
-                f"{language_attribute}{title}{current}>{html.escape(language_name)}</a>"
-            )
-        language_switcher_html = (
-            f'<nav class="language-switcher" aria-label="{html.escape(t("Language"), quote=True)}">'
-            + "".join(language_links)
-            + "</nav>"
-        )
+        language_toolbar_html = f"""
+<div class="header-tools" aria-label="{html.escape(t("Application controls"), quote=True)}">
+<form method="get" class="language-select-form" id="language-select-form">
+<input type="hidden" name="mode" value="{html.escape(mode, quote=True)}">
+{f'<input type="hidden" name="device" value="{html.escape(selected_serial, quote=True)}">' if selected_serial else ''}
+<label class="language-select-label" for="language-select"><span>{html.escape(t("Language"))}</span>
+<select name="lang" id="language-select" title="{html.escape(t("Language"), quote=True)}">{''.join(language_select_options)}</select></label>
+<noscript><button type="submit" class="header-tool-button">{html.escape(t("Apply"))}</button></noscript>
+</form>
+<button type="button" class="header-tool-button reload-button" id="reload-dashboard" aria-label="{html.escape(t("Refresh page"), quote=True)}" title="{html.escape(t("Refresh page"), quote=True)}"><span class="header-tool-icon" aria-hidden="true">↻</span><span>{html.escape(t("Refresh"))}</span></button>
+</div>
+"""
         page = f"""<!doctype html>
 <html lang="{language}">
 <head>
@@ -747,10 +745,12 @@ input[type="date"], input[type="week"], input[type="month"], input[type="datetim
 </head>
 <body class="mode-{mode}" data-analysis-level="{"summary" if mode == "simple" else "analysis"}" data-main-value-size="{html.escape(self.main_value_size, quote=True)}" data-custom-value-font-size-px="{self.custom_value_font_size_px}" style="--custom-main-value-font-size:{self.custom_value_font_size_px}px"><div class="page-scroll" id="page-scroll"><main>
 <header class="report-header">
+<div class="header-topline">
 <div class="header-intro">
 <h1>{html.escape(t("GMC Radiation Monitoring"))}</h1>
 <p>{html.escape(t("Local monitoring for GQ GMC Geiger counters"))}</p>
-{language_switcher_html}
+</div>
+{language_toolbar_html}
 </div>
 {location_details_html}
 <div class="header-resource-links">
