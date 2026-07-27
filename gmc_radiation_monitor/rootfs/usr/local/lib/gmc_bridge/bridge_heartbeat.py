@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import tempfile
 import threading
 import time
 from pathlib import Path
@@ -46,6 +47,7 @@ class BridgeHeartbeatReporter:
             "last_write_error": "",
         }
         self._lock = threading.Lock()
+        self._write_lock = threading.Lock()
         self._stop_event = threading.Event()
         self._thread: threading.Thread | None = None
 
@@ -74,21 +76,40 @@ class BridgeHeartbeatReporter:
         return state
 
     def write_now(self) -> None:
-        payload = self.snapshot()
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        temporary = self.path.with_name(f".{self.path.name}.{os.getpid()}.tmp")
-        try:
-            temporary.write_text(
-                json.dumps(payload, separators=(",", ":"), sort_keys=True),
-                encoding="utf-8",
-            )
-            os.chmod(temporary, 0o600)
-            os.replace(temporary, self.path)
-        finally:
+        # update() and the periodic heartbeat thread may request a write at the
+        # same time. Serialize the complete snapshot/write/replace sequence so
+        # an older snapshot cannot overwrite a newer state. Each write also
+        # receives its own temporary file; a PID-only name is shared by all
+        # threads and allowed one writer to replace another writer's source.
+        with self._write_lock:
+            payload = self.snapshot()
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            descriptor = -1
+            temporary: Path | None = None
             try:
-                temporary.unlink(missing_ok=True)
-            except OSError as exc:
-                self._record_write_error(exc)
+                descriptor, temporary_name = tempfile.mkstemp(
+                    prefix=f".{self.path.name}.{os.getpid()}.",
+                    suffix=".tmp",
+                    dir=self.path.parent,
+                )
+                temporary = Path(temporary_name)
+                with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+                    descriptor = -1
+                    handle.write(json.dumps(payload, separators=(",", ":"), sort_keys=True))
+                    handle.flush()
+                    os.fsync(handle.fileno())
+                os.replace(temporary, self.path)
+            finally:
+                if descriptor >= 0:
+                    try:
+                        os.close(descriptor)
+                    except OSError as exc:
+                        self._record_write_error(exc)
+                if temporary is not None:
+                    try:
+                        temporary.unlink(missing_ok=True)
+                    except OSError as exc:
+                        self._record_write_error(exc)
 
     def _record_write_error(self, error: OSError) -> None:
         now = int(time.time())
