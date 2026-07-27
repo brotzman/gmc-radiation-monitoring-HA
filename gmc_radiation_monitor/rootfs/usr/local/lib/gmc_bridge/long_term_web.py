@@ -176,11 +176,11 @@ def _monthly_table(months: list[dict[str, Any]], t: TranslatorLike) -> str:
     for item in reversed(months[-18:]):
         rows.append(
             "<tr>"
-            f'<td>{html.escape(str(item["month"]))}</td>'
-            f'<td>{html.escape(_num(item.get("mean_cpm"), t.language, decimals=2))}</td>'
-            f'<td>{html.escape(_num(item.get("median_cpm"), t.language, decimals=2))}</td>'
-            f'<td>{html.escape(_num(item.get("covered_hours"), t.language, decimals=1))}</td>'
-            f'<td>{html.escape(_num(item.get("dose_usv"), t.language, decimals=3))}</td>'
+            f'<td data-label="{html.escape(t("Month"), quote=True)}">{html.escape(str(item["month"]))}</td>'
+            f'<td data-label="{html.escape(t("Mean CPM"), quote=True)}">{html.escape(_num(item.get("mean_cpm"), t.language, decimals=2))}</td>'
+            f'<td data-label="{html.escape(t("Median CPM"), quote=True)}">{html.escape(_num(item.get("median_cpm"), t.language, decimals=2))}</td>'
+            f'<td data-label="{html.escape(t("Covered hours"), quote=True)}">{html.escape(_num(item.get("covered_hours"), t.language, decimals=1))}</td>'
+            f'<td data-label="{html.escape(t("Derived dose (µSv)"), quote=True)}">{html.escape(_num(item.get("dose_usv"), t.language, decimals=3))}</td>'
             "</tr>"
         )
     return f'''
@@ -196,9 +196,9 @@ def _seasonal_table(items: list[dict[str, Any]], t: TranslatorLike) -> str:
     for item in items:
         rows.append(
             "<tr>"
-            f'<td>{html.escape(str(int(item.get("month") or 0)))}</td>'
-            f'<td>{html.escape(_num(item.get("median_cpm"), t.language, decimals=2))}</td>'
-            f'<td>{html.escape(str(int(item.get("days") or 0)))}</td>'
+            f'<td data-label="{html.escape(t("Calendar month"), quote=True)}">{html.escape(str(int(item.get("month") or 0)))}</td>'
+            f'<td data-label="{html.escape(t("Median CPM"), quote=True)}">{html.escape(_num(item.get("median_cpm"), t.language, decimals=2))}</td>'
+            f'<td data-label="{html.escape(t("Days represented"), quote=True)}">{html.escape(str(int(item.get("days") or 0)))}</td>'
             "</tr>"
         )
     return f'''
@@ -216,11 +216,11 @@ def _episodes_table(episodes: dict[str, Any], timezone, t: TranslatorLike) -> st
     for item in items[:10]:
         rows.append(
             "<tr>"
-            f'<td>{html.escape(_date_time(item.get("start_utc"), timezone, t.language))}</td>'
-            f'<td>{html.escape(_num(item.get("duration_hours"), t.language, decimals=1))}</td>'
-            f'<td>{html.escape(_num(item.get("mean_cpm"), t.language, decimals=1))}</td>'
-            f'<td>{html.escape(_num(item.get("maximum_cpm"), t.language, decimals=0))}</td>'
-            f'<td>{html.escape(_num(item.get("area_above_threshold_cpm_h"), t.language, decimals=1))}</td>'
+            f'<td data-label="{html.escape(t("Start"), quote=True)}">{html.escape(_date_time(item.get("start_utc"), timezone, t.language))}</td>'
+            f'<td data-label="{html.escape(t("Duration (h)"), quote=True)}">{html.escape(_num(item.get("duration_hours"), t.language, decimals=1))}</td>'
+            f'<td data-label="{html.escape(t("Mean CPM"), quote=True)}">{html.escape(_num(item.get("mean_cpm"), t.language, decimals=1))}</td>'
+            f'<td data-label="{html.escape(t("Maximum CPM"), quote=True)}">{html.escape(_num(item.get("maximum_cpm"), t.language, decimals=0))}</td>'
+            f'<td data-label="{html.escape(t("Excess area (CPM·h)"), quote=True)}">{html.escape(_num(item.get("area_above_threshold_cpm_h"), t.language, decimals=1))}</td>'
             "</tr>"
         )
     return f'''

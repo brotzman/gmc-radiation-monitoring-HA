@@ -79,7 +79,7 @@ from .security_logging import configure_secure_logging
 from .time_series import time_weighted_summary
 from .translations import SUPPORTED_UI_LANGUAGES, Translator, resolve_language
 from .utils import slugify
-from .version import APP_VERSION
+from .version import APP_VERSION, ASSET_REVISION
 from .web_analysis_views import (
     render_absolute_safety,
     render_adaptive_background,
@@ -889,7 +889,7 @@ class ReportApplication(WorkflowApplicationMixin):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>{html.escape(t("GMC Radiation Monitoring"))}</title>
-<link rel="stylesheet" href="./assets/dashboard.css?v={html.escape(APP_VERSION, quote=True)}">
+<link rel="stylesheet" href="./assets/dashboard.css?v={html.escape(ASSET_REVISION, quote=True)}">
 <style id="critical-dashboard-layout">
 .page-scroll {{ width:100%; height:100%; min-height:0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; touch-action: pan-y; padding-bottom:env(safe-area-inset-bottom,0px); }}
 .status-strip {{ position:static; display:block; }}
@@ -1054,7 +1054,7 @@ input[type="date"], input[type="week"], input[type="month"], input[type="datetim
 <details class="analysis-group history-management-tool" id="history-delete"><summary><span class="summary-copy">{html.escape(t("Delete history"))}<small>{html.escape(t("Permanently remove app and Recorder history after explicit confirmation"))}</small></span></summary><div class="group-body">{purge_controls}</div></details>
 </section>
 </main></div>
-<script nonce="{html.escape(script_nonce, quote=True)}">{render_dashboard_bootstrap(selected_serial=selected_serial, language=language, translator=t)}</script><script src="./assets/dashboard.js?v={html.escape(APP_VERSION, quote=True)}" defer></script></body></html>"""
+<script nonce="{html.escape(script_nonce, quote=True)}">{render_dashboard_bootstrap(selected_serial=selected_serial, language=language, translator=t)}</script><script src="./assets/dashboard.js?v={html.escape(ASSET_REVISION, quote=True)}" defer></script></body></html>"""
         # Bind every download server-side to the device currently shown in Analysis.
         # JavaScript is only a progressive enhancement; Ingress-safe links work without it.
         report_prefix = (

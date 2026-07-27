@@ -73,7 +73,7 @@ p { line-height: 1.5; }
 .section-card-header { margin-bottom:.85rem; }
 .section-card-title { margin:0; font-size:1.25rem; }
 .device-card-header h3 { margin:0 0 .15rem; font-size:1.05rem; }
-.device-status { display:inline-flex; align-items:center; gap:.35rem; border-radius:999px; padding:.28rem .55rem; font-size:.78rem; font-weight:750; white-space:nowrap; }
+.device-status { display:inline-flex; align-items:center; justify-content:center; gap:.35rem; max-width:100%; min-width:0; border-radius:999px; padding:.28rem .55rem; font-size:.78rem; font-weight:750; line-height:1.25; text-align:center; white-space:normal; overflow-wrap:anywhere; word-break:normal; }
 .device-status::before { content:""; width:.55rem; height:.55rem; border-radius:50%; background:currentColor; }
 .device-status.online { color:var(--green); background:color-mix(in srgb,var(--green) 12%,transparent); }
 .device-status.offline { color:var(--gray); background:color-mix(in srgb,var(--gray) 12%,transparent); }
@@ -184,7 +184,7 @@ p { line-height: 1.5; }
 .stability-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; align-items:stretch; }
 .stability-grid .assessment-card { min-width:0; padding:1.05rem; }
 .stability-meta { display:grid; gap:.32rem; margin-top:.65rem; line-height:1.35; font-variant-numeric:tabular-nums; }
-.stability-meta-line { display:block; white-space:nowrap; }
+.stability-meta-line { display:block; white-space:normal; overflow-wrap:anywhere; }
 .gap-status { display:inline-flex; align-items:center; margin-left:.38rem; padding:.08rem .42rem; border-radius:999px; font-size:.72rem; font-weight:800; line-height:1.25; vertical-align:baseline; border:1px solid currentColor; }
 .gap-status.warning { color:color-mix(in srgb,var(--yellow) 72%,CanvasText); background:color-mix(in srgb,var(--yellow) 14%,Canvas); }
 .gap-status.critical { color:var(--red); background:color-mix(in srgb,var(--red) 10%,Canvas); }
@@ -276,7 +276,7 @@ details.collapsible-card:not([open]) > summary { border-radius:inherit; }
 .analysis-device-badge.device-500 { background:color-mix(in srgb,#7c3aed 12%,var(--panel)); color:#7c3aed; }
 .device-card-title-copy small,.technical-value { overflow-wrap:anywhere; word-break:break-word; }
 .device-alerts { display:grid; gap:.45rem; margin:.7rem 0; }
-.device-alert { display:grid; gap:.15rem; padding:.58rem .65rem; border-radius:9px; border:1px solid var(--border); font-size:.84rem; }
+.device-alert { display:grid; gap:.15rem; min-width:0; max-width:100%; padding:.58rem .65rem; border-radius:9px; border:1px solid var(--border); font-size:.84rem; white-space:normal; overflow-wrap:anywhere; word-break:normal; }
 .device-alert.warning { border-color:color-mix(in srgb,var(--yellow) 62%,var(--border)); background:color-mix(in srgb,var(--yellow) 9%,var(--panel)); }
 .device-alert.error { border-color:color-mix(in srgb,var(--red) 62%,var(--border)); background:color-mix(in srgb,var(--red) 8%,var(--panel)); }
 .device-alert.info { border-color:color-mix(in srgb,var(--blue) 52%,var(--border)); background:color-mix(in srgb,var(--blue) 7%,var(--panel)); }
@@ -701,7 +701,7 @@ body[data-main-value-size="custom"] { --main-value-font-size:var(--custom-main-v
 .device-card-title-copy h3 { margin:0; font-size:1.08rem; line-height:1.2; }
 .device-model-line { color:var(--muted); font-size:.86rem; line-height:1.3; overflow-wrap:anywhere; }
 .device-id { color:var(--muted); font-size:.72rem; letter-spacing:.015em; }
-.device-status-stack { display:grid; justify-items:end; gap:.22rem; min-width:max-content; }
+.device-status-stack { display:grid; justify-items:end; gap:.22rem; min-width:0; max-width:48%; }
 .device-freshness { max-width:11rem; color:var(--muted); font-size:.72rem; text-align:right; line-height:1.25; }
 .measurement-hero { grid-template-columns:minmax(0,1fr) auto; gap:.35rem .9rem; padding:1rem 1.05rem; }
 .dose-reading { display:flex; align-items:baseline; gap:.28em; min-width:0; font-size:var(--main-value-font-size); font-weight:850; line-height:.95; font-variant-numeric:tabular-nums; letter-spacing:-.035em; }
@@ -804,6 +804,8 @@ body[data-main-value-size="custom"] { --main-value-font-size:var(--custom-main-v
 
 /* Version 9 scientific, live-update and accessibility refinements. */
 .live-refresh-status {
+  min-width:0;
+  max-width:100%;
   margin:.65rem 0;
   padding:.65rem .75rem;
   border:1px solid color-mix(in srgb,var(--yellow) 55%,var(--border));
@@ -811,6 +813,9 @@ body[data-main-value-size="custom"] { --main-value-font-size:var(--custom-main-v
   background:color-mix(in srgb,var(--yellow) 8%,Canvas);
   color:CanvasText;
   line-height:1.4;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  word-break:normal;
 }
 .live-refresh-status[hidden] { display:none; }
 .live-refresh-status[data-state="warning"]::before { content:"⚠ "; }
@@ -896,11 +901,11 @@ input:invalid:not(:placeholder-shown), select:invalid, textarea:invalid:not(:pla
 .report-form-grid input,
 .report-form-grid select { width:100%; min-width:0; max-width:100%; box-sizing:border-box; }
 .report-timezone-note { display:block; margin-top:.55rem; color:var(--muted); }
-.report-form-status { margin:.55rem 0 0; padding:.62rem .72rem; border-radius:8px; background:var(--panel); border:1px solid var(--border); }
+.report-form-status { min-width:0; max-width:100%; margin:.55rem 0 0; padding:.62rem .72rem; border-radius:8px; background:var(--panel); border:1px solid var(--border); white-space:normal; overflow-wrap:anywhere; word-break:normal; }
 .report-form-status[data-tone="error"] { border-color:color-mix(in srgb,var(--danger,#b3261e) 50%,var(--border)); color:var(--danger,#b3261e); }
 .report-form-status[data-tone="info"] { color:var(--muted); }
 button:disabled,.button:disabled { opacity:.62; cursor:wait; }
-.copy-status { align-self:center; min-height:1.2em; color:var(--muted); }
+.copy-status { min-width:0; max-width:100%; align-self:center; min-height:1.2em; color:var(--muted); white-space:normal; overflow-wrap:anywhere; word-break:normal; }
 
 .chart-actions { display:flex; align-items:center; justify-content:flex-end; gap:.4rem; flex-wrap:wrap; margin:0 0 .45rem; }
 .chart-actions span { margin-right:auto; color:var(--muted); font-size:.8rem; }
@@ -1205,7 +1210,7 @@ input,select,textarea { min-height:2.75rem; }
   }
 }
 
-/* Evidence-led long-term presentation and field-test diagnostics 10.0.0 */
+/* Evidence-led long-term presentation and field-test diagnostics 10.0.1 */
 .plain-assessment {
   min-width:0;
   display:grid;
@@ -1286,8 +1291,251 @@ input,select,textarea { min-height:2.75rem; }
   .plain-assessment-grid article { padding:.68rem; }
 }
 
-/* 10.0.0: keep expanded method groups inside the card at 200% text zoom. */
+/* 10.0.1: keep expanded method groups inside the card at 200% text zoom. */
 details.analysis-group { min-width:0; max-width:100%; box-sizing:border-box; overflow:hidden; }
 details.analysis-group > summary { min-width:0; max-width:100%; box-sizing:border-box; }
 details.analysis-group > summary .summary-copy { min-width:0; max-width:100%; }
 details.analysis-group > summary::after { flex:0 0 auto; }
+
+
+/* 10.0.1 mobile layout hardening: no horizontal page scrolling, wrapped status messages and stacked compact controls. */
+.status-item,
+.metric,
+.device-alert,
+.live-refresh-status,
+.report-form-status,
+.copy-status,
+.history-management-status,
+.system-status-copy,
+.status-strip-item,
+.status-strip-item > span,
+.device-status-stack,
+.device-freshness,
+.note,
+.interpretation,
+.assessment-note {
+  min-width:0;
+  max-width:100%;
+}
+.status-item strong,
+.status-item small,
+.status-item .status-value,
+.metric strong,
+.metric small,
+.metric .value,
+.device-alert strong,
+.device-alert small,
+.live-refresh-status,
+.report-form-status,
+.copy-status,
+.history-management-status strong,
+.history-management-status small,
+.device-freshness,
+.note,
+.interpretation,
+.assessment-note {
+  white-space:normal;
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
+
+@media (max-width:800px) {
+  html, body, .page-scroll, main, header, section { width:100%; max-width:100%; overflow-x:hidden; }
+
+  /* Navigation and language controls wrap into rows instead of becoming horizontal scrollers. */
+  .dashboard-controls {
+    position:static;
+    display:grid;
+    grid-template-columns:minmax(0,1fr);
+    align-items:stretch;
+    gap:.55rem;
+  }
+  .jump-links,
+  .dashboard-actions,
+  .language-switcher {
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    overflow:visible;
+    contain:none;
+  }
+  .jump-links a,
+  .dashboard-actions .compact-action,
+  .language-switcher a {
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    justify-content:center;
+    text-align:center;
+    white-space:normal;
+    overflow-wrap:anywhere;
+  }
+
+  /* Device status moves below the title when space is tight. */
+  .device-card-header {
+    display:grid;
+    grid-template-columns:minmax(0,1fr);
+    gap:.65rem;
+  }
+  .device-status-stack {
+    width:100%;
+    max-width:100%;
+    justify-items:start;
+    align-items:start;
+  }
+  .device-status,
+  .device-freshness {
+    width:fit-content;
+    max-width:100%;
+    justify-content:flex-start;
+    text-align:left;
+  }
+
+  /* Compact status panel: icon and copy on the first row, disclosure control remains contained. */
+  .system-status-panel > summary {
+    grid-template-columns:auto minmax(0,1fr) auto;
+    align-items:start;
+    column-gap:.6rem;
+    row-gap:.25rem;
+  }
+  .system-status-detail-label { display:none; }
+  .status-details-grid { grid-template-columns:1fr; }
+  .status-strip-item { min-height:0; }
+
+  /* All data tables become labelled card rows on phones, removing horizontal table scrolling. */
+  .table-wrap,
+  .table-scroll,
+  .long-term-table-wrap {
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    overflow:visible;
+    contain:none;
+    border:0;
+  }
+  .table-wrap table,
+  .long-term-table,
+  .seasonal-table:not(.empty-state) {
+    display:block;
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    table-layout:fixed;
+  }
+  .table-wrap thead,
+  .long-term-table thead { display:none; }
+  .table-wrap tbody,
+  .table-wrap tr,
+  .table-wrap td,
+  .long-term-table tbody,
+  .long-term-table tr,
+  .long-term-table td {
+    display:block;
+    width:100%;
+    min-width:0;
+    max-width:100%;
+  }
+  .table-wrap tr,
+  .long-term-table tr {
+    margin:.55rem 0;
+    padding:.3rem .65rem;
+    border:1px solid var(--border);
+    border-radius:10px;
+    background:var(--panel);
+  }
+  .table-wrap td,
+  .long-term-table td {
+    display:grid;
+    grid-template-columns:minmax(7.2rem,42%) minmax(0,1fr);
+    gap:.65rem;
+    align-items:start;
+    padding:.5rem 0;
+    border-bottom:1px solid color-mix(in srgb,var(--border) 72%,transparent);
+    text-align:left;
+    white-space:normal;
+    overflow-wrap:anywhere;
+    word-break:normal;
+  }
+  .table-wrap td:last-child,
+  .long-term-table td:last-child { border-bottom:0; }
+  .table-wrap td::before,
+  .long-term-table td::before {
+    content:attr(data-label);
+    min-width:0;
+    color:var(--muted);
+    font-size:.76rem;
+    font-weight:750;
+    line-height:1.3;
+    overflow-wrap:anywhere;
+  }
+
+  /* The annual heat map scales to the card width instead of requiring a sideways swipe. */
+  .calendar-scroll {
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    overflow:hidden;
+    contain:none;
+  }
+  .calendar-grid {
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    grid-auto-columns:minmax(0,1fr);
+    gap:1px;
+  }
+  .calendar-cell {
+    width:100%;
+    min-width:2px;
+    height:auto;
+    aspect-ratio:1;
+  }
+
+  .calibration-wizard,
+  .workflow-history-chart,
+  pre,
+  code {
+    max-width:100%;
+    overflow-x:hidden;
+    white-space:pre-wrap;
+    overflow-wrap:anywhere;
+  }
+  .chart-actions { position:static; left:auto; width:100%; }
+  .long-term-state,
+  .evidence-badge { width:fit-content; max-width:100%; white-space:normal; }
+}
+
+@media (max-width:430px) {
+  .jump-links,
+  .dashboard-actions,
+  .language-switcher,
+  .status-summary { grid-template-columns:1fr; }
+  .table-wrap td,
+  .long-term-table td { grid-template-columns:1fr; gap:.16rem; }
+}
+
+
+/* 10.0.1 mobile follow-up: remaining status badges and visual workflows also reflow. */
+.calibration-status,
+.history-period-label {
+  max-width:100%;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
+@media (max-width:800px) {
+  .calibration-wizard {
+    grid-template-columns:1fr;
+    width:100%;
+    overflow:visible;
+    contain:none;
+  }
+  .calibration-wizard .step { width:100%; min-width:0; }
+  .calibration-wizard .arrow { display:none; }
+  .workflow-history-chart { width:100%; overflow:hidden; contain:none; }
+  .workflow-history-chart svg { display:block; width:100%; min-width:0; max-width:100%; height:auto; }
+  .history-period-label { border-radius:10px; }
+  .calibration-status { width:fit-content; }
+}

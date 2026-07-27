@@ -88,7 +88,8 @@ def _render_table(table: AnalysisTable, t: TranslatorLike) -> str:
     header = "".join(f'<th>{html.escape(t(column.label_key))}</th>' for column in table.columns)
     rows = "".join(
         "<tr>" + "".join(
-            f'<td>{html.escape(localize_numeric_text(row.get(column.key, "—"), translator_language(t), group_plain_integers=True))}</td>'
+            f'<td data-label="{html.escape(t(column.label_key), quote=True)}">'
+            f'{html.escape(localize_numeric_text(row.get(column.key, "—"), translator_language(t), group_plain_integers=True))}</td>'
             for column in table.columns
         ) + "</tr>"
         for row in table.rows
