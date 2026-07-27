@@ -6,9 +6,15 @@ A local Home Assistant App (formerly add-on) for compatible GQ GMC Geiger counte
 
 > **Safety notice:** This add-on is intended for monitoring and home automation. It is not a calibrated radiation-protection instrument. Derived dose rates, profiles, anomaly detection and recommendations do not replace official measurements, professional advice or emergency instructions.
 
-## Version 10.0.4: device capability probe hotfix
+## Version 10.0.6: persistent mobile navigation
 
-Version 10.0.4 fixes a runtime `NameError` in the timestamp helper moved to `history_models.py` in 10.0.3. The missing standard-library `time` import caused an automatically detected GMC device thread to stop while saving probed capabilities. Automatic serial discovery, capability persistence and measurement startup now continue normally.
+Version 10.0.6 restores the dashboard navigation tile as a sticky floating control on mobile Home Assistant views. The section links remain available while the user scrolls, but are arranged in a compact four-column, two-row grid instead of a horizontal scroller. Long translated labels wrap inside their buttons and the tile remains inside the viewport.
+
+At extreme text enlargement the tile receives a bounded height and may scroll vertically inside itself; it never scrolls sideways. Anchor navigation uses the measured sticky-tile height so destination headings are not hidden behind it. The real-application and compact Chromium tests now scroll the page and verify the computed sticky position, viewport bounds, four-column link grid and absence of horizontal overflow. Database schema 8, stored measurements, MQTT identities, detector profiles, thresholds, calculations and serial protocols are unchanged.
+
+## Version 10.0.5: device capability probe hotfix
+
+Version 10.0.5 fixes a runtime `NameError` in the timestamp helper moved to `history_models.py` in 10.0.3. The missing standard-library `time` import caused an automatically detected GMC device thread to stop while saving probed capabilities. Automatic serial discovery, capability persistence and measurement startup now continue normally.
 
 The release adds an exact regression test for `HistoryStore.set_device_capabilities()` without an explicit timestamp and a source-level undefined-global check for the modules extracted during the recent maintenance releases. Database schema 8, stored measurements, MQTT identities, detector profiles, thresholds, calculations, responsive layout and serial protocols are unchanged.
 

@@ -1,5 +1,22 @@
 # Changelog
 
+## 10.0.6
+
+- Restored the dashboard navigation tile as a sticky/floating control on mobile Home Assistant views, matching the intended always-available navigation behavior.
+- Arranged the eight section links in a compact four-column, two-row grid with wrapped labels and no horizontal scrolling.
+- Added bounded vertical overflow only for extreme text enlargement so the tile remains usable without covering the full viewport.
+- Kept anchor destinations visible by retaining the runtime sticky-height offset used by dashboard navigation.
+- Extended both Chromium regressions to scroll the real page and assert sticky positioning, viewport bounds, link-column count and horizontal-overflow prevention.
+- Kept database schema 8, measurements, MQTT identities, detector profiles, alarm thresholds, scientific calculations and serial protocols compatible.
+
+## 10.0.5
+
+- Fixed the incorrectly floating dashboard navigation tile on mobile Home Assistant views.
+- Removed late critical CSS declarations that overrode the responsive `position: static` and grid layout from `dashboard.css`.
+- Restored wrapped two-column mobile navigation without horizontal scrolling.
+- Extended the populated full-application Chromium test to assert the computed navigation position, display mode and overflow behavior.
+- Kept database schema 8, measurements, MQTT identities, detector profiles, alarm thresholds, scientific calculations and serial protocols compatible.
+
 ## 10.0.4
 
 - Fixed the automatic device capability probe crash caused by a missing `time` import in `history_models.py` after the 10.0.3 module split.
