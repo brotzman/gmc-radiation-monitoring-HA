@@ -737,12 +737,9 @@ class ReportApplication(ReportStatusMixin, ReportDeviceViewMixin, WorkflowApplic
 <title>{html.escape(t("GMC Radiation Monitoring"))}</title>
 <link rel="stylesheet" href="./assets/dashboard.css?v={html.escape(ASSET_REVISION, quote=True)}">
 <style id="critical-dashboard-layout">
-.page-scroll {{ width:100%; height:100%; min-height:0; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; touch-action: pan-y; padding-bottom:env(safe-area-inset-bottom,0px); }}
+.page-scroll {{ width:100%; height:100%; min-height:0; overflow-y:auto; overflow-x:clip; -webkit-overflow-scrolling:touch; touch-action:pan-y; padding-bottom:env(safe-area-inset-bottom,0px); }}
 .status-strip {{ position:static; display:block; }}
 .system-status-panel {{ display:block; width:100%; }}
-.dashboard-controls {{ position:sticky; top:0; z-index:50; display:flex; justify-content:space-between; align-items:center; gap:.75rem; flex-wrap:nowrap; }}
-.dashboard-controls {{ position:-webkit-sticky; position:sticky; top:env(safe-area-inset-top,0px); }}
-.jump-links {{ flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden; }}
 .form-grid > *, label {{ min-width:0; max-width:100%; }}
 input[type="date"], input[type="week"], input[type="month"], input[type="datetime-local"] {{ min-inline-size:0; max-inline-size:100%; }}
 @media (max-width:620px) {{ .report-format-guide {{ grid-template-columns:1fr; }} }}

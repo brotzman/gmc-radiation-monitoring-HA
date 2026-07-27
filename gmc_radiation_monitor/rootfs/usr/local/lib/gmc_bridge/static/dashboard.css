@@ -250,7 +250,7 @@ details.collapsible-card:not([open]) > summary { border-radius:inherit; }
 .system-status-panel.warning > summary > .status-dot,.status-strip-item.warning .status-dot { background:var(--yellow); box-shadow:0 0 0 .22rem color-mix(in srgb,var(--yellow) 16%,transparent); }
 .system-status-panel.error > summary > .status-dot,.status-strip-item.error .status-dot { background:var(--red); box-shadow:0 0 0 .22rem color-mix(in srgb,var(--red) 16%,transparent); }
 .status-strip-item.waiting .status-dot { background:var(--blue); box-shadow:0 0 0 .22rem color-mix(in srgb,var(--blue) 16%,transparent); }
-.dashboard-controls { position:sticky; top:0; z-index:50; display:flex; justify-content:space-between; align-items:center; gap:.75rem; flex-wrap:nowrap; margin:0 0 1rem; padding:.65rem .8rem; border:1px solid var(--border); border-radius:12px; background:color-mix(in srgb,Canvas 96%,transparent); box-shadow:0 3px 12px color-mix(in srgb,CanvasText 8%,transparent); backdrop-filter:blur(14px); }
+.dashboard-controls { position:sticky; top:0; z-index:80; display:flex; justify-content:space-between; align-items:center; gap:.75rem; flex-wrap:nowrap; margin:0 0 1rem; padding:.65rem .8rem; border:1px solid var(--border); border-radius:12px; background:color-mix(in srgb,Canvas 96%,transparent); box-shadow:0 3px 12px color-mix(in srgb,CanvasText 8%,transparent); backdrop-filter:blur(14px); }
 .background-profile-values { display:inline-block; margin-top:.12rem; }
 .jump-links,.dashboard-actions { display:flex; gap:.45rem; flex-wrap:wrap; align-items:center; min-width:0; max-width:100%; }
 .jump-links { flex:1 1 auto; overflow:visible; padding:.08rem 0; }
@@ -402,7 +402,7 @@ body[data-analysis-level="analysis"] [data-analysis-tier="expert"] { display:non
   .assessment-primary { grid-column:1 / -1; }
   .legend-grid { grid-template-columns:1fr; }
   .download-columns, .custom-periods { grid-template-columns: 1fr; }
-  .dashboard-controls { position:static; align-items:stretch; backdrop-filter:none; }
+  .dashboard-controls { position:sticky; top:0; align-items:stretch; }
   .jump-links, .dashboard-actions { flex-wrap:wrap; overflow:visible; }
   .status-details-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .form-grid { grid-template-columns: 1fr; }
@@ -1327,15 +1327,36 @@ details.analysis-group > summary::after { flex:0 0 auto; }
   main *,main *::before,main *::after { min-width:0; }
 
   .dashboard-controls {
-    position:static;
+    position:sticky;
+    top:0;
+    z-index:80;
     display:grid;
     grid-template-columns:minmax(0,1fr);
     align-items:stretch;
-    gap:.55rem;
+    gap:.45rem;
+    max-height:min(46vh,19rem);
+    overflow-x:clip;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    scrollbar-gutter:stable;
+    padding:.5rem;
+    background:color-mix(in srgb,Canvas 97%,transparent);
+    box-shadow:0 6px 18px color-mix(in srgb,CanvasText 14%,transparent);
+    backdrop-filter:blur(14px);
   }
-  .jump-links,.dashboard-actions,.language-switcher {
+  .jump-links {
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:.35rem;
+    width:100%;
+    max-width:100%;
+    overflow:visible;
+    contain:none;
+  }
+  .dashboard-actions,.language-switcher {
     display:grid;
     grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:.35rem;
     width:100%;
     max-width:100%;
     overflow:visible;
@@ -1345,11 +1366,18 @@ details.analysis-group > summary::after { flex:0 0 auto; }
     width:100%;
     min-width:0;
     max-width:100%;
+    min-height:2.55rem;
+    padding:.34rem .28rem;
     justify-content:center;
     text-align:center;
     white-space:normal;
     overflow-wrap:anywhere;
+    hyphens:auto;
   }
+  .jump-links a { font-size:clamp(.68rem,2.5vw,.78rem); line-height:1.12; }
+  .dashboard-actions .compact-action { min-height:2.35rem; font-size:.76rem; }
+  #devices,#radiation-intelligence,#analysis,#long-term-analysis,#history,#workflow,#calibration-management,#reports,#maintenance,
+  .analysis-section { scroll-margin-top:12rem; }
 
   .device-card-header {
     display:grid;
@@ -1465,7 +1493,7 @@ details.analysis-group > summary::after { flex:0 0 auto; }
 }
 
 @media (max-width:430px) {
-  .jump-links,.dashboard-actions,.language-switcher,.status-summary { grid-template-columns:1fr; }
+  .dashboard-actions,.language-switcher,.status-summary { grid-template-columns:1fr; }
   .table-wrap td,.long-term-table td { grid-template-columns:1fr; gap:.16rem; }
 }
 
@@ -1526,4 +1554,12 @@ details.analysis-group > summary::after { flex:0 0 auto; }
     min-width:0;
     max-width:100%;
   }
+}
+
+
+/* 10.0.6: persistent mobile section navigation without horizontal scrolling. */
+@media (max-width:360px) {
+  .dashboard-controls { padding:.42rem; gap:.38rem; }
+  .jump-links { gap:.28rem; }
+  .jump-links a { padding:.3rem .18rem; font-size:.66rem; }
 }
