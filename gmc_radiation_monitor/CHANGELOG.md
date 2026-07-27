@@ -1,6 +1,6 @@
 # Changelog
 
-## 10.0.8
+## 10.0.9
 
 - Replaced the multi-row language link list with a compact accessible dropdown in the application header.
 - Preserved the current dashboard mode and selected GMC device when changing language.
