@@ -7,6 +7,7 @@ from email.message import Message
 from pathlib import Path
 from typing import BinaryIO
 
+from .i18n.registry import LANGUAGE_NAMES
 from .version import APP_VERSION
 
 MAX_DOWNLOAD_BYTES = 64 * 1024 * 1024
@@ -31,16 +32,7 @@ USER_MANUAL_FILENAMES = {
     "pl": f"GMC_Radiation_Monitor_User_Manual_{APP_VERSION}_pl.pdf",
     "hr": f"GMC_Radiation_Monitor_User_Manual_{APP_VERSION}_hr.pdf",
 }
-USER_MANUAL_LANGUAGE_NAMES = {
-    "de": "Deutsch",
-    "en": "English",
-    "es": "Español",
-    "fr": "Français",
-    "it": "Italiano",
-    "nl": "Nederlands",
-    "pl": "Polski",
-    "hr": "Hrvatski",
-}
+USER_MANUAL_LANGUAGE_NAMES = dict(LANGUAGE_NAMES)
 # Backwards-compatible German aliases used by existing integrations and tests.
 USER_MANUAL_FILENAME = USER_MANUAL_FILENAMES["de"]
 USER_MANUAL_PATH = USER_MANUAL_DIRECTORY / USER_MANUAL_FILENAME

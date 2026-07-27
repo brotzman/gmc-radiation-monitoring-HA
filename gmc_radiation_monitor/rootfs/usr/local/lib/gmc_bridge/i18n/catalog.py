@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from string import Formatter
 
 from .de import CATALOG as DE_CATALOG
 from .en import CATALOG as EN_CATALOG
@@ -13,9 +12,10 @@ from .it import CATALOG as IT_CATALOG
 from .nl import CATALOG as NL_CATALOG
 from .pl import CATALOG as PL_CATALOG
 from .workflow import WORKFLOW_CATALOGS
+from .registry import SUPPORTED_UI_LANGUAGES, build_catalogs
+from .validation import validate_catalogs as _validate_catalogs
 
-SUPPORTED_UI_LANGUAGES = ('en', 'de', 'fr', 'es', 'it', 'nl', 'pl', 'hr')
-CATALOGS: dict[str, dict[str, str]] = {
+CATALOGS: dict[str, dict[str, str]] = build_catalogs({
     "en": EN_CATALOG,
     "de": DE_CATALOG,
     "fr": FR_CATALOG,
@@ -23,8 +23,8 @@ CATALOGS: dict[str, dict[str, str]] = {
     "it": IT_CATALOG,
     "nl": NL_CATALOG,
     "pl": PL_CATALOG,
-    "hr": HR_CATALOG
-}
+    "hr": HR_CATALOG,
+})
 for _language, _workflow_catalog in WORKFLOW_CATALOGS.items():
     CATALOGS[_language].update(_workflow_catalog)
 
@@ -34,6 +34,14 @@ _release_overrides = json.loads(
     Path(__file__).with_name("release_822.json").read_text(encoding="utf-8")
 )
 for _language, _catalogue in _release_overrides.items():
+    CATALOGS[_language].update(_catalogue)
+
+# Newer release additions live in one structured file instead of being copied
+# into all eight language modules.
+_release_1001_overrides = json.loads(
+    Path(__file__).with_name("release_1001.json").read_text(encoding="utf-8")
+)
+for _language, _catalogue in _release_1001_overrides.items():
     CATALOGS[_language].update(_catalogue)
 
 # Version 8.3 stability-card clarification.  These labels are shared by the
@@ -382,74 +390,6 @@ for _language, _catalogue in _calibration_panel_overrides.items():
 # Two legacy indirection labels intentionally carry format fields only in their
 # translated template. Callers resolve them to the real source sentence before
 # formatting.
-_PLACEHOLDER_EXCEPTIONS = {
-    "Dose rate formula explanation",
-    "Radiation traffic light hysteresis explanation",
-}
-
-
-def _fields(text: str) -> set[str]:
-    result: set[str] = set()
-    for _literal, field, _spec, _conversion in Formatter().parse(text):
-        if field:
-            result.add(field.split(".", 1)[0].split("[", 1)[0])
-    return result
-
-
-
-# Version 8.4.6: dual-tube detector profile calibration status.
-_partial_calibration_overrides = {
-    "en": {"Partially calibrated": "Partially calibrated"},
-    "de": {"Partially calibrated": "Teilweise kalibriert"},
-    "fr": {"Partially calibrated": "Partiellement étalonné"},
-    "es": {"Partially calibrated": "Parcialmente calibrado"},
-    "it": {"Partially calibrated": "Parzialmente calibrato"},
-    "nl": {"Partially calibrated": "Gedeeltelijk gekalibreerd"},
-    "pl": {"Partially calibrated": "Częściowo skalibrowany"},
-    "hr": {"Partially calibrated": "Djelomično kalibrirano"},
-}
-for _language, _catalogue in _partial_calibration_overrides.items():
-    CATALOGS[_language].update(_catalogue)
-
-_IDENTICAL_TRANSLATION_ALLOWLIST = {
-    "Home Assistant API",
-    "GMCMap world map",
-    "Certificate SHA-256",
-    "Correction active",
-    "PDF", "CSV", "JSON", "CPM", "ACPM",
-}
-
-def _looks_untranslated(key: str, value: str) -> bool:
-    if key != value or key in _IDENTICAL_TRANSLATION_ALLOWLIST:
-        return False
-    if "{" in key or "}" in key:
-        return False
-    words = [part for part in key.replace("/", " ").replace("-", " ").split() if any(ch.isalpha() for ch in part)]
-    return len(key) >= 15 and len(words) >= 2
-
-def validate_catalogs() -> list[str]:
-    """Return human-readable catalogue problems; an empty list means valid."""
-    problems: list[str] = []
-    canonical = set(CATALOGS["en"])
-    for language in SUPPORTED_UI_LANGUAGES:
-        catalogue = CATALOGS[language]
-        missing = sorted(canonical - set(catalogue))
-        extra = sorted(set(catalogue) - canonical)
-        if missing:
-            problems.append(f"{language} missing {len(missing)} keys: {missing[:5]}")
-        if extra:
-            problems.append(f"{language} has {len(extra)} unexpected keys: {extra[:5]}")
-        for key in canonical:
-            value = catalogue.get(key, "")
-            if not value:
-                problems.append(f"{language} has an empty translation for {key!r}")
-            if key not in _PLACEHOLDER_EXCEPTIONS and _fields(key) != _fields(value):
-                problems.append(
-                    f"{language} placeholder mismatch for {key!r}: {_fields(key)} != {_fields(value)}"
-                )
-            if language != "en" and _looks_untranslated(key, value):
-                problems.append(f"{language} appears untranslated for {key!r}")
-    return problems
 
 # Version 8.4.0: detector presets, single/dual distinction and reduced duplication.
 _calibration_profile_835_overrides = {
@@ -1794,3 +1734,8 @@ _release_903_overrides = {
 }
 for _language, _catalogue in _release_903_overrides.items():
     CATALOGS[_language].update(_catalogue)
+
+
+def validate_catalogs() -> list[str]:
+    """Validate the fully assembled runtime catalogues."""
+    return _validate_catalogs(CATALOGS, SUPPORTED_UI_LANGUAGES)

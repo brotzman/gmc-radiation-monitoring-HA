@@ -13,14 +13,14 @@
   --gray: #94a3b8;
 }
 * { box-sizing: border-box; }
-html, body { width: 100%; height: 100%; min-height: 100%; margin: 0; overflow: hidden; }
+html, body { width:100%; height:100%; min-height:100%; margin:0; overflow:hidden; }
 body { background: Canvas; color: CanvasText; }
 .page-scroll {
   width: 100%;
   height: 100%;
   min-height: 0;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: clip;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
   overscroll-behavior-x: none;
@@ -252,8 +252,8 @@ details.collapsible-card:not([open]) > summary { border-radius:inherit; }
 .status-strip-item.waiting .status-dot { background:var(--blue); box-shadow:0 0 0 .22rem color-mix(in srgb,var(--blue) 16%,transparent); }
 .dashboard-controls { position:sticky; top:0; z-index:50; display:flex; justify-content:space-between; align-items:center; gap:.75rem; flex-wrap:nowrap; margin:0 0 1rem; padding:.65rem .8rem; border:1px solid var(--border); border-radius:12px; background:color-mix(in srgb,Canvas 96%,transparent); box-shadow:0 3px 12px color-mix(in srgb,CanvasText 8%,transparent); backdrop-filter:blur(14px); }
 .background-profile-values { display:inline-block; margin-top:.12rem; }
-.jump-links,.dashboard-actions { display:flex; gap:.45rem; flex-wrap:nowrap; align-items:center; }
-.jump-links { flex:1 1 auto; min-width:0; overflow-x:auto; padding:.08rem 0; scrollbar-width:thin; }
+.jump-links,.dashboard-actions { display:flex; gap:.45rem; flex-wrap:wrap; align-items:center; min-width:0; max-width:100%; }
+.jump-links { flex:1 1 auto; overflow:visible; padding:.08rem 0; }
 .dashboard-actions { flex:0 0 auto; }
 .jump-links a,.compact-action { width:auto; min-height:2rem; padding:.38rem .7rem; border-radius:999px; font-size:.82rem; line-height:1.2; white-space:nowrap; text-decoration:none; color:CanvasText; border:1px solid var(--border); background:Canvas; }
 .jump-links a.active { border-color:var(--blue); background:color-mix(in srgb,var(--blue) 10%,Canvas); font-weight:750; }
@@ -402,9 +402,8 @@ body[data-analysis-level="analysis"] [data-analysis-tier="expert"] { display:non
   .assessment-primary { grid-column:1 / -1; }
   .legend-grid { grid-template-columns:1fr; }
   .download-columns, .custom-periods { grid-template-columns: 1fr; }
-  .dashboard-controls { position:-webkit-sticky; position:sticky; top:env(safe-area-inset-top,0px); flex-wrap:nowrap; align-items:center; backdrop-filter:blur(14px); }
-  .jump-links { flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch; touch-action:pan-x pan-y; }
-  .dashboard-actions { flex-wrap:nowrap; overflow:visible; }
+  .dashboard-controls { position:static; align-items:stretch; backdrop-filter:none; }
+  .jump-links, .dashboard-actions { flex-wrap:wrap; overflow:visible; }
   .status-details-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .form-grid { grid-template-columns: 1fr; }
   .custom-form .form-grid { grid-template-columns:1fr; }
@@ -413,11 +412,11 @@ body[data-analysis-level="analysis"] [data-analysis-tier="expert"] { display:non
 }
 @media (max-width: 620px) {
   .report-format-guide { grid-template-columns:1fr; }
-  .header-intro { overflow-x:hidden; }
+  .header-intro { min-width:0; }
   .analysis-level-button, a.button, button { min-height:2.75rem; }
   .header-resource-links { grid-template-columns:1fr; }
-  .language-switcher { width:100%; min-width:0; flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden; padding:.08rem 0 .3rem; scrollbar-width:thin; -webkit-overflow-scrolling:touch; }
-  .language-switcher a { flex:0 0 auto; min-height:2.5rem; }
+  .language-switcher { width:100%; min-width:0; flex-wrap:wrap; overflow:visible; padding:.08rem 0 .3rem; }
+  .language-switcher a { flex:1 1 9rem; min-width:0; min-height:2.5rem; white-space:normal; }
   input[type="date"], input[type="week"], input[type="month"], input[type="datetime-local"] { font-size:16px; }
 }
 @media (max-width: 520px) {
@@ -1005,7 +1004,6 @@ input,select,textarea { min-height:2.75rem; }
   .long-term-window-grid,.long-term-grid { grid-template-columns:1fr; }
   .long-term-card { gap:.4rem; }
   .long-term-chart { height:12rem; }
-  .long-term-table { min-width:39rem; }
   .calendar-grid { grid-template-rows:repeat(7,.66rem); grid-auto-columns:.66rem; gap:.16rem; }
   .calendar-cell { width:.66rem; height:.66rem; }
 }
@@ -1018,17 +1016,17 @@ input,select,textarea { min-height:2.75rem; }
 .long-term-subgroup > .group-body { padding:.8rem; }
 .seasonal-table:not(.empty-state) { min-width:28rem; }
 .seasonal-table.empty-state { width:100%; min-width:0; max-width:100%; }
-@media(max-width:430px){ .long-term-subgroup > .group-body { padding:.65rem; } .seasonal-table:not(.empty-state) { min-width:24rem; } }
+@media(max-width:430px){ .long-term-subgroup > .group-body { padding:.65rem; } }
 
-/* Horizontal scrollers must remain inside their own cards on narrow Home Assistant views. */
-.jump-links,
-.language-switcher,
+/* Wide desktop data views remain contained in their cards; controls always wrap. */
 .table-scroll,
-.calendar-scroll {
+.calendar-scroll,
+.long-term-table-wrap {
   min-width:0;
   max-width:100%;
   overflow-x:auto;
   overflow-y:hidden;
+  -webkit-overflow-scrolling:touch;
   contain:inline-size;
 }
 .long-term-analysis > *,
@@ -1038,12 +1036,6 @@ input,select,textarea { min-height:2.75rem; }
 .long-term-subgroup > .group-body {
   min-width:0;
   max-width:100%;
-}
-.long-term-table-wrap {
-  overflow-x:auto;
-  overflow-y:hidden;
-  -webkit-overflow-scrolling:touch;
-  contain:inline-size;
 }
 
 /* Narrow-screen text and action containment. */
@@ -1210,7 +1202,7 @@ input,select,textarea { min-height:2.75rem; }
   }
 }
 
-/* Evidence-led long-term presentation and field-test diagnostics 10.0.1 */
+/* Evidence-led long-term presentation and field-test diagnostics 10.0.2 */
 .plain-assessment {
   min-width:0;
   display:grid;
@@ -1291,58 +1283,49 @@ input,select,textarea { min-height:2.75rem; }
   .plain-assessment-grid article { padding:.68rem; }
 }
 
-/* 10.0.1: keep expanded method groups inside the card at 200% text zoom. */
+/* 10.0.2: keep expanded method groups inside the card at 200% text zoom. */
 details.analysis-group { min-width:0; max-width:100%; box-sizing:border-box; overflow:hidden; }
 details.analysis-group > summary { min-width:0; max-width:100%; box-sizing:border-box; }
 details.analysis-group > summary .summary-copy { min-width:0; max-width:100%; }
 details.analysis-group > summary::after { flex:0 0 auto; }
 
-
-/* 10.0.1 mobile layout hardening: no horizontal page scrolling, wrapped status messages and stacked compact controls. */
-.status-item,
-.metric,
-.device-alert,
-.live-refresh-status,
-.report-form-status,
-.copy-status,
-.history-management-status,
-.system-status-copy,
-.status-strip-item,
-.status-strip-item > span,
-.device-status-stack,
-.device-freshness,
-.note,
-.interpretation,
-.assessment-note {
+/* 10.0.2 responsive layout contract. Mobile views reflow instead of scrolling sideways. */
+:where(
+  .status-item,.metric,.device-alert,.live-refresh-status,.report-form-status,
+  .copy-status,.history-management-status,.system-status-copy,.status-strip-item,
+  .status-strip-item > span,.device-status-stack,.device-freshness,.note,
+  .interpretation,.assessment-note,.calibration-status,.history-period-label
+) {
   min-width:0;
   max-width:100%;
 }
-.status-item strong,
-.status-item small,
-.status-item .status-value,
-.metric strong,
-.metric small,
-.metric .value,
-.device-alert strong,
-.device-alert small,
-.live-refresh-status,
-.report-form-status,
-.copy-status,
-.history-management-status strong,
-.history-management-status small,
-.device-freshness,
-.note,
-.interpretation,
-.assessment-note {
+:where(
+  .status-item strong,.status-item small,.status-item .status-value,
+  .metric strong,.metric small,.metric .value,.device-alert strong,
+  .device-alert small,.live-refresh-status,.report-form-status,.copy-status,
+  .history-management-status strong,.history-management-status small,
+  .device-freshness,.note,.interpretation,.assessment-note,
+  .calibration-status,.history-period-label
+) {
   white-space:normal;
   overflow-wrap:anywhere;
   word-break:normal;
 }
+details.analysis-group,
+details.analysis-group > summary,
+details.analysis-group > summary .summary-copy {
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
+}
+details.analysis-group { overflow:hidden; }
+details.analysis-group > summary::after { flex:0 0 auto; }
 
 @media (max-width:800px) {
-  html, body, .page-scroll, main, header, section { width:100%; max-width:100%; overflow-x:hidden; }
+  html,body,.page-scroll,main,header,section { width:100%; max-width:100%; }
+  .page-scroll { overflow-x:clip; }
+  main *,main *::before,main *::after { min-width:0; }
 
-  /* Navigation and language controls wrap into rows instead of becoming horizontal scrollers. */
   .dashboard-controls {
     position:static;
     display:grid;
@@ -1350,20 +1333,15 @@ details.analysis-group > summary::after { flex:0 0 auto; }
     align-items:stretch;
     gap:.55rem;
   }
-  .jump-links,
-  .dashboard-actions,
-  .language-switcher {
+  .jump-links,.dashboard-actions,.language-switcher {
     display:grid;
     grid-template-columns:repeat(2,minmax(0,1fr));
     width:100%;
-    min-width:0;
     max-width:100%;
     overflow:visible;
     contain:none;
   }
-  .jump-links a,
-  .dashboard-actions .compact-action,
-  .language-switcher a {
+  .jump-links a,.dashboard-actions .compact-action,.language-switcher a {
     width:100%;
     min-width:0;
     max-width:100%;
@@ -1373,27 +1351,20 @@ details.analysis-group > summary::after { flex:0 0 auto; }
     overflow-wrap:anywhere;
   }
 
-  /* Device status moves below the title when space is tight. */
   .device-card-header {
     display:grid;
     grid-template-columns:minmax(0,1fr);
     gap:.65rem;
   }
-  .device-status-stack {
-    width:100%;
-    max-width:100%;
-    justify-items:start;
-    align-items:start;
-  }
-  .device-status,
-  .device-freshness {
+  .device-status-stack { width:100%; justify-items:start; align-items:start; }
+  .device-status,.device-freshness,.calibration-status,.long-term-state,.evidence-badge {
     width:fit-content;
     max-width:100%;
     justify-content:flex-start;
     text-align:left;
+    white-space:normal;
   }
 
-  /* Compact status panel: icon and copy on the first row, disclosure control remains contained. */
   .system-status-panel > summary {
     grid-template-columns:auto minmax(0,1fr) auto;
     align-items:start;
@@ -1404,49 +1375,37 @@ details.analysis-group > summary::after { flex:0 0 auto; }
   .status-details-grid { grid-template-columns:1fr; }
   .status-strip-item { min-height:0; }
 
-  /* All data tables become labelled card rows on phones, removing horizontal table scrolling. */
-  .table-wrap,
-  .table-scroll,
-  .long-term-table-wrap {
+  /* Tables become labelled card rows. Every generated cell carries data-label. */
+  .table-wrap,.table-scroll,.long-term-table-wrap {
     width:100%;
-    min-width:0;
     max-width:100%;
     overflow:visible;
     contain:none;
     border:0;
   }
-  .table-wrap table,
-  .long-term-table,
-  .seasonal-table:not(.empty-state) {
+  .table-wrap table,.long-term-table,.seasonal-table:not(.empty-state) {
     display:block;
     width:100%;
     min-width:0;
     max-width:100%;
     table-layout:fixed;
   }
-  .table-wrap thead,
-  .long-term-table thead { display:none; }
-  .table-wrap tbody,
-  .table-wrap tr,
-  .table-wrap td,
-  .long-term-table tbody,
-  .long-term-table tr,
-  .long-term-table td {
+  .table-wrap thead,.long-term-table thead { display:none; }
+  .table-wrap tbody,.table-wrap tr,.table-wrap td,
+  .long-term-table tbody,.long-term-table tr,.long-term-table td {
     display:block;
     width:100%;
     min-width:0;
     max-width:100%;
   }
-  .table-wrap tr,
-  .long-term-table tr {
+  .table-wrap tr,.long-term-table tr {
     margin:.55rem 0;
     padding:.3rem .65rem;
     border:1px solid var(--border);
     border-radius:10px;
     background:var(--panel);
   }
-  .table-wrap td,
-  .long-term-table td {
+  .table-wrap td,.long-term-table td {
     display:grid;
     grid-template-columns:minmax(7.2rem,42%) minmax(0,1fr);
     gap:.65rem;
@@ -1458,12 +1417,9 @@ details.analysis-group > summary::after { flex:0 0 auto; }
     overflow-wrap:anywhere;
     word-break:normal;
   }
-  .table-wrap td:last-child,
-  .long-term-table td:last-child { border-bottom:0; }
-  .table-wrap td::before,
-  .long-term-table td::before {
+  .table-wrap td:last-child,.long-term-table td:last-child { border-bottom:0; }
+  .table-wrap td::before,.long-term-table td::before {
     content:attr(data-label);
-    min-width:0;
     color:var(--muted);
     font-size:.76rem;
     font-weight:750;
@@ -1471,10 +1427,8 @@ details.analysis-group > summary::after { flex:0 0 auto; }
     overflow-wrap:anywhere;
   }
 
-  /* The annual heat map scales to the card width instead of requiring a sideways swipe. */
   .calendar-scroll {
     width:100%;
-    min-width:0;
     max-width:100%;
     overflow:hidden;
     contain:none;
@@ -1486,56 +1440,31 @@ details.analysis-group > summary::after { flex:0 0 auto; }
     grid-auto-columns:minmax(0,1fr);
     gap:1px;
   }
-  .calendar-cell {
-    width:100%;
-    min-width:2px;
-    height:auto;
-    aspect-ratio:1;
-  }
+  .calendar-cell { width:100%; min-width:2px; height:auto; aspect-ratio:1; }
 
-  .calibration-wizard,
-  .workflow-history-chart,
-  pre,
-  code {
-    max-width:100%;
-    overflow-x:hidden;
-    white-space:pre-wrap;
-    overflow-wrap:anywhere;
-  }
-  .chart-actions { position:static; left:auto; width:100%; }
-  .long-term-state,
-  .evidence-badge { width:fit-content; max-width:100%; white-space:normal; }
-}
-
-@media (max-width:430px) {
-  .jump-links,
-  .dashboard-actions,
-  .language-switcher,
-  .status-summary { grid-template-columns:1fr; }
-  .table-wrap td,
-  .long-term-table td { grid-template-columns:1fr; gap:.16rem; }
-}
-
-
-/* 10.0.1 mobile follow-up: remaining status badges and visual workflows also reflow. */
-.calibration-status,
-.history-period-label {
-  max-width:100%;
-  white-space:normal;
-  overflow-wrap:anywhere;
-  word-break:normal;
-}
-@media (max-width:800px) {
   .calibration-wizard {
     grid-template-columns:1fr;
     width:100%;
+    max-width:100%;
     overflow:visible;
     contain:none;
   }
   .calibration-wizard .step { width:100%; min-width:0; }
   .calibration-wizard .arrow { display:none; }
-  .workflow-history-chart { width:100%; overflow:hidden; contain:none; }
+  .workflow-history-chart { width:100%; max-width:100%; overflow:hidden; contain:none; }
   .workflow-history-chart svg { display:block; width:100%; min-width:0; max-width:100%; height:auto; }
   .history-period-label { border-radius:10px; }
-  .calibration-status { width:fit-content; }
+
+  pre,code {
+    max-width:100%;
+    overflow-x:clip;
+    white-space:pre-wrap;
+    overflow-wrap:anywhere;
+  }
+  .chart-actions { position:static; left:auto; width:100%; }
+}
+
+@media (max-width:430px) {
+  .jump-links,.dashboard-actions,.language-switcher,.status-summary { grid-template-columns:1fr; }
+  .table-wrap td,.long-term-table td { grid-template-columns:1fr; gap:.16rem; }
 }
