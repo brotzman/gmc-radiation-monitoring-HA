@@ -1202,7 +1202,7 @@ input,select,textarea { min-height:2.75rem; }
   }
 }
 
-/* Evidence-led long-term presentation and field-test diagnostics 10.0.2 */
+/* Evidence-led long-term presentation and field-test diagnostics. */
 .plain-assessment {
   min-width:0;
   display:grid;
@@ -1283,13 +1283,13 @@ input,select,textarea { min-height:2.75rem; }
   .plain-assessment-grid article { padding:.68rem; }
 }
 
-/* 10.0.2: keep expanded method groups inside the card at 200% text zoom. */
+/* Keep expanded method groups inside the card at 200% text zoom. */
 details.analysis-group { min-width:0; max-width:100%; box-sizing:border-box; overflow:hidden; }
 details.analysis-group > summary { min-width:0; max-width:100%; box-sizing:border-box; }
 details.analysis-group > summary .summary-copy { min-width:0; max-width:100%; }
 details.analysis-group > summary::after { flex:0 0 auto; }
 
-/* 10.0.2 responsive layout contract. Mobile views reflow instead of scrolling sideways. */
+/* Base responsive layout contract. Mobile views reflow instead of scrolling sideways. */
 :where(
   .status-item,.metric,.device-alert,.live-refresh-status,.report-form-status,
   .copy-status,.history-management-status,.system-status-copy,.status-strip-item,
@@ -1467,4 +1467,63 @@ details.analysis-group > summary::after { flex:0 0 auto; }
 @media (max-width:430px) {
   .jump-links,.dashboard-actions,.language-switcher,.status-summary { grid-template-columns:1fr; }
   .table-wrap td,.long-term-table td { grid-template-columns:1fr; gap:.16rem; }
+}
+
+/* 10.0.3 full-page responsive contract: real rendered app + 200% text zoom. */
+@media (max-width:800px) {
+  main,
+  main > *,
+  .report-header,
+  .header-intro,
+  .header-resource-links,
+  .analysis-level-panel,
+  .analysis-level-buttons,
+  .analysis-section,
+  .assessment-grid,
+  .assessment-card,
+  .report-format-guide,
+  .actions,
+  .custom-form,
+  .custom-form .form-grid,
+  .custom-form .form-actions {
+    min-width:0;
+    max-width:100%;
+    box-sizing:border-box;
+  }
+
+  main :where(h1,h2,h3,h4,p,li,dt,dd,strong,small,span,label,button,a,summary,div) {
+    max-width:100%;
+    overflow-wrap:anywhere;
+    word-break:normal;
+    hyphens:auto;
+  }
+
+  .header-resource-links,
+  .analysis-level-buttons,
+  .assessment-grid,
+  .assessment-grid.baseline-grid,
+  #adaptive-background .collapsible-card-body > .assessment-grid,
+  #adaptive-background .collapsible-card-body > .metrics,
+  #cosmic-influence .collapsible-card-body > .metrics,
+  .report-format-guide,
+  .actions {
+    grid-template-columns:minmax(0,1fr);
+  }
+
+  .assessment-primary { grid-column:auto; }
+  .assessment-card { overflow:hidden; }
+  .analysis-level-button { justify-content:flex-start; white-space:normal; }
+
+  .custom-form .form-actions {
+    width:100%;
+    max-width:100%;
+    grid-template-columns:minmax(0,1fr);
+    justify-content:stretch;
+  }
+  .custom-form .form-actions button,
+  .form-actions button {
+    width:100%;
+    min-width:0;
+    max-width:100%;
+  }
 }
