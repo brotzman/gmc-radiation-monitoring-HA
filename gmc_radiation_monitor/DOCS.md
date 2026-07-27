@@ -6,9 +6,9 @@ A local Home Assistant App (formerly add-on) for compatible GQ GMC Geiger counte
 
 > **Safety notice:** This add-on is intended for monitoring and home automation. It is not a calibrated radiation-protection instrument. Derived dose rates, profiles, anomaly detection and recommendations do not replace official measurements, professional advice or emergency instructions.
 
-## Version 10.0.0: clearer long-term evidence and field-test diagnostics
+## Version 10.0.1: clearer long-term evidence and field-test diagnostics
 
-Version 10.0.0 makes long-term results easier to interpret without duplicating the existing short-term baseline, alarm or device-comparison functions. A plain-language assessment appears first, while statistical method details remain available in collapsed Analysis and Expert sections.
+Version 10.0.1 makes long-term results easier to interpret without duplicating the existing short-term baseline, alarm or device-comparison functions. A plain-language assessment appears first, while statistical method details remain available in collapsed Analysis and Expert sections.
 
 The release adds conservative evidence levels, minimum duration and coverage rules, practical trend magnitude, a 90-day minimum for annual projection, at least 100 paired values plus Benjamini-Hochberg correction for environmental associations, and an exportable long-term field-test protocol covering USB reconnects, serial/database errors, data gaps and GMCMap operation. Statistical signals never suppress the configured absolute warning and danger thresholds and are not presented as proof of a radiation source or environmental cause.
 

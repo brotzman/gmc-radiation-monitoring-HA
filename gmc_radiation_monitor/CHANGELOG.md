@@ -1,5 +1,12 @@
 # Changelog
 
+## 10.0.1
+
+- Raised all active add-on, runtime, asset, documentation and bundled-manual version references to 10.0.1.
+- Completed the mobile layout correction so status messages, device states, navigation controls and analytical tables remain inside narrow Home Assistant Ingress viewports.
+- Prevented horizontal page scrolling by wrapping long values and using stacked or labelled two-line/mobile-card layouts where required.
+- Kept database schema 8, stored measurements, MQTT identities, detector profiles, safety thresholds and serial protocols compatible.
+
 ## 10.0.0
 
 - Raised all active application, add-on, asset, documentation and manual version references to 10.0.0.
@@ -1037,3 +1044,10 @@
 - Rewrote all add-on configuration translations.
 - Reworked README to document only the current feature set and operation.
 - Preserved Ingress-safe streaming downloads and GMC-500+ dual-tube support.
+
+## Mobile layout correction
+
+- Status messages, device states and diagnostic notices now wrap within the mobile viewport.
+- Navigation and language controls use multi-row layouts instead of horizontal scrolling.
+- Analysis and long-term tables use labelled mobile card rows; the calendar heat map scales to the available width.
+- Narrow Home Assistant Ingress views no longer require horizontal page scrolling.
