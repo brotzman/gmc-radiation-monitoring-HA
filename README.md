@@ -6,7 +6,7 @@ Measurements are published to Home Assistant through MQTT Discovery, while the l
 
 Add this repository to Home Assistant, then install **GMC Radiation Monitor** from the App Store.
 
-Current release: **10.0.4**, a runtime hotfix that restores automatic device capability storage after the 10.0.3 history-model split and adds regression coverage for extracted-module imports.
+Current release: **10.0.6**, restoring a persistent sticky mobile navigation tile while preserving wrapped multi-row controls and preventing horizontal scrolling.
 
 
 ## Release quality checks

@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import re
 import shutil
 import sys
 import tempfile
@@ -168,7 +169,7 @@ def _inspect(page: Any, width: int, zoom: int) -> dict[str, Any]:
         page.add_style_tag(content="html{font-size:200%!important}")
     page.wait_for_timeout(20)
     return page.evaluate(
-        """() => {
+        """async () => {
           const viewport = window.innerWidth;
           const root = document.documentElement;
           const body = document.body;
@@ -189,6 +190,18 @@ def _inspect(page: Any, width: int, zoom: int) -> dict[str, Any]:
               if (horizontalScrollers.length >= 12) break;
             }
           }
+          const scroller = document.querySelector('.page-scroll');
+          const dashboard = document.querySelector('.dashboard-controls');
+          const jumpLinks = document.querySelector('.jump-links');
+          const dashboardStyle = getComputedStyle(dashboard);
+          const jumpStyle = getComputedStyle(jumpLinks);
+          const jumpColumnCount = jumpStyle.gridTemplateColumns.split(' ').filter(Boolean).length;
+          const beforeTop = dashboard.getBoundingClientRect().top;
+          scroller.scrollTop = Math.min(dashboard.offsetTop + dashboard.offsetHeight + 240, Math.max(0, scroller.scrollHeight - scroller.clientHeight));
+          await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+          const afterBox = dashboard.getBoundingClientRect();
+          const scrollerBox = scroller.getBoundingClientRect();
+          const scrollerPaddingTop = parseFloat(getComputedStyle(scroller).paddingTop) || 0;
           return {
             viewport,
             documentWidth: root.scrollWidth,
@@ -197,7 +210,18 @@ def _inspect(page: Any, width: int, zoom: int) -> dict[str, Any]:
             horizontalScrollers,
             title: document.title,
             deviceCards: document.querySelectorAll('.device-card').length,
-            tables: document.querySelectorAll('table').length
+            tables: document.querySelectorAll('table').length,
+            dashboardPosition: dashboardStyle.position,
+            dashboardDisplay: dashboardStyle.display,
+            dashboardOverflowX: dashboardStyle.overflowX,
+            dashboardBeforeTop: beforeTop,
+            dashboardAfterTop: afterBox.top,
+            scrollerTop: scrollerBox.top,
+            scrollerPaddingTop,
+            dashboardRight: afterBox.right,
+            dashboardLeft: afterBox.left,
+            jumpLinksOverflowX: jumpStyle.overflowX,
+            jumpLinksColumns: jumpColumnCount
           };
         }"""
     )
@@ -223,9 +247,17 @@ def run(package_root: Path, *, chromium_path: str | None = None) -> list[dict[st
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(executable_path=executable, headless=True, args=["--no-sandbox"])
         browser_page = browser.new_page()
+        styled_pages = {
+            language: re.sub(
+                r'<link rel="stylesheet" href="\./assets/dashboard\.css\?v=[^"]+">',
+                lambda _match: f"<style>{css}</style>",
+                document,
+                count=1,
+            )
+            for language, document in pages.items()
+        }
         for language, width, zoom in checks:
-            browser_page.set_content(pages[language], wait_until="domcontentloaded")
-            browser_page.add_style_tag(content=css)
+            browser_page.set_content(styled_pages[language], wait_until="domcontentloaded")
             result = _inspect(browser_page, width, zoom)
             ok = (
                 result["documentWidth"] <= width + 1
@@ -234,6 +266,14 @@ def run(package_root: Path, *, chromium_path: str | None = None) -> list[dict[st
                 and not result["horizontalScrollers"]
                 and result["deviceCards"] >= 2
                 and result["tables"] >= 1
+                and result["dashboardPosition"] == "sticky"
+                and result["dashboardDisplay"] == "grid"
+                and result["dashboardOverflowX"] in {"clip", "hidden"}
+                and abs(result["dashboardAfterTop"] - (result["scrollerTop"] + result["scrollerPaddingTop"])) <= 2
+                and result["dashboardLeft"] >= -1
+                and result["dashboardRight"] <= width + 1
+                and result["jumpLinksOverflowX"] == "visible"
+                and result["jumpLinksColumns"] == 4
             )
             if not ok:
                 failures.append({"language": language, "width": width, "zoom": zoom, **result})

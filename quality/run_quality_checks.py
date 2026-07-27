@@ -80,6 +80,7 @@ def main() -> int:
         ".language-switcher { width:100%; min-width:0; flex-wrap:nowrap; overflow-x:auto",
         "10.0.1 mobile layout hardening",
         "10.0.1 mobile follow-up",
+        ".dashboard-controls { position:static",
     )
     found = [item for item in forbidden if item in css_text]
     if found:
@@ -111,7 +112,7 @@ def main() -> int:
 
     print(
         "Quality checks passed: compilation, 19 unit/integration tests, module splits, "
-        "single-source translations and responsive browser regressions"
+        "single-source translations and sticky responsive browser regressions"
     )
     return 0
 

@@ -61,7 +61,7 @@ def run(css_path: Path, *, chromium_path: str | None = None) -> list[dict[str, o
                 if zoom == 2:
                     page.add_style_tag(content="html{font-size:200%!important}")
                 result = page.evaluate(
-                    """() => {
+                    """async () => {
                       const viewport = window.innerWidth;
                       const pageScroll = document.querySelector('.page-scroll');
                       const selectors = ['main','header','section','.dashboard-controls','.jump-links','.language-switcher','.system-status-panel','.device-card','.table-wrap','.long-term-table-wrap','.calendar-scroll','.calibration-wizard'];
@@ -74,6 +74,15 @@ def run(css_path: Path, *, chromium_path: str | None = None) -> list[dict[str, o
                       }
                       const status = document.querySelector('.device-status');
                       const tableCell = document.querySelector('.table-wrap td');
+                      const dashboard = document.querySelector('.dashboard-controls');
+                      const jumpLinks = document.querySelector('.jump-links');
+                      const dashboardStyle = getComputedStyle(dashboard);
+                      const jumpStyle = getComputedStyle(jumpLinks);
+                      pageScroll.scrollTop = Math.min(dashboard.offsetTop + dashboard.offsetHeight + 240, Math.max(0, pageScroll.scrollHeight - pageScroll.clientHeight));
+                      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+                      const dashboardBox = dashboard.getBoundingClientRect();
+                      const pageBox = pageScroll.getBoundingClientRect();
+                      const pagePaddingTop = parseFloat(getComputedStyle(pageScroll).paddingTop) || 0;
                       return {
                         viewport,
                         documentWidth: document.documentElement.scrollWidth,
@@ -83,7 +92,16 @@ def run(css_path: Path, *, chromium_path: str | None = None) -> list[dict[str, o
                         outside,
                         statusWhiteSpace: getComputedStyle(status).whiteSpace,
                         tableCellDisplay: getComputedStyle(tableCell).display,
-                        tableCellColumns: getComputedStyle(tableCell).gridTemplateColumns
+                        tableCellColumns: getComputedStyle(tableCell).gridTemplateColumns,
+                        dashboardPosition: dashboardStyle.position,
+                        dashboardDisplay: dashboardStyle.display,
+                        dashboardOverflowX: dashboardStyle.overflowX,
+                        dashboardTop: dashboardBox.top,
+                        pageTop: pageBox.top,
+                        pagePaddingTop,
+                        dashboardLeft: dashboardBox.left,
+                        dashboardRight: dashboardBox.right,
+                        jumpLinksColumns: jumpStyle.gridTemplateColumns.split(' ').filter(Boolean).length
                       };
                     }"""
                 )
@@ -94,6 +112,13 @@ def run(css_path: Path, *, chromium_path: str | None = None) -> list[dict[str, o
                     and not result["outside"]
                     and result["statusWhiteSpace"] == "normal"
                     and result["tableCellDisplay"] == "grid"
+                    and result["dashboardPosition"] == "sticky"
+                    and result["dashboardDisplay"] == "grid"
+                    and result["dashboardOverflowX"] in {"clip", "hidden"}
+                    and abs(result["dashboardTop"] - (result["pageTop"] + result["pagePaddingTop"])) <= 2
+                    and result["dashboardLeft"] >= -1
+                    and result["dashboardRight"] <= width + 1
+                    and result["jumpLinksColumns"] == 4
                 )
                 if not ok:
                     failures.append({"width": width, "zoom": zoom, **result})
