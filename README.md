@@ -6,15 +6,15 @@ Measurements are published to Home Assistant through MQTT Discovery, while the l
 
 Add this repository to Home Assistant, then install **GMC Radiation Monitor** from the App Store.
 
-Current release: **10.0.1**, with evidence-led long-term analysis, conservative interpretation thresholds and exportable endurance diagnostics.
+Current release: **10.0.2**, a maintenance release focused on responsive-layout reliability, clearer module boundaries and centrally validated translations.
 
 
-## Development test suite
+## Release quality checks
 
 From the repository root, run:
 
 ```bash
-python3 -m pytest
+python3 quality/run_quality_checks.py
 ```
 
-The root test configuration resolves the add-on package path and keeps legacy path-based tests anchored to the add-on directory, so test results do not depend on execution order.
+The checks compile the runtime package, validate all translation catalogues, confirm the split web-module architecture and test the mobile layout in Chromium at 320-800 px and 100%/200% text size. Playwright and Chromium are required for the browser check; use `--skip-browser` for the static checks only.
