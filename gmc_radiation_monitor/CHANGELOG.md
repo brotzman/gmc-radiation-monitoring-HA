@@ -1,5 +1,12 @@
 # Changelog
 
+## 10.0.4
+
+- Fixed the automatic device capability probe crash caused by a missing `time` import in `history_models.py` after the 10.0.3 module split.
+- Added a regression test that exercises `HistoryStore.set_device_capabilities()` with its default runtime timestamp, matching the failing serial-device startup path.
+- Added a standard-library undefined-global check for source-defined functions in the recently extracted history, report-period, metrology and web mixin modules.
+- Kept database schema 8, measurements, MQTT identities, detector profiles, alarm thresholds, scientific calculations, responsive layout and serial protocols compatible.
+
 ## 10.0.3
 
 - Added 17 unit and integration tests for count-rate metrology, gap-aware dose integration, dual-tube selection, adaptive high-CPM confirmation, report periods, database migration/history behavior, simulated serial failures and MQTT retained-state synchronization.

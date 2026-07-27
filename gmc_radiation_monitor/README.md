@@ -6,6 +6,12 @@ A local Home Assistant App (formerly add-on) for compatible GQ GMC Geiger counte
 
 > **Safety notice:** This add-on is intended for monitoring and home automation. It is not a calibrated radiation-protection instrument. Derived dose rates, profiles, anomaly detection and recommendations do not replace official measurements, professional advice or emergency instructions.
 
+## Version 10.0.4: device capability probe hotfix
+
+Version 10.0.4 fixes a runtime `NameError` in the timestamp helper moved to `history_models.py` in 10.0.3. The missing standard-library `time` import caused an automatically detected GMC device thread to stop while saving probed capabilities. Automatic serial discovery, capability persistence and measurement startup now continue normally.
+
+The release adds an exact regression test for `HistoryStore.set_device_capabilities()` without an explicit timestamp and a source-level undefined-global check for the modules extracted during the recent maintenance releases. Database schema 8, stored measurements, MQTT identities, detector profiles, thresholds, calculations, responsive layout and serial protocols are unchanged.
+
 ## Version 10.0.3: verified measurement logic and single-source maintenance
 
 Version 10.0.3 is a verification and maintainability release. It adds 17 repeatable unit and integration tests for dead-time correction, dose integration with gaps, dual-tube selection, adaptive CPM filtering, database migrations, report periods, simulated serial failures and retained MQTT state synchronization.
