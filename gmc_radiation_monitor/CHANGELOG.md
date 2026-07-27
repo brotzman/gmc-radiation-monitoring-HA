@@ -1,5 +1,15 @@
 # Changelog
 
+## 10.0.8
+
+- Replaced the multi-row language link list with a compact accessible dropdown in the application header.
+- Preserved the current dashboard mode and selected GMC device when changing language.
+- Added a localized header refresh button that reloads the complete dashboard on demand.
+- Reflowed the header controls below the title on mobile and stacked them at the narrowest widths without horizontal scrolling.
+- Kept the sticky/floating mobile section-navigation tile unchanged and always available.
+- Added rendered-HTML and JavaScript contract tests for the new controls, increasing the repeatable unit/integration suite to 23 tests.
+- Kept database schema 8, stored measurements, MQTT identities, detector profiles, alarm thresholds, scientific calculations and serial protocols compatible.
+
 ## 10.0.7
 
 - Fixed a race condition between periodic bridge-heartbeat writes and immediate supervisor status updates that shared one PID-based temporary path.
