@@ -291,6 +291,17 @@ class ReportApplication(ReportStatusMixin, ReportDeviceViewMixin, WorkflowApplic
             if known_count
             else t("Automatic device detection is running")
         )
+        header_connection_label = (
+            t("{connected}/{known} connected", connected=connected_count, known=known_count)
+            if known_count
+            else t("Scanning for devices")
+        )
+        header_connection_symbol = (
+            "🟢" if known_count and connected_count == known_count
+            else "🟡" if known_count and connected_count > 0
+            else "🔴" if known_count
+            else "🔵"
+        )
         selected_latest_timestamp = int((selected_device or {}).get("timestamp_utc") or 0)
         selected_latest_cpm = (selected_device or {}).get("cpm")
         selected_latest_value = (
@@ -321,19 +332,7 @@ class ReportApplication(ReportStatusMixin, ReportDeviceViewMixin, WorkflowApplic
         storage_summary = t("Storage current") if global_last_timestamp else t("No successful storage yet")
         compact_status = " · ".join((connection_summary, f"{selected_latest_value} · {selected_latest_meta}", storage_summary))
         status_open = " open" if status_state == "error" else ""
-        status_strip_html = f"""
-<section class="status-strip" id="live-status" aria-label="{html.escape(t("Live system status"), quote=True)}"><details class="system-status-panel {status_state}"{status_open}>
-<summary><span class="status-dot"></span><span class="system-status-copy"><strong>{html.escape(status_headline)}</strong><small>{html.escape(compact_status)}</small></span><span class="system-status-detail-label">{html.escape(t("Show status details"))}</span></summary>
-<div class="status-details-grid">
-<a class="status-strip-item {connection_state_class}" href="#devices"><span class="status-dot"></span><span><strong>{html.escape(t("Devices"))}</strong><small>{html.escape(connection_summary)}</small></span></a>
-<a class="status-strip-item {"ok" if selected_latest_timestamp else "waiting"}" href="#analysis"><span class="status-dot"></span><span><strong>{html.escape(t("Latest accepted value"))}: {html.escape(selected_latest_value)}</strong><small>{html.escape(selected_latest_meta)}</small></span></a>
-<a class="status-strip-item {"ok" if global_last_timestamp else "waiting"}" href="#maintenance"><span class="status-dot"></span><span><strong>{html.escape(t("Last successful storage"))}</strong><small>{html.escape(_dashboard_timestamp(global_last_timestamp))}</small></span></a>
-<a class="status-strip-item {"warning" if discarded_peak_samples else "ok"}" href="#devices"><span class="status-dot"></span><span><strong>{html.escape(t("Discarded CPM peaks"))}: {format_number(discarded_peak_samples, language, grouping=True)}</strong><small>{html.escape(t("Unconfirmed values since bridge start"))}</small></span></a>
-<a class="status-strip-item ok" href="#maintenance"><span class="status-dot"></span><span><strong>{html.escape(t("Stored samples"))}: {format_number(count, language, grouping=True)}</strong><small>{html.escape(t("Stored samples across all devices"))}</small></span></a>
-<a class="status-strip-item {db_state_class}" href="#maintenance"><span class="status-dot"></span><span><strong>{html.escape(t("Database"))}: {html.escape(db_integrity)}</strong><small>{html.escape(db_size)}</small></span></a>
-</div>
-</details></section>
-"""
+        status_strip_html = ""
         dashboard_controls_html = f"""
 <nav class="dashboard-controls" id="dashboard-controls" aria-label="{html.escape(t("Dashboard navigation"), quote=True)}">
 <div class="jump-links">
@@ -748,6 +747,7 @@ class ReportApplication(ReportStatusMixin, ReportDeviceViewMixin, WorkflowApplic
 <select name="lang" id="language-select" aria-label="{html.escape(t("Language"), quote=True)}" title="{html.escape(t("Language"), quote=True)}">{''.join(language_select_options)}</select></span></label>
 <noscript><button type="submit" class="header-tool-button">{html.escape(t("Apply"))}</button></noscript>
 </form>
+<a class="header-status-badge {connection_state_class}" id="header-status-badge" href="#devices" title="{html.escape(connection_summary, quote=True)}" aria-label="{html.escape(connection_summary, quote=True)}"><span class="header-status-symbol" aria-hidden="true">{header_connection_symbol}</span><span class="header-status-text">{html.escape(header_connection_label)}</span></a>
 <button type="button" class="header-tool-button reload-button" id="reload-dashboard" aria-label="{html.escape(t("Refresh page"), quote=True)}" title="{html.escape(t("Refresh page"), quote=True)}"><span class="header-tool-icon" aria-hidden="true">↻</span><span class="header-tool-label visually-hidden">{html.escape(t("Refresh"))}</span></button>
 </div>
 """
