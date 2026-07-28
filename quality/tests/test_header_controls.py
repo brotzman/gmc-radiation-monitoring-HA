@@ -27,11 +27,14 @@ class HeaderControlTests(unittest.TestCase):
                 device_override="",
                 accept_language="de",
             ).decode("utf-8")
+        self.assertIn('id="analysis-level-select"', page)
         self.assertIn('id="language-select"', page)
         self.assertIn('name="lang"', page)
         self.assertIn('<option value="de" selected>Deutsch</option>', page)
         self.assertIn('id="reload-dashboard"', page)
         self.assertIn('aria-label="Seite aktualisieren"', page)
+        self.assertIn('class="analysis-select-control"', page)
+        self.assertIn('class="analysis-select-group"', page)
         self.assertIn('class="language-select-control"', page)
         self.assertIn('class="language-select-icon"', page)
         self.assertIn('aria-label="Sprache"', page)
@@ -44,6 +47,7 @@ class HeaderControlTests(unittest.TestCase):
             / "gmc_radiation_monitor/rootfs/usr/local/lib/gmc_bridge/static/dashboard.js"
         ).read_text(encoding="utf-8")
         self.assertIn("languageSelect?.addEventListener('change'", source)
+        self.assertIn("analysisLevelSelect?.addEventListener('change'", source)
         self.assertIn("form.requestSubmit()", source)
         self.assertIn("document.getElementById('reload-dashboard')", source)
         self.assertIn("window.location.reload()", source)
