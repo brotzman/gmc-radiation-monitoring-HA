@@ -7,6 +7,7 @@ import compileall
 import os
 import subprocess
 import sys
+import unittest
 from pathlib import Path
 
 
@@ -94,6 +95,7 @@ def main() -> int:
     env = dict(os.environ)
     env["PYTHONPATH"] = str(library) + os.pathsep + env.get("PYTHONPATH", "")
 
+    unit_test_count = unittest.defaultTestLoader.discover(str(repo_root / "quality/tests")).countTestCases()
     if not args.skip_unit:
         command = [sys.executable, "-m", "unittest", "discover", "-s", str(repo_root / "quality/tests"), "-v"]
         if _run(command, env=env):
@@ -110,9 +112,11 @@ def main() -> int:
             if _run(command, env=env):
                 return 1
 
+    browser_summary = "browser regressions skipped" if args.skip_browser else "sticky responsive browser regressions"
+    unit_summary = "unit/integration tests skipped" if args.skip_unit else f"{unit_test_count} unit/integration tests"
     print(
-        "Quality checks passed: compilation, 23 unit/integration tests, module splits, "
-        "single-source translations and sticky responsive browser regressions"
+        f"Quality checks passed: compilation, {unit_summary}, module splits, "
+        f"single-source translations and {browser_summary}"
     )
     return 0
 

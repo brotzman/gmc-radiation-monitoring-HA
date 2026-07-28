@@ -184,7 +184,7 @@ def _inspect(page: Any, width: int, zoom: int) -> dict[str, Any]:
             }
           }
           const horizontalScrollers = [];
-          for (const node of document.querySelectorAll('main,section,article,nav,header,.device-card,.status-strip,.table-wrap,.table-scroll,.calendar-scroll')) {
+          for (const node of document.querySelectorAll('main,section,article,nav,header,.device-card,.table-wrap,.table-scroll,.calendar-scroll')) {
             if (node.scrollWidth > node.clientWidth + 1) {
               horizontalScrollers.push({tag:node.tagName, cls:String(node.className || '').slice(0,100), client:node.clientWidth, scroll:node.scrollWidth});
               if (horizontalScrollers.length >= 12) break;
