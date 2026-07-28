@@ -6,9 +6,9 @@ A local Home Assistant App (formerly add-on) for compatible GQ GMC Geiger counte
 
 > **Safety notice:** This add-on is intended for monitoring and home automation. It is not a calibrated radiation-protection instrument. Derived dose rates, profiles, anomaly detection and recommendations do not replace official measurements, professional advice or emergency instructions.
 
-## Version 10.0.12: aligned compact header controls
+## Version 10.0.13: aligned compact header controls
 
-Version 10.0.12 removes the visible second-line language label from the application header while retaining an accessible localized label for assistive technology. A subtle globe icon is integrated into the selector, and the selector now shares the same 2.5-rem height and vertical alignment as the square refresh tile.
+Version 10.0.13 removes the visible second-line language label from the application header while retaining an accessible localized label for assistive technology. A subtle globe icon is integrated into the selector, and the selector now shares the same 2.5-rem height and vertical alignment as the square refresh tile.
 
 Desktop and mobile layouts keep both controls in one compact row. The selector remains flexible, the refresh tile remains fixed and unobtrusive, and narrow Home Assistant views continue without horizontal scrolling. Automatic language submission, the no-JavaScript fallback and the sticky/floating section navigation are unchanged. Database schema 8, measurements, MQTT identities, detector profiles, thresholds, scientific calculations and serial protocols remain compatible.
 
