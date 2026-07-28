@@ -1,6 +1,6 @@
 # Changelog
 
-## 10.0.11
+## 10.0.12
 
 - Simplified the application-header language selector to one visible line by moving the language label to an accessible screen-reader label.
 - Added a subtle globe icon inside the selector and aligned the selector exactly with the compact square refresh tile.
