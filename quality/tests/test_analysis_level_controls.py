@@ -28,7 +28,7 @@ class AnalysisLevelControlTests(unittest.TestCase):
                 accept_language="de",
             ).decode("utf-8")
         self.assertIn('id="analysis-level-select"', page)
-        self.assertIn('class="analysis-select-icon"', page)
+        self.assertNotIn('id="analysis-level-icon"', page)
         self.assertIn('>◉ Zusammenfassung<', page)
         self.assertIn('>▤ Analyse<', page)
         self.assertIn('>∑ Experte<', page)

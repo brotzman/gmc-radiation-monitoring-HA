@@ -35,6 +35,8 @@ class HeaderControlTests(unittest.TestCase):
         self.assertIn('id="section-select"', page)
         self.assertIn('aria-label="Bereich"', page)
         self.assertIn('class="header-status-column"', page)
+        self.assertIn('id="section-navigation-slot"', page)
+        self.assertIn('id="section-floating-navigation"', page)
         self.assertIn('id="reload-dashboard"', page)
         self.assertIn('aria-label="Seite aktualisieren"', page)
         self.assertIn('class="analysis-select-control"', page)

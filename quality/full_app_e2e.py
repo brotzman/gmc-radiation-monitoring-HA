@@ -160,7 +160,8 @@ def _render_pages(package_root: Path) -> tuple[dict[str, str], str]:
         if int(status.get("measurements") or 0) < 4000:
             raise AssertionError("The full-app fixture did not populate enough measurements")
     css = (library / "gmc_bridge/static/dashboard.css").read_text(encoding="utf-8")
-    return pages, css
+    javascript = (library / "gmc_bridge/static/dashboard.js").read_text(encoding="utf-8")
+    return pages, css, javascript
 
 
 def _inspect(page: Any, width: int, zoom: int) -> dict[str, Any]:
@@ -193,13 +194,34 @@ def _inspect(page: Any, width: int, zoom: int) -> dict[str, Any]:
           const scroller = document.querySelector('.page-scroll');
           const languageSelect = document.querySelector('#language-select');
           const sectionSelect = document.querySelector('#section-select');
+          const sectionFloatingNavigation = document.querySelector('#section-floating-navigation');
           const statusColumn = document.querySelector('.header-status-column');
           const statusBadge = document.querySelector('#header-status-badge');
+          const analysisSelect = document.querySelector('#analysis-level-select');
           const reloadButton = document.querySelector('#reload-dashboard');
           const headerTools = document.querySelector('.header-tools');
           const statusColumnBox = statusColumn ? statusColumn.getBoundingClientRect() : null;
           const statusBadgeBox = statusBadge ? statusBadge.getBoundingClientRect() : null;
           const sectionSelectBox = sectionSelect ? sectionSelect.getBoundingClientRect() : null;
+          const sectionSelectedInitial = sectionSelect ? sectionSelect.value : '';
+          const sectionInitiallyFloating = Boolean(sectionFloatingNavigation?.classList.contains('is-floating'));
+          if (scroller) {
+            const scrollerBox = scroller.getBoundingClientRect();
+            const slot = document.querySelector('#section-navigation-slot');
+            const slotBoxBeforeScroll = slot ? slot.getBoundingClientRect() : null;
+            const targetScroll = slotBoxBeforeScroll
+              ? scroller.scrollTop + slotBoxBeforeScroll.top - scrollerBox.top + 96
+              : Math.max(900, scroller.clientHeight);
+            scroller.scrollTop = Math.min(targetScroll, Math.max(0, scroller.scrollHeight - scroller.clientHeight));
+            await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+            await new Promise((resolve) => setTimeout(resolve, 25));
+          }
+          const sectionFloatingAfterScroll = Boolean(sectionFloatingNavigation?.classList.contains('is-floating'));
+          const sectionFloatingPosition = sectionFloatingNavigation ? getComputedStyle(sectionFloatingNavigation).position : '';
+          const statusPositionAfterScroll = statusBadge ? getComputedStyle(statusBadge).position : '';
+          const analysisPositionAfterScroll = analysisSelect ? getComputedStyle(analysisSelect).position : '';
+          const languagePositionAfterScroll = languageSelect ? getComputedStyle(languageSelect).position : '';
+          const reloadPositionAfterScroll = reloadButton ? getComputedStyle(reloadButton).position : '';
           return {
             viewport,
             documentWidth: root.scrollWidth,
@@ -210,7 +232,14 @@ def _inspect(page: Any, width: int, zoom: int) -> dict[str, Any]:
             deviceCards: document.querySelectorAll('.device-card').length,
             tables: document.querySelectorAll('table').length,
             sectionSelectPresent: Boolean(sectionSelect),
-            sectionSelected: sectionSelect ? sectionSelect.value : '',
+            sectionSelected: sectionSelectedInitial,
+            sectionInitiallyFloating,
+            sectionFloatingAfterScroll,
+            sectionFloatingPosition,
+            statusPositionAfterScroll,
+            analysisPositionAfterScroll,
+            languagePositionAfterScroll,
+            reloadPositionAfterScroll,
             sectionBelowStatus: Boolean(statusBadgeBox && sectionSelectBox && sectionSelectBox.top >= statusBadgeBox.bottom - 1),
             sectionWithinStatusColumn: Boolean(statusColumnBox && sectionSelectBox && sectionSelectBox.left >= statusColumnBox.left - 1 && sectionSelectBox.right <= statusColumnBox.right + 1),
             languageSelectPresent: Boolean(languageSelect),
@@ -232,7 +261,7 @@ def run(package_root: Path, *, chromium_path: str | None = None) -> list[dict[st
     if not executable:
         raise SystemExit("Chromium was not found. Set CHROMIUM_PATH or pass --chromium.")
 
-    pages, css = _render_pages(package_root)
+    pages, css, javascript = _render_pages(package_root)
     failures: list[dict[str, Any]] = []
     checks: list[tuple[str, int, int]] = []
     for zoom in (1, 2):
@@ -243,15 +272,21 @@ def run(package_root: Path, *, chromium_path: str | None = None) -> list[dict[st
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(executable_path=executable, headless=True, args=["--no-sandbox"])
         browser_page = browser.new_page()
-        styled_pages = {
-            language: re.sub(
+        styled_pages = {}
+        for language, document in pages.items():
+            styled = re.sub(
                 r'<link rel="stylesheet" href="\./assets/dashboard\.css\?v=[^"]+">',
                 lambda _match: f"<style>{css}</style>",
                 document,
                 count=1,
             )
-            for language, document in pages.items()
-        }
+            styled = re.sub(
+                r'<script src="\./assets/dashboard\.js\?v=[^"]+" defer></script>',
+                lambda _match: f"<script>{javascript}</script>",
+                styled,
+                count=1,
+            )
+            styled_pages[language] = styled
         for language, width, zoom in checks:
             browser_page.set_content(styled_pages[language], wait_until="domcontentloaded")
             result = _inspect(browser_page, width, zoom)
@@ -264,6 +299,13 @@ def run(package_root: Path, *, chromium_path: str | None = None) -> list[dict[st
                 and result["tables"] >= 1
                 and result["sectionSelectPresent"]
                 and result["sectionSelected"] == "devices"
+                and not result["sectionInitiallyFloating"]
+                and result["sectionFloatingAfterScroll"]
+                and result["sectionFloatingPosition"] == "fixed"
+                and result["statusPositionAfterScroll"] != "fixed"
+                and result["analysisPositionAfterScroll"] != "fixed"
+                and result["languagePositionAfterScroll"] != "fixed"
+                and result["reloadPositionAfterScroll"] != "fixed"
                 and result["sectionBelowStatus"]
                 and result["sectionWithinStatusColumn"]
                 and result["languageSelectPresent"]
