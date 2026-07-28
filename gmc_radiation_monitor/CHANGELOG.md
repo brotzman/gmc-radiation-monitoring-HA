@@ -1,5 +1,15 @@
 # Changelog
 
+## 10.0.19
+
+- Kept the view selector, language selector, connection-status badge and refresh button together at the top right beside the application title on desktop.
+- Kept the section dropdown directly below the connection-status badge in its normal header position.
+- Made only the section dropdown float after its original slot scrolls above the dashboard viewport; all other header controls remain static.
+- Added viewport-safe floating coordinates, resize handling and a reserved slot to prevent layout jumps.
+- Added browser regression coverage that verifies the selector is initially static, becomes fixed after scrolling and does not make the other controls float.
+- Removed the duplicated analysis symbol shown by the previous external icon plus symbol-prefixed option label.
+- Kept database schema 8, stored measurements, MQTT identities, detector profiles, thresholds, scientific calculations, serial protocols and existing app options compatible.
+
 ## 10.0.18
 
 - Replaced the sticky/floating desktop and mobile section navigation with one compact section dropdown in the application header.
@@ -10,7 +20,7 @@
 - Removed the retired floating-menu markup, scroll-direction state, mobile sheet, back-to-top control and associated responsive CSS.
 - Kept database schema 8, stored measurements, MQTT identities, detector profiles, thresholds, scientific calculations, serial protocols and existing app options compatible.
 
-## 10.0.18
+## 10.0.16
 
 - Removed the obsolete large system-status panel styles, segmented analysis-selector styles and JavaScript handlers left behind after the compact header controls replaced them.
 - Removed dead report-rendering variables, empty component wrappers and unused imports associated with those retired controls.
