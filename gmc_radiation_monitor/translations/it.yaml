@@ -379,12 +379,6 @@ configuration:
   interface:
     description: Lingua, modalità di visualizzazione e presentazione MQTT condivise.
     fields:
-      custom_value_font_size_px:
-        description: "Dimensione in pixel (20–64), usata solo con Personalizzata."
-        name: "Dimensione personalizzata"
-      main_value_size:
-        description: "Imposta la dimensione predefinita: piccola, media, grande o personalizzata."
-        name: "Dimensione valore principale"
       publish_advanced_sensors:
         description: Pubblica statistiche, baseline e avvisi tramite MQTT Discovery.
         name: Pubblica sensori MQTT avanzati

@@ -1,12 +1,24 @@
 # Changelog
 
-## 10.0.14
+## 10.0.16
 
-- Shortened the German application and browser title from `GMC-Strahlungsüberwachung` to `Strahlungsüberwachung`.
-- Kept the subtitle `Lokale Überwachung für GQ-GMC-Geigerzähler` unchanged.
-- Added a rendered-page regression test for the shortened German title and unchanged subtitle.
-- Updated the bundled manual version markers and PDF metadata to 10.0.14.
-- Kept database schema 8, measurements, MQTT identities, detector profiles, thresholds, scientific calculations and serial protocols compatible.
+- Removed the obsolete large system-status panel styles, segmented analysis-selector styles and JavaScript handlers left behind after the compact header controls replaced them.
+- Removed dead report-rendering variables, empty component wrappers and unused imports associated with those retired controls.
+- Updated the standalone mobile layout fixture to exercise the current analysis dropdown, language selector, connection badge and reload button instead of deleted UI components.
+- Added an archive-cleanup regression test and made the quality-runner test count dynamic.
+- Consolidated duplicate 10.0.15 release documentation and normalized the add-on description formatting.
+- Removed generated caches and development artefacts from the distributable archive.
+- Kept database schema 8, stored measurements, MQTT identities, detector profiles, thresholds, scientific calculations, serial protocols and existing app options compatible.
+
+## 10.0.15
+
+- Removed the dashboard card and controls for **Measurement display / Main measurement font size**.
+- Removed the corresponding Home Assistant app options and browser-local override storage.
+- Fixed the primary live measurement font size to the former **medium** setting for a consistent layout on every client.
+- Shortened the German application and browser title from `GMC-Strahlungsüberwachung` to `Strahlungsüberwachung` while keeping the subtitle unchanged.
+- Added regression coverage for the fixed measurement size and shortened German title.
+- Updated the bundled manual version markers and PDF metadata to 10.0.15.
+- Kept database schema 8, stored measurements, MQTT identities, detector profiles, thresholds, scientific calculations and serial protocols compatible.
 
 ## 10.0.9
 
@@ -816,8 +828,6 @@
 ## 4.7.12
 
 - Analysis-linked reports and responsive download controls.
-
-## 4.7.9
 
 ## 4.7.11
 

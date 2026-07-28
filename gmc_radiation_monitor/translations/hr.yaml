@@ -369,12 +369,6 @@ configuration:
   interface:
     description: Zajednički jezik, način prikaza i MQTT prezentacija.
     fields:
-      custom_value_font_size_px:
-        description: "Veličina u pikselima (20–64), koristi se samo uz Prilagođeno."
-        name: "Prilagođena veličina"
-      main_value_size:
-        description: "Postavlja zadanu veličinu: malu, srednju, veliku ili prilagođenu."
-        name: "Veličina glavne vrijednosti"
       publish_advanced_sensors:
         description: Izloži statistiku, osnovnu vrijednost i upozorenja putem MQTT Discoveryja.
         name: Objavi napredne MQTT senzore

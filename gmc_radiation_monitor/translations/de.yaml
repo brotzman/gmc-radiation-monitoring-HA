@@ -379,12 +379,6 @@ configuration:
   interface:
     description: Gemeinsame Sprache, Ansichtsart und MQTT-Darstellung.
     fields:
-      custom_value_font_size_px:
-        description: "Schriftgröße in Pixeln (20–64). Wird nur bei „Benutzerdefiniert“ verwendet."
-        name: "Benutzerdefinierte Schriftgröße"
-      main_value_size:
-        description: "Legt die Standardgröße des Hauptmesswerts fest: klein, mittel, groß oder benutzerdefiniert."
-        name: "Hauptmesswert Schriftgröße"
       publish_advanced_sensors:
         description: Statistik-, Basislinien- und Alarmwerte per MQTT Discovery veröffentlichen.
         name: Erweiterte MQTT-Sensoren
