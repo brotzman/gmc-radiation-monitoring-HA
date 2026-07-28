@@ -6,7 +6,7 @@ Measurements are published to Home Assistant through MQTT Discovery, while the l
 
 Add this repository to Home Assistant, then install **GMC Radiation Monitor** from the App Store.
 
-Current release: **10.0.16**, a maintenance and archive-cleanup release that removes obsolete dashboard code and updates outdated test-fixture coverage while preserving measurements, database schema 8, MQTT identities and configuration compatibility.
+Current release: **10.0.17**, a maintenance and archive-cleanup release that removes obsolete dashboard code and updates outdated test-fixture coverage while preserving measurements, database schema 8, MQTT identities and configuration compatibility.
 
 
 ## Release quality checks

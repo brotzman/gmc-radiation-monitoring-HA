@@ -192,13 +192,13 @@ def _inspect(page: Any, width: int, zoom: int) -> dict[str, Any]:
           }
           const scroller = document.querySelector('.page-scroll');
           const dashboard = document.querySelector('.dashboard-controls');
-          const jumpLinks = document.querySelector('.jump-links');
+          const mobileNavigation = document.querySelector('.mobile-dashboard-navigation');
           const languageSelect = document.querySelector('#language-select');
           const reloadButton = document.querySelector('#reload-dashboard');
           const headerTools = document.querySelector('.header-tools');
           const dashboardStyle = getComputedStyle(dashboard);
-          const jumpStyle = getComputedStyle(jumpLinks);
-          const jumpColumnCount = jumpStyle.gridTemplateColumns.split(' ').filter(Boolean).length;
+          const mobileNavigationStyle = getComputedStyle(mobileNavigation);
+          const mobileNavigationColumnCount = mobileNavigationStyle.gridTemplateColumns.split(' ').filter(Boolean).length;
           const beforeTop = dashboard.getBoundingClientRect().top;
           scroller.scrollTop = Math.min(dashboard.offsetTop + dashboard.offsetHeight + 240, Math.max(0, scroller.scrollHeight - scroller.clientHeight));
           await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
@@ -223,8 +223,8 @@ def _inspect(page: Any, width: int, zoom: int) -> dict[str, Any]:
             scrollerPaddingTop,
             dashboardRight: afterBox.right,
             dashboardLeft: afterBox.left,
-            jumpLinksOverflowX: jumpStyle.overflowX,
-            jumpLinksColumns: jumpColumnCount,
+            mobileNavigationDisplay: mobileNavigationStyle.display,
+            mobileNavigationColumns: mobileNavigationColumnCount,
             languageSelectPresent: Boolean(languageSelect),
             languageSelected: languageSelect ? languageSelect.value : '',
             reloadButtonPresent: Boolean(reloadButton),
@@ -275,13 +275,13 @@ def run(package_root: Path, *, chromium_path: str | None = None) -> list[dict[st
                 and result["deviceCards"] >= 2
                 and result["tables"] >= 1
                 and result["dashboardPosition"] == "sticky"
-                and result["dashboardDisplay"] == "grid"
-                and result["dashboardOverflowX"] in {"clip", "hidden"}
-                and abs(result["dashboardAfterTop"] - (result["scrollerTop"] + result["scrollerPaddingTop"])) <= 2
+                and result["dashboardDisplay"] == "block"
+                and result["dashboardOverflowX"] in {"visible", "clip", "hidden"}
+                and 5 <= result["dashboardAfterTop"] - (result["scrollerTop"] + result["scrollerPaddingTop"]) <= 16
                 and result["dashboardLeft"] >= -1
                 and result["dashboardRight"] <= width + 1
-                and result["jumpLinksOverflowX"] == "visible"
-                and result["jumpLinksColumns"] == 4
+                and result["mobileNavigationDisplay"] == "grid"
+                and result["mobileNavigationColumns"] == 3
                 and result["languageSelectPresent"]
                 and result["languageSelected"] == language
                 and result["reloadButtonPresent"]

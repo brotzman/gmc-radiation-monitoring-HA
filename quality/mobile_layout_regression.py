@@ -18,9 +18,9 @@ FIXTURE_BODY = r'''
     <div class="header-tools"><div class="analysis-select-group"><label class="analysis-select-label"><span class="visually-hidden">Ansicht</span><span class="analysis-select-control"><span class="analysis-select-icon" aria-hidden="true">▤</span><select id="analysis-level-select" aria-label="Ansicht"><option>◉ Zusammenfassung</option><option selected>▤ Analyse</option><option>∑ Experte</option></select></span></label><small class="header-select-description">Detaillierte Interpretation und die wichtigsten unterstützenden Werte</small></div><form class="language-select-form"><label class="language-select-label"><span class="visually-hidden">Sprache</span><span class="language-select-control"><span class="language-select-icon" aria-hidden="true">🌐</span><select id="language-select" aria-label="Sprache"><option>Automatisch</option><option selected>Deutsch</option><option>English</option></select></span></label></form><a class="header-status-badge warning"><span class="header-status-symbol">🟡</span><span class="header-status-text">1/2 verbunden</span></a><button class="header-tool-button reload-button" id="reload-dashboard" aria-label="Seite aktualisieren" title="Seite aktualisieren"><span class="header-tool-icon">↻</span><span class="header-tool-label visually-hidden">Aktualisieren</span></button></div>
   </div>
 </header>
-<nav class="dashboard-controls">
-  <div class="jump-links"><a>Verbundene Geräte</a><a>Strahlungsintelligenz</a><a>Langzeitanalyse und Entwicklung</a><a>Wartung und Diagnose</a></div>
-  <div class="dashboard-actions"><button class="compact-action">Ansicht aktualisieren und Status neu laden</button></div>
+<nav class="dashboard-controls" id="dashboard-controls">
+  <div class="desktop-dashboard-navigation"><div class="jump-links"><a>Geräte</a><a>Intelligenz</a><a>Analyse</a><a>Langzeit</a><a>Verlauf</a></div><details class="navigation-menu"><summary>Mehr</summary></details></div>
+  <div class="mobile-dashboard-navigation"><details class="navigation-menu sections-navigation-menu"><summary>☰ Bereiche</summary><div class="mobile-navigation-sheet"><strong>Übersicht</strong><a>Geräte</a><a>Intelligenz</a><strong>Auswertung</strong><a>Analyse</a><a>Langzeit</a><a>Verlauf</a></div></details><span class="current-section-label">Analyse</span><button class="back-to-top-button">⌃</button></div>
 </nav>
 <section><div class="device-card"><div class="device-card-header"><div class="device-card-title"><div class="device-card-icon">GMC-500+</div><div class="device-card-title-copy"><h3>GMC-500+ - Wohnzimmer und Messstation</h3><small>USB-/dev/serial/by-id/außergewöhnlich-lange-serielle-gerätekennung</small></div></div><div class="device-status-stack"><span class="device-status waiting">Verbindung wird hergestellt und Messdaten werden validiert</span><span class="device-freshness freshness-warning">Letzter Messwert ist älter als erwartet und wird erneut geprüft</span></div></div><div class="live-refresh-status" data-state="warning">Die Live-Aktualisierung ist vorübergehend verzögert: außergewöhnlichLangeFehlerkennungOhneTrennzeichen012345678901234567890123456789.</div><div class="device-alert warning"><strong>Statusmeldung</strong><small>Diese Meldung muss vollständig innerhalb des Kartenrandes bleiben und darf nicht horizontal abgeschnitten werden.</small></div></div></section>
 <section><div class="status-summary"><div class="status-item yellow"><strong>Datenbankstatus</strong><span class="status-value">Wiederherstellung erforderlich</span><small>Sehr lange ergänzende Statusmeldung.</small></div><div class="status-item blue"><strong>Gerätestatus</strong><span class="status-value">Verbindung wird hergestellt</span></div></div></section>
@@ -63,7 +63,7 @@ def run(css_path: Path, *, chromium_path: str | None = None) -> list[dict[str, o
                     """async () => {
                       const viewport = window.innerWidth;
                       const pageScroll = document.querySelector('.page-scroll');
-                      const selectors = ['main','header','section','.dashboard-controls','.jump-links','.header-topline','.header-tools','.analysis-select-group','.analysis-select-label','.language-select-form','.language-select-label','.header-status-badge','.device-card','.table-wrap','.long-term-table-wrap','.calendar-scroll','.calibration-wizard'];
+                      const selectors = ['main','header','section','.dashboard-controls','.mobile-dashboard-navigation','.header-topline','.header-tools','.analysis-select-group','.analysis-select-label','.language-select-form','.language-select-label','.header-status-badge','.device-card','.table-wrap','.long-term-table-wrap','.calendar-scroll','.calibration-wizard'];
                       const outside = [];
                       for (const selector of selectors) {
                         for (const node of document.querySelectorAll(selector)) {
@@ -74,9 +74,9 @@ def run(css_path: Path, *, chromium_path: str | None = None) -> list[dict[str, o
                       const status = document.querySelector('.device-status');
                       const tableCell = document.querySelector('.table-wrap td');
                       const dashboard = document.querySelector('.dashboard-controls');
-                      const jumpLinks = document.querySelector('.jump-links');
+                      const mobileNavigation = document.querySelector('.mobile-dashboard-navigation');
                       const dashboardStyle = getComputedStyle(dashboard);
-                      const jumpStyle = getComputedStyle(jumpLinks);
+                      const mobileNavigationStyle = getComputedStyle(mobileNavigation);
                       pageScroll.scrollTop = Math.min(dashboard.offsetTop + dashboard.offsetHeight + 240, Math.max(0, pageScroll.scrollHeight - pageScroll.clientHeight));
                       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
                       const dashboardBox = dashboard.getBoundingClientRect();
@@ -100,7 +100,7 @@ def run(css_path: Path, *, chromium_path: str | None = None) -> list[dict[str, o
                         pagePaddingTop,
                         dashboardLeft: dashboardBox.left,
                         dashboardRight: dashboardBox.right,
-                        jumpLinksColumns: jumpStyle.gridTemplateColumns.split(' ').filter(Boolean).length
+                        mobileNavigationColumns: mobileNavigationStyle.gridTemplateColumns.split(' ').filter(Boolean).length
                       };
                     }"""
                 )
@@ -112,12 +112,12 @@ def run(css_path: Path, *, chromium_path: str | None = None) -> list[dict[str, o
                     and result["statusWhiteSpace"] == "normal"
                     and result["tableCellDisplay"] == "grid"
                     and result["dashboardPosition"] == "sticky"
-                    and result["dashboardDisplay"] == "grid"
-                    and result["dashboardOverflowX"] in {"clip", "hidden"}
-                    and abs(result["dashboardTop"] - (result["pageTop"] + result["pagePaddingTop"])) <= 2
+                    and result["dashboardDisplay"] == "block"
+                    and result["dashboardOverflowX"] in {"visible", "clip", "hidden"}
+                    and 5 <= result["dashboardTop"] - (result["pageTop"] + result["pagePaddingTop"]) <= 16
                     and result["dashboardLeft"] >= -1
                     and result["dashboardRight"] <= width + 1
-                    and result["jumpLinksColumns"] == 4
+                    and result["mobileNavigationColumns"] == 3
                 )
                 if not ok:
                     failures.append({"width": width, "zoom": zoom, **result})
