@@ -1,5 +1,14 @@
 # Changelog
 
+## 10.0.10
+
+- Simplified the application-header language selector to one visible line by moving the language label to an accessible screen-reader label.
+- Added a subtle globe icon inside the selector and aligned the selector exactly with the compact square refresh tile.
+- Kept both controls at the same 2.5-rem height on desktop and mobile, including narrow Home Assistant views.
+- Preserved keyboard access, localized labels, automatic submission, no-JavaScript fallback and the sticky mobile section navigation.
+- Extended rendered-header regression coverage for the compact control structure and accessible language label.
+- Kept database schema 8, measurements, MQTT identities, detector profiles, thresholds, scientific calculations and serial protocols compatible.
+
 ## 10.0.9
 
 - Replaced the multi-row language link list with a compact accessible dropdown in the application header.
