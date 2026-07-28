@@ -5,7 +5,7 @@ from typing import Protocol
 
 from .explanations import translate_action, translate_explanation
 from .number_format import format_number, localize_numeric_text, translator_language
-from .presentation_models import AnalysisLevel, AnalysisMetric, AnalysisResult, AnalysisStatus
+from .presentation_models import AnalysisMetric, AnalysisResult, AnalysisStatus
 
 
 class TranslatorLike(Protocol):
@@ -119,13 +119,6 @@ def render_collapsible_card(
         f'title="{html.escape(pin_label, quote=True)}" aria-pressed="false">☆</button></span></summary>'
         f'<div class="collapsible-card-body">{body}</div></details>'
     )
-
-
-def render_analysis_level_controls(*, default_level: str, translator: TranslatorLike) -> str:
-    """The analysis-level chooser now lives in the compact header toolbar."""
-    _ = AnalysisLevel.normalize(default_level)
-    _translator = translator
-    return ""
 
 
 def render_analysis_result_summary(result: AnalysisResult, translator: TranslatorLike) -> str:

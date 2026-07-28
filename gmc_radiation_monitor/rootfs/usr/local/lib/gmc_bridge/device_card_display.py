@@ -153,26 +153,6 @@ def render_live_measurement(
     )
 
 
-def render_measurement_display_settings(*, t: TranslatorLike, custom_px: int) -> str:
-    options = "".join(
-        f'<label><input type="radio" name="main-value-size" value="{value}"><span>{html.escape(t(label))}</span></label>'
-        for value, label in (("small", "Small"), ("medium", "Medium"), ("large", "Large"), ("custom", "Custom"))
-    )
-    return (
-        '<details class="measurement-display-settings">'
-        f'<summary><span><strong>{html.escape(t("Measurement display"))}</strong>'
-        f'<small>{html.escape(t("Main measurement font size"))}</small></span></summary>'
-        f'<div class="measurement-size-options" role="radiogroup" aria-label="{html.escape(t("Main measurement font size"), quote=True)}">'
-        f'{options}<label class="custom-font-size"><span>{html.escape(t("Custom font size"))}</span>'
-        f'<input type="number" id="custom-value-font-size" min="20" max="64" step="1" value="{custom_px}"><span>px</span></label>'
-        '</div>'
-        f'<div class="measurement-override-row" id="measurement-override-status" hidden aria-live="polite">'
-        f'<span>{html.escape(t("Local browser setting active"))}</span>'
-        f'<button type="button" id="reset-main-value-size" class="button secondary">{html.escape(t("Reset to app default"))}</button>'
-        '</div></details>'
-    )
-
-
 def render_connection_details(
     *,
     t: TranslatorLike,

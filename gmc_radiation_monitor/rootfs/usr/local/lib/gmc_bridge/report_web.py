@@ -41,7 +41,6 @@ from .device_card_display import (
     render_connection_details,
     render_device_card_header,
     render_live_measurement,
-    render_measurement_display_settings,
 )
 from .fleet_analytics import build_fleet_snapshot
 from .historical_presentation import trend_symbol
@@ -95,7 +94,6 @@ from .web_analysis_views import (
 )
 from .web_assets import render_dashboard_bootstrap
 from .web_components import (
-    render_analysis_level_controls,
     render_collapsible_card,
     render_home_assistant_location,
 )
@@ -139,8 +137,6 @@ class ReportApplication(ReportStatusMixin, ReportDeviceViewMixin, WorkflowApplic
         safety_danger_usvh: float = 0.651,
         ui_mode: str = "advanced",
         ui_language: str = "auto",
-        main_value_size: str = "large",
-        custom_value_font_size_px: int = 36,
         history_management_enabled: bool = False,
         restore_enabled: bool | None = None,
         purge_all_history_enabled: bool | None = None,
@@ -170,8 +166,6 @@ class ReportApplication(ReportStatusMixin, ReportDeviceViewMixin, WorkflowApplic
         self.safety_danger_usvh = safety_danger_usvh
         self.ui_mode = ui_mode if ui_mode in {"simple", "advanced"} else "advanced"
         self.ui_language = ui_language
-        self.main_value_size = main_value_size if main_value_size in {"small", "medium", "large", "custom"} else "large"
-        self.custom_value_font_size_px = min(64, max(20, int(custom_value_font_size_px)))
         legacy_history_management = bool(restore_enabled) or bool(purge_all_history_enabled)
         self.history_management_enabled = bool(history_management_enabled) or legacy_history_management
         self.restore_enabled = self.history_management_enabled
@@ -263,17 +257,6 @@ class ReportApplication(ReportStatusMixin, ReportDeviceViewMixin, WorkflowApplic
         database = status["database"]
         db_size_bytes = int(database.get("size_bytes", 0))
         db_size = f"{format_number(db_size_bytes / (1024 * 1024), language, decimals=2)} MiB"
-        now_epoch = int(datetime.now(UTC).timestamp())
-
-        def _dashboard_timestamp(value: object, fallback: str | None = None) -> str:
-            if value in (None, "", 0):
-                return fallback or t("No data")
-            try:
-                localized = datetime.fromtimestamp(int(value), UTC).astimezone(self.timezone)
-                return localized.strftime("%d.%m.%Y %H:%M:%S %Z" if language == "de" else "%Y-%m-%d %H:%M:%S %Z")
-            except (TypeError, ValueError, OSError):
-                return str(value)
-
         connected_count = len(devices)
         known_count = len(all_sorted_devices)
         disconnected_count = max(0, known_count - connected_count)
@@ -302,37 +285,6 @@ class ReportApplication(ReportStatusMixin, ReportDeviceViewMixin, WorkflowApplic
             else "🔴" if known_count
             else "🔵"
         )
-        selected_latest_timestamp = int((selected_device or {}).get("timestamp_utc") or 0)
-        selected_latest_cpm = (selected_device or {}).get("cpm")
-        selected_latest_value = (
-            f"{format_number(int(selected_latest_cpm), language, grouping=True)} CPM" if selected_latest_cpm is not None else t("No measurement yet")
-        )
-        selected_latest_age = (
-            max(0, now_epoch - selected_latest_timestamp) if selected_latest_timestamp else None
-        )
-        selected_latest_meta = (
-            t("{seconds} seconds ago", seconds=selected_latest_age)
-            if selected_latest_age is not None and selected_latest_age < 120
-            else _dashboard_timestamp(selected_latest_timestamp)
-        )
-        global_last_timestamp = int(status.get("last_timestamp_utc") or 0)
-        discarded_peak_samples = sum(
-            int(item.get("cpm_discarded_peak_samples") or 0) for item in all_sorted_devices
-        )
-        db_integrity = str(database.get("integrity") or "unknown")
-        db_state_class = "ok" if db_integrity == "ok" else "error"
-        status_state = (
-            "error"
-            if db_state_class == "error" or (known_count and connected_count == 0)
-            else "warning"
-            if disconnected_count or discarded_peak_samples or not selected_latest_timestamp or not global_last_timestamp
-            else "ok"
-        )
-        status_headline = t("System running normally") if status_state == "ok" else t("Attention required")
-        storage_summary = t("Storage current") if global_last_timestamp else t("No successful storage yet")
-        compact_status = " · ".join((connection_summary, f"{selected_latest_value} · {selected_latest_meta}", storage_summary))
-        status_open = " open" if status_state == "error" else ""
-        status_strip_html = ""
         dashboard_controls_html = f"""
 <nav class="dashboard-controls" id="dashboard-controls" aria-label="{html.escape(t("Dashboard navigation"), quote=True)}">
 <div class="jump-links">
@@ -478,11 +430,6 @@ class ReportApplication(ReportStatusMixin, ReportDeviceViewMixin, WorkflowApplic
             t=t,
             csrf_token=self.csrf_tokens.issue("calibration-profiles"),
         )
-        analysis_level_controls_html = self._render_analysis_level_controls(
-            default_level="summary" if mode == "simple" else "analysis",
-            t=t,
-        )
-
         workflow_settings = load_workflow_settings(self.store)
         comparison_serial = (
             compare_device_override if compare_device_override in device_serials else selected_serial
@@ -760,14 +707,12 @@ class ReportApplication(ReportStatusMixin, ReportDeviceViewMixin, WorkflowApplic
 <link rel="stylesheet" href="./assets/dashboard.css?v={html.escape(ASSET_REVISION, quote=True)}">
 <style id="critical-dashboard-layout">
 .page-scroll {{ width:100%; height:100%; min-height:0; overflow-y:auto; overflow-x:clip; -webkit-overflow-scrolling:touch; touch-action:pan-y; padding-bottom:env(safe-area-inset-bottom,0px); }}
-.status-strip {{ position:static; display:block; }}
-.system-status-panel {{ display:block; width:100%; }}
 .form-grid > *, label {{ min-width:0; max-width:100%; }}
 input[type="date"], input[type="week"], input[type="month"], input[type="datetime-local"] {{ min-inline-size:0; max-inline-size:100%; }}
 @media (max-width:620px) {{ .report-format-guide {{ grid-template-columns:1fr; }} }}
 </style>
 </head>
-<body class="mode-{mode}" data-analysis-level="{"summary" if mode == "simple" else "analysis"}" data-main-value-size="{html.escape(self.main_value_size, quote=True)}" data-custom-value-font-size-px="{self.custom_value_font_size_px}" style="--custom-main-value-font-size:{self.custom_value_font_size_px}px"><div class="page-scroll" id="page-scroll"><main>
+<body class="mode-{mode}" data-analysis-level="{"summary" if mode == "simple" else "analysis"}"><div class="page-scroll" id="page-scroll"><main>
 <header class="report-header">
 <div class="header-topline">
 <div class="header-intro">
@@ -790,8 +735,6 @@ input[type="date"], input[type="week"], input[type="month"], input[type="datetim
 </a>
 </div>
 </header>
-{analysis_level_controls_html}
-{status_strip_html}
 {dashboard_controls_html}
 <div id="primary-dashboard" class="primary-dashboard">
 {multi_device_html}

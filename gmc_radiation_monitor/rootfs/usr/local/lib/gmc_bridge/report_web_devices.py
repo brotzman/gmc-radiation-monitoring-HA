@@ -8,7 +8,7 @@ from urllib.parse import quote_plus
 from .analysis_presentation import AnalysisPresentationConfig, baseline_state, build_absolute_safety_result, build_adaptive_background_result, build_background_profile_entity, build_combined_interpretation_result, build_cosmic_influence_result, build_detailed_analysis_result, build_fleet_intelligence_result, build_local_background_result, build_radiation_intelligence_result, build_recommendation_result, effective_safety_thresholds, fleet_stability_display_key, safety_state
 from .calibration_web import render_calibration_panel
 from .device_profiles import normalize_device_version_display
-from .device_card_display import format_live_dose as _format_live_dose, measurement_freshness, render_connection_details, render_device_card_header, render_live_measurement, render_measurement_display_settings
+from .device_card_display import format_live_dose as _format_live_dose, measurement_freshness, render_connection_details, render_device_card_header, render_live_measurement
 from .fleet_analytics import build_fleet_snapshot
 from .historical_presentation import trend_symbol
 from .intelligence import build_radiation_intelligence
@@ -20,7 +20,7 @@ from .reports import expected_samples, resolve_period
 from .translations import Translator, resolve_language
 from .utils import slugify
 from .web_analysis_views import render_absolute_safety, render_adaptive_background, render_assessment_legend, render_background_profile_entity, render_combined_interpretation, render_cosmic_influence, render_device_analysis, render_fleet_intelligence, render_local_background, render_radiation_intelligence, render_recommendation
-from .web_components import render_analysis_level_controls, render_collapsible_card
+from .web_components import render_collapsible_card
 
 
 class ReportDeviceViewMixin:
@@ -52,10 +52,6 @@ class ReportDeviceViewMixin:
             pin_label=pin_label,
             help_label=help_label,
         )
-
-    @staticmethod
-    def _render_analysis_level_controls(*, default_level: str, t) -> str:
-        return render_analysis_level_controls(default_level=default_level, translator=t)
 
     @staticmethod
     def _trend_symbol(value: float | None) -> str:
@@ -456,8 +452,7 @@ class ReportDeviceViewMixin:
             card_id="devices",
             title=t("Connected GMC devices"),
             body=(
-                render_measurement_display_settings(t=t, custom_px=self.custom_value_font_size_px)
-                + f'<div id="live-refresh-status" class="live-refresh-status" role="status" aria-live="polite" hidden></div>'
+                f'<div id="live-refresh-status" class="live-refresh-status" role="status" aria-live="polite" hidden></div>'
                 + f'<div class="device-grid">{device_cards}</div>'
             ),
             attributes=(

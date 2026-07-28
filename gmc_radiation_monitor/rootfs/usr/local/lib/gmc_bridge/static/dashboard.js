@@ -32,60 +32,6 @@
     try { localStorage.setItem(key, JSON.stringify(value)); } catch (_error) {}
   }
   const preferences = readJson(uiStorageKey, { cards: {}, groups: {}, pinned: [], reportForms: {}, lastSection: '', analysisLevel: '' });
-  const allowedMainValueSizes = new Set(['small', 'medium', 'large', 'custom']);
-  const appMainValueSize = allowedMainValueSizes.has(document.body.dataset.mainValueSize)
-    ? document.body.dataset.mainValueSize
-    : 'large';
-  const configuredCustomValue = Number(document.body.dataset.customValueFontSizePx || 36);
-  const appCustomValueFontSizePx = Math.min(64, Math.max(20, Number.isFinite(configuredCustomValue) ? Math.round(configuredCustomValue) : 36));
-  function hasLocalMeasurementDisplayOverride() {
-    return Object.prototype.hasOwnProperty.call(preferences, 'mainValueSize')
-      || Object.prototype.hasOwnProperty.call(preferences, 'customValueFontSizePx');
-  }
-  function applyMeasurementDisplayPreferences() {
-    const requestedSize = preferences.mainValueSize || appMainValueSize;
-    const size = allowedMainValueSizes.has(requestedSize) ? requestedSize : appMainValueSize;
-    const requestedCustom = Number(preferences.customValueFontSizePx ?? appCustomValueFontSizePx);
-    const customPx = Math.min(64, Math.max(20, Number.isFinite(requestedCustom) ? Math.round(requestedCustom) : appCustomValueFontSizePx));
-    document.body.dataset.mainValueSize = size;
-    document.body.style.setProperty('--custom-main-value-font-size', `${customPx}px`);
-    document.querySelectorAll('input[name="main-value-size"]').forEach((input) => { input.checked = input.value === size; });
-    document.querySelectorAll('#custom-value-font-size').forEach((input) => { input.value = String(customPx); input.disabled = size !== 'custom'; });
-    const overrideStatus = document.getElementById('measurement-override-status');
-    if (overrideStatus) overrideStatus.hidden = !hasLocalMeasurementDisplayOverride();
-  }
-  applyMeasurementDisplayPreferences();
-
-  document.addEventListener('change', (event) => {
-    const sizeInput = event.target.closest('input[name="main-value-size"]');
-    if (sizeInput) {
-      preferences.mainValueSize = sizeInput.value;
-      writeJson(uiStorageKey, preferences);
-      applyMeasurementDisplayPreferences();
-      return;
-    }
-    const customInput = event.target.closest('#custom-value-font-size');
-    if (customInput) {
-      preferences.customValueFontSizePx = Math.min(64, Math.max(20, Number(customInput.value || appCustomValueFontSizePx)));
-      writeJson(uiStorageKey, preferences);
-      applyMeasurementDisplayPreferences();
-    }
-  });
-  document.addEventListener('input', (event) => {
-    const customInput = event.target.closest('#custom-value-font-size');
-    if (!customInput || document.body.dataset.mainValueSize !== 'custom') return;
-    const px = Math.min(64, Math.max(20, Number(customInput.value || appCustomValueFontSizePx)));
-    document.body.style.setProperty('--custom-main-value-font-size', `${px}px`);
-  });
-  document.addEventListener('click', (event) => {
-    const resetButton = event.target.closest('#reset-main-value-size');
-    if (!resetButton) return;
-    event.preventDefault();
-    delete preferences.mainValueSize;
-    delete preferences.customValueFontSizePx;
-    writeJson(uiStorageKey, preferences);
-    applyMeasurementDisplayPreferences();
-  });
   const analysisLevelSelect = document.getElementById('analysis-level-select');
   const analysisLevelIcon = document.getElementById('analysis-level-icon');
   const allowedAnalysisLevels = new Set(['summary', 'analysis', 'expert']);
@@ -168,8 +114,6 @@
     return true;
   }
   document.addEventListener('click', (event) => {
-    const levelButton = event.target.closest('.analysis-level-button');
-    if (levelButton) { event.preventDefault(); setAnalysisLevel(levelButton.dataset.analysisLevel || 'analysis'); return; }
     const toggleAll = event.target.closest('#toggle-all-cards');
     if (toggleAll) {
       event.preventDefault();
@@ -177,7 +121,7 @@
       setAllCards(!(details.length > 0 && details.every((item) => item.open)));
       return;
     }
-    const jump = event.target.closest('.jump-links a[href^="#"], .status-strip a[href^="#"]');
+    const jump = event.target.closest('.jump-links a[href^="#"]');
     if (jump && jumpToSection(jump.getAttribute('href') || '')) event.preventDefault();
   });
 

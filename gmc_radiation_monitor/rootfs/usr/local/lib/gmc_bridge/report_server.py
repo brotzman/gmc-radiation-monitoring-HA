@@ -47,8 +47,6 @@ def run_report_server() -> None:
     safety_danger_usvh = float(os.environ.get("SAFETY_DANGER_USVH", "0.651"))
     ui_mode = os.environ.get("UI_MODE", "simple").strip().lower()
     ui_language = os.environ.get("UI_LANGUAGE", "auto").strip().lower()
-    main_value_size = os.environ.get("MAIN_VALUE_SIZE", "large").strip().lower()
-    custom_value_font_size_px = int(os.environ.get("CUSTOM_VALUE_FONT_SIZE_PX", "36"))
     cosmic_hint_enabled = os.environ.get("COSMIC_HINT_ENABLED", "false").strip().lower() == "true"
     bridge_heartbeat_path = os.environ.get("BRIDGE_HEARTBEAT_PATH", "/data/gmc_bridge_heartbeat.json").strip()
     pressure_weather_entity_primary = os.environ.get(
@@ -85,10 +83,6 @@ def run_report_server() -> None:
         raise ValueError("UI_MODE must be simple or advanced")
     if ui_language not in {"auto", *SUPPORTED_UI_LANGUAGES}:
         raise ValueError("UI_LANGUAGE is unsupported")
-    if main_value_size not in {"small", "medium", "large", "custom"}:
-        raise ValueError("MAIN_VALUE_SIZE must be small, medium, large, or custom")
-    if not 20 <= custom_value_font_size_px <= 64:
-        raise ValueError("CUSTOM_VALUE_FONT_SIZE_PX must be between 20 and 64")
     store = HistoryStore(DEFAULT_DB_PATH, retention_days=retention_days)
     home_assistant_client = HomeAssistantConfigClient()
     pressure_client = (
@@ -117,8 +111,6 @@ def run_report_server() -> None:
         safety_danger_usvh=safety_danger_usvh,
         ui_mode=ui_mode,
         ui_language=ui_language,
-        main_value_size=main_value_size,
-        custom_value_font_size_px=custom_value_font_size_px,
         history_management_enabled=history_management_enabled,
         home_assistant_client=home_assistant_client,
         pressure_client=pressure_client,
