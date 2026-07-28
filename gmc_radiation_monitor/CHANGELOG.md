@@ -1,6 +1,6 @@
 # Changelog
 
-## 10.0.16
+## 10.0.17
 
 - Removed the obsolete large system-status panel styles, segmented analysis-selector styles and JavaScript handlers left behind after the compact header controls replaced them.
 - Removed dead report-rendering variables, empty component wrappers and unused imports associated with those retired controls.

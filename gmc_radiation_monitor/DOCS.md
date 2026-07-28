@@ -6,9 +6,9 @@ A local Home Assistant App (formerly add-on) for compatible GQ GMC Geiger counte
 
 > **Safety notice:** This add-on is intended for monitoring and home automation. It is not a calibrated radiation-protection instrument. Derived dose rates, profiles, anomaly detection and recommendations do not replace official measurements, professional advice or emergency instructions.
 
-## Version 10.0.16: archive and maintenance cleanup
+## Version 10.0.17: archive and maintenance cleanup
 
-Version 10.0.16 removes obsolete CSS, JavaScript and Python rendering code left behind by the earlier replacement of the large status panel and segmented view selector. The standalone responsive fixture now represents the current compact header controls, and a dedicated regression test prevents the retired components from returning unnoticed.
+Version 10.0.17 removes obsolete CSS, JavaScript and Python rendering code left behind by the earlier replacement of the large status panel and segmented view selector. The standalone responsive fixture now represents the current compact header controls, and a dedicated regression test prevents the retired components from returning unnoticed.
 
 The quality runner now reports its discovered unit/integration test count dynamically. Duplicate 10.0.15 release documentation was consolidated, the add-on description formatting was normalized and generated cache files are excluded from the release archive. Database schema 8, measurements, MQTT identities, detector profiles, thresholds, scientific calculations, serial protocols and existing configuration remain compatible.
 
