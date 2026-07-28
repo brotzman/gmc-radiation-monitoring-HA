@@ -1,12 +1,11 @@
 # Changelog
 
-## 10.0.13
+## 10.0.14
 
-- Simplified the application-header language selector to one visible line by moving the language label to an accessible screen-reader label.
-- Added a subtle globe icon inside the selector and aligned the selector exactly with the compact square refresh tile.
-- Kept both controls at the same 2.5-rem height on desktop and mobile, including narrow Home Assistant views.
-- Preserved keyboard access, localized labels, automatic submission, no-JavaScript fallback and the sticky mobile section navigation.
-- Extended rendered-header regression coverage for the compact control structure and accessible language label.
+- Shortened the German application and browser title from `GMC-Strahlungsüberwachung` to `Strahlungsüberwachung`.
+- Kept the subtitle `Lokale Überwachung für GQ-GMC-Geigerzähler` unchanged.
+- Added a rendered-page regression test for the shortened German title and unchanged subtitle.
+- Updated the bundled manual version markers and PDF metadata to 10.0.14.
 - Kept database schema 8, measurements, MQTT identities, detector profiles, thresholds, scientific calculations and serial protocols compatible.
 
 ## 10.0.9
