@@ -191,20 +191,15 @@ def _inspect(page: Any, width: int, zoom: int) -> dict[str, Any]:
             }
           }
           const scroller = document.querySelector('.page-scroll');
-          const dashboard = document.querySelector('.dashboard-controls');
-          const mobileNavigation = document.querySelector('.mobile-dashboard-navigation');
           const languageSelect = document.querySelector('#language-select');
+          const sectionSelect = document.querySelector('#section-select');
+          const statusColumn = document.querySelector('.header-status-column');
+          const statusBadge = document.querySelector('#header-status-badge');
           const reloadButton = document.querySelector('#reload-dashboard');
           const headerTools = document.querySelector('.header-tools');
-          const dashboardStyle = getComputedStyle(dashboard);
-          const mobileNavigationStyle = getComputedStyle(mobileNavigation);
-          const mobileNavigationColumnCount = mobileNavigationStyle.gridTemplateColumns.split(' ').filter(Boolean).length;
-          const beforeTop = dashboard.getBoundingClientRect().top;
-          scroller.scrollTop = Math.min(dashboard.offsetTop + dashboard.offsetHeight + 240, Math.max(0, scroller.scrollHeight - scroller.clientHeight));
-          await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-          const afterBox = dashboard.getBoundingClientRect();
-          const scrollerBox = scroller.getBoundingClientRect();
-          const scrollerPaddingTop = parseFloat(getComputedStyle(scroller).paddingTop) || 0;
+          const statusColumnBox = statusColumn ? statusColumn.getBoundingClientRect() : null;
+          const statusBadgeBox = statusBadge ? statusBadge.getBoundingClientRect() : null;
+          const sectionSelectBox = sectionSelect ? sectionSelect.getBoundingClientRect() : null;
           return {
             viewport,
             documentWidth: root.scrollWidth,
@@ -214,17 +209,10 @@ def _inspect(page: Any, width: int, zoom: int) -> dict[str, Any]:
             title: document.title,
             deviceCards: document.querySelectorAll('.device-card').length,
             tables: document.querySelectorAll('table').length,
-            dashboardPosition: dashboardStyle.position,
-            dashboardDisplay: dashboardStyle.display,
-            dashboardOverflowX: dashboardStyle.overflowX,
-            dashboardBeforeTop: beforeTop,
-            dashboardAfterTop: afterBox.top,
-            scrollerTop: scrollerBox.top,
-            scrollerPaddingTop,
-            dashboardRight: afterBox.right,
-            dashboardLeft: afterBox.left,
-            mobileNavigationDisplay: mobileNavigationStyle.display,
-            mobileNavigationColumns: mobileNavigationColumnCount,
+            sectionSelectPresent: Boolean(sectionSelect),
+            sectionSelected: sectionSelect ? sectionSelect.value : '',
+            sectionBelowStatus: Boolean(statusBadgeBox && sectionSelectBox && sectionSelectBox.top >= statusBadgeBox.bottom - 1),
+            sectionWithinStatusColumn: Boolean(statusColumnBox && sectionSelectBox && sectionSelectBox.left >= statusColumnBox.left - 1 && sectionSelectBox.right <= statusColumnBox.right + 1),
             languageSelectPresent: Boolean(languageSelect),
             languageSelected: languageSelect ? languageSelect.value : '',
             reloadButtonPresent: Boolean(reloadButton),
@@ -274,14 +262,10 @@ def run(package_root: Path, *, chromium_path: str | None = None) -> list[dict[st
                 and not result["horizontalScrollers"]
                 and result["deviceCards"] >= 2
                 and result["tables"] >= 1
-                and result["dashboardPosition"] == "sticky"
-                and result["dashboardDisplay"] == "block"
-                and result["dashboardOverflowX"] in {"visible", "clip", "hidden"}
-                and 5 <= result["dashboardAfterTop"] - (result["scrollerTop"] + result["scrollerPaddingTop"]) <= 16
-                and result["dashboardLeft"] >= -1
-                and result["dashboardRight"] <= width + 1
-                and result["mobileNavigationDisplay"] == "grid"
-                and result["mobileNavigationColumns"] == 3
+                and result["sectionSelectPresent"]
+                and result["sectionSelected"] == "devices"
+                and result["sectionBelowStatus"]
+                and result["sectionWithinStatusColumn"]
                 and result["languageSelectPresent"]
                 and result["languageSelected"] == language
                 and result["reloadButtonPresent"]

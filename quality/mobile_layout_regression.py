@@ -15,13 +15,10 @@ FIXTURE_BODY = r'''
 <header class="report-header">
   <div class="header-topline">
     <div class="header-intro"><h1>GMC Radiation Monitor responsive regression</h1><p>Sehr lange mobile Überschrift und Beschreibung für die Überprüfung der Darstellung.</p></div>
-    <div class="header-tools"><div class="analysis-select-group"><label class="analysis-select-label"><span class="visually-hidden">Ansicht</span><span class="analysis-select-control"><span class="analysis-select-icon" aria-hidden="true">▤</span><select id="analysis-level-select" aria-label="Ansicht"><option>◉ Zusammenfassung</option><option selected>▤ Analyse</option><option>∑ Experte</option></select></span></label><small class="header-select-description">Detaillierte Interpretation und die wichtigsten unterstützenden Werte</small></div><form class="language-select-form"><label class="language-select-label"><span class="visually-hidden">Sprache</span><span class="language-select-control"><span class="language-select-icon" aria-hidden="true">🌐</span><select id="language-select" aria-label="Sprache"><option>Automatisch</option><option selected>Deutsch</option><option>English</option></select></span></label></form><a class="header-status-badge warning"><span class="header-status-symbol">🟡</span><span class="header-status-text">1/2 verbunden</span></a><button class="header-tool-button reload-button" id="reload-dashboard" aria-label="Seite aktualisieren" title="Seite aktualisieren"><span class="header-tool-icon">↻</span><span class="header-tool-label visually-hidden">Aktualisieren</span></button></div>
+    <div class="header-tools"><div class="analysis-select-group"><label class="analysis-select-label"><span class="visually-hidden">Ansicht</span><span class="analysis-select-control"><span class="analysis-select-icon" aria-hidden="true">▤</span><select id="analysis-level-select" aria-label="Ansicht"><option>◉ Zusammenfassung</option><option selected>▤ Analyse</option><option>∑ Experte</option></select></span></label><small class="header-select-description">Detaillierte Interpretation und die wichtigsten unterstützenden Werte</small></div><form class="language-select-form"><label class="language-select-label"><span class="visually-hidden">Sprache</span><span class="language-select-control"><span class="language-select-icon" aria-hidden="true">🌐</span><select id="language-select" aria-label="Sprache"><option>Automatisch</option><option selected>Deutsch</option><option>English</option></select></span></label></form><div class="header-status-column"><a class="header-status-badge warning"><span class="header-status-symbol">🟡</span><span class="header-status-text">1/2 verbunden</span></a><label class="section-select-label"><span class="visually-hidden">Bereich</span><span class="section-select-control"><select id="section-select" aria-label="Bereich"><optgroup label="Übersicht"><option>▣ Geräte</option><option>✦ Intelligente Auswertung</option></optgroup><optgroup label="Auswertung"><option selected>▤ Analyse</option><option>↗ Langzeit</option><option>⌁ Verlauf</option></optgroup></select></span></label></div><button class="header-tool-button reload-button" id="reload-dashboard" aria-label="Seite aktualisieren" title="Seite aktualisieren"><span class="header-tool-icon">↻</span><span class="header-tool-label visually-hidden">Aktualisieren</span></button></div>
   </div>
 </header>
-<nav class="dashboard-controls" id="dashboard-controls">
-  <div class="desktop-dashboard-navigation"><div class="jump-links"><a>Geräte</a><a>Intelligenz</a><a>Analyse</a><a>Langzeit</a><a>Verlauf</a></div><details class="navigation-menu"><summary>Mehr</summary></details></div>
-  <div class="mobile-dashboard-navigation"><details class="navigation-menu sections-navigation-menu"><summary>☰ Bereiche</summary><div class="mobile-navigation-sheet"><strong>Übersicht</strong><a>Geräte</a><a>Intelligenz</a><strong>Auswertung</strong><a>Analyse</a><a>Langzeit</a><a>Verlauf</a></div></details><span class="current-section-label">Analyse</span><button class="back-to-top-button">⌃</button></div>
-</nav>
+<div class="content-utility-bar"><button class="compact-content-action">Alle ausklappen</button></div>
 <section><div class="device-card"><div class="device-card-header"><div class="device-card-title"><div class="device-card-icon">GMC-500+</div><div class="device-card-title-copy"><h3>GMC-500+ - Wohnzimmer und Messstation</h3><small>USB-/dev/serial/by-id/außergewöhnlich-lange-serielle-gerätekennung</small></div></div><div class="device-status-stack"><span class="device-status waiting">Verbindung wird hergestellt und Messdaten werden validiert</span><span class="device-freshness freshness-warning">Letzter Messwert ist älter als erwartet und wird erneut geprüft</span></div></div><div class="live-refresh-status" data-state="warning">Die Live-Aktualisierung ist vorübergehend verzögert: außergewöhnlichLangeFehlerkennungOhneTrennzeichen012345678901234567890123456789.</div><div class="device-alert warning"><strong>Statusmeldung</strong><small>Diese Meldung muss vollständig innerhalb des Kartenrandes bleiben und darf nicht horizontal abgeschnitten werden.</small></div></div></section>
 <section><div class="status-summary"><div class="status-item yellow"><strong>Datenbankstatus</strong><span class="status-value">Wiederherstellung erforderlich</span><small>Sehr lange ergänzende Statusmeldung.</small></div><div class="status-item blue"><strong>Gerätestatus</strong><span class="status-value">Verbindung wird hergestellt</span></div></div></section>
 <section><div class="table-wrap"><table><thead><tr><th>Messzeitpunkt</th><th>Status und Interpretation</th><th>Technischer Wert</th></tr></thead><tbody><tr><td data-label="Messzeitpunkt">26.07.2026 21:45:00</td><td data-label="Status und Interpretation">Außergewöhnlich lange Statusbeschreibung, die auf Mobilgeräten zweizeilig oder mehrzeilig erscheinen soll.</td><td data-label="Technischer Wert">UngewöhnlichLangerTechnischerWertOhneLeerzeichen012345678901234567890123456789</td></tr></tbody></table></div></section>
@@ -63,7 +60,7 @@ def run(css_path: Path, *, chromium_path: str | None = None) -> list[dict[str, o
                     """async () => {
                       const viewport = window.innerWidth;
                       const pageScroll = document.querySelector('.page-scroll');
-                      const selectors = ['main','header','section','.dashboard-controls','.mobile-dashboard-navigation','.header-topline','.header-tools','.analysis-select-group','.analysis-select-label','.language-select-form','.language-select-label','.header-status-badge','.device-card','.table-wrap','.long-term-table-wrap','.calendar-scroll','.calibration-wizard'];
+                      const selectors = ['main','header','section','.content-utility-bar','.header-topline','.header-tools','.analysis-select-group','.analysis-select-label','.language-select-form','.language-select-label','.header-status-column','.header-status-badge','.section-select-label','.device-card','.table-wrap','.long-term-table-wrap','.calendar-scroll','.calibration-wizard'];
                       const outside = [];
                       for (const selector of selectors) {
                         for (const node of document.querySelectorAll(selector)) {
@@ -73,15 +70,11 @@ def run(css_path: Path, *, chromium_path: str | None = None) -> list[dict[str, o
                       }
                       const status = document.querySelector('.device-status');
                       const tableCell = document.querySelector('.table-wrap td');
-                      const dashboard = document.querySelector('.dashboard-controls');
-                      const mobileNavigation = document.querySelector('.mobile-dashboard-navigation');
-                      const dashboardStyle = getComputedStyle(dashboard);
-                      const mobileNavigationStyle = getComputedStyle(mobileNavigation);
-                      pageScroll.scrollTop = Math.min(dashboard.offsetTop + dashboard.offsetHeight + 240, Math.max(0, pageScroll.scrollHeight - pageScroll.clientHeight));
-                      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-                      const dashboardBox = dashboard.getBoundingClientRect();
-                      const pageBox = pageScroll.getBoundingClientRect();
-                      const pagePaddingTop = parseFloat(getComputedStyle(pageScroll).paddingTop) || 0;
+                      const sectionSelect = document.querySelector('#section-select');
+                      const headerStatusColumn = document.querySelector('.header-status-column');
+                      const sectionSelectStyle = getComputedStyle(sectionSelect);
+                      const statusBox = headerStatusColumn.getBoundingClientRect();
+                      const selectBox = sectionSelect.getBoundingClientRect();
                       return {
                         viewport,
                         documentWidth: document.documentElement.scrollWidth,
@@ -92,15 +85,10 @@ def run(css_path: Path, *, chromium_path: str | None = None) -> list[dict[str, o
                         statusWhiteSpace: getComputedStyle(status).whiteSpace,
                         tableCellDisplay: getComputedStyle(tableCell).display,
                         tableCellColumns: getComputedStyle(tableCell).gridTemplateColumns,
-                        dashboardPosition: dashboardStyle.position,
-                        dashboardDisplay: dashboardStyle.display,
-                        dashboardOverflowX: dashboardStyle.overflowX,
-                        dashboardTop: dashboardBox.top,
-                        pageTop: pageBox.top,
-                        pagePaddingTop,
-                        dashboardLeft: dashboardBox.left,
-                        dashboardRight: dashboardBox.right,
-                        mobileNavigationColumns: mobileNavigationStyle.gridTemplateColumns.split(' ').filter(Boolean).length
+                        sectionSelectPresent: Boolean(sectionSelect),
+                        sectionSelectDisplay: sectionSelectStyle.display,
+                        sectionBelowStatus: selectBox.top >= statusBox.top,
+                        sectionWithinStatusColumn: selectBox.left >= statusBox.left - 1 && selectBox.right <= statusBox.right + 1
                       };
                     }"""
                 )
@@ -111,13 +99,10 @@ def run(css_path: Path, *, chromium_path: str | None = None) -> list[dict[str, o
                     and not result["outside"]
                     and result["statusWhiteSpace"] == "normal"
                     and result["tableCellDisplay"] == "grid"
-                    and result["dashboardPosition"] == "sticky"
-                    and result["dashboardDisplay"] == "block"
-                    and result["dashboardOverflowX"] in {"visible", "clip", "hidden"}
-                    and 5 <= result["dashboardTop"] - (result["pageTop"] + result["pagePaddingTop"]) <= 16
-                    and result["dashboardLeft"] >= -1
-                    and result["dashboardRight"] <= width + 1
-                    and result["mobileNavigationColumns"] == 3
+                    and result["sectionSelectPresent"]
+                    and result["sectionSelectDisplay"] != "none"
+                    and result["sectionBelowStatus"]
+                    and result["sectionWithinStatusColumn"]
                 )
                 if not ok:
                     failures.append({"width": width, "zoom": zoom, **result})

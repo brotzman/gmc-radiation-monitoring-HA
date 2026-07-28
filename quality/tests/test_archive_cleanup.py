@@ -17,12 +17,22 @@ class ArchiveCleanupTests(unittest.TestCase):
             ".system-status-panel",
             ".status-details-grid",
             ".status-strip-item",
+            ".dashboard-controls",
+            ".mobile-dashboard-navigation",
+            ".navigation-menu-popover",
+            ".mobile-navigation-sheet",
+            ".back-to-top-button",
         ):
             self.assertNotIn(obsolete, css)
         self.assertNotIn("analysis-level-button", js)
         self.assertNotIn("status-strip", js)
+        self.assertNotIn("navigation-condensed", js)
+        self.assertNotIn("back-to-top", js)
+        self.assertNotIn("data-jump-link", js)
         self.assertNotIn("analysis_level_controls_html", report)
         self.assertNotIn("status_strip_html", report)
+        self.assertNotIn("dashboard_controls_html", report)
+        self.assertNotIn('id="dashboard-controls"', report)
         self.assertNotIn("def render_analysis_level_controls", components)
 
 

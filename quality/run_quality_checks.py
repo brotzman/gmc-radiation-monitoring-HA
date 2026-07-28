@@ -81,7 +81,6 @@ def main() -> int:
         ".language-switcher { width:100%; min-width:0; flex-wrap:nowrap; overflow-x:auto",
         "10.0.1 mobile layout hardening",
         "10.0.1 mobile follow-up",
-        ".dashboard-controls { position:static",
     )
     found = [item for item in forbidden if item in css_text]
     if found:
@@ -112,7 +111,7 @@ def main() -> int:
             if _run(command, env=env):
                 return 1
 
-    browser_summary = "browser regressions skipped" if args.skip_browser else "sticky responsive browser regressions"
+    browser_summary = "browser regressions skipped" if args.skip_browser else "responsive browser regressions"
     unit_summary = "unit/integration tests skipped" if args.skip_unit else f"{unit_test_count} unit/integration tests"
     print(
         f"Quality checks passed: compilation, {unit_summary}, module splits, "
