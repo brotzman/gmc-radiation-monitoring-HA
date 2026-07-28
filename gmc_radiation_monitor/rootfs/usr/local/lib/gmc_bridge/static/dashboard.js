@@ -33,24 +33,20 @@
   }
   const preferences = readJson(uiStorageKey, { cards: {}, groups: {}, pinned: [], reportForms: {}, lastSection: '', analysisLevel: '' });
   const analysisLevelSelect = document.getElementById('analysis-level-select');
-  const analysisLevelIcon = document.getElementById('analysis-level-icon');
   const allowedAnalysisLevels = new Set(['summary', 'analysis', 'expert']);
   function setAnalysisLevel(requestedLevel, persist = true) {
     const fallback = analysisLevelSelect?.dataset.defaultLevel || 'analysis';
     const level = allowedAnalysisLevels.has(requestedLevel) ? requestedLevel : fallback;
     document.body.dataset.analysisLevel = level;
     let selectedDescription = '';
-    let selectedSymbol = '';
     if (analysisLevelSelect instanceof HTMLSelectElement) {
       analysisLevelSelect.value = level;
       const selectedOption = analysisLevelSelect.selectedOptions[0];
       selectedDescription = selectedOption?.dataset.description || '';
-      selectedSymbol = selectedOption?.dataset.symbol || '';
       analysisLevelSelect.title = selectedDescription || analysisLevelSelect.getAttribute('aria-label') || '';
     }
     const description = document.getElementById('analysis-level-description');
     if (description && selectedDescription) description.textContent = selectedDescription;
-    if (analysisLevelIcon && selectedSymbol) analysisLevelIcon.textContent = selectedSymbol;
     if (persist) { preferences.analysisLevel = level; writeJson(uiStorageKey, preferences); }
   }
   analysisLevelSelect?.addEventListener('change', () => {
@@ -119,10 +115,46 @@
     setAllCards(!(details.length > 0 && details.every((item) => item.open)));
   });
   const sectionSelect = document.getElementById('section-select');
+  const sectionNavigationSlot = document.getElementById('section-navigation-slot');
+  const sectionFloatingNavigation = document.getElementById('section-floating-navigation');
+  const navigationScrollContainer = document.getElementById('page-scroll');
   sectionSelect?.addEventListener('change', () => {
     const sectionId = sectionSelect.value || 'devices';
     jumpToSection(`#${sectionId}`);
   });
+  function updateFloatingSectionNavigation() {
+    if (!sectionNavigationSlot || !sectionFloatingNavigation) return;
+    const slotBox = sectionNavigationSlot.getBoundingClientRect();
+    const scrollBox = navigationScrollContainer?.getBoundingClientRect();
+    const safeTop = Math.max(12, (scrollBox?.top || 0) + 12);
+    const shouldFloat = slotBox.top < safeTop;
+    if (!shouldFloat) {
+      sectionFloatingNavigation.classList.remove('is-floating');
+      sectionFloatingNavigation.style.removeProperty('--section-floating-left');
+      sectionFloatingNavigation.style.removeProperty('--section-floating-width');
+      return;
+    }
+    const viewportPadding = 12;
+    const width = Math.min(slotBox.width, window.innerWidth - viewportPadding * 2);
+    const left = Math.min(
+      Math.max(viewportPadding, slotBox.left),
+      Math.max(viewportPadding, window.innerWidth - width - viewportPadding),
+    );
+    sectionFloatingNavigation.style.setProperty('--section-floating-left', `${Math.round(left)}px`);
+    sectionFloatingNavigation.style.setProperty('--section-floating-width', `${Math.round(width)}px`);
+    sectionFloatingNavigation.classList.add('is-floating');
+  }
+  let sectionFloatingFrame = 0;
+  function scheduleFloatingSectionNavigationUpdate() {
+    if (sectionFloatingFrame) return;
+    sectionFloatingFrame = window.requestAnimationFrame(() => {
+      sectionFloatingFrame = 0;
+      updateFloatingSectionNavigation();
+    });
+  }
+  navigationScrollContainer?.addEventListener('scroll', scheduleFloatingSectionNavigationUpdate, {passive:true});
+  window.addEventListener('resize', scheduleFloatingSectionNavigationUpdate, {passive:true});
+  scheduleFloatingSectionNavigationUpdate();
 
   document.querySelectorAll('a[href*="action=download"]').forEach((link) => {
     const url = resolveDashboardUrl(link.getAttribute('href') || '');

@@ -652,12 +652,10 @@ class ReportApplication(ReportStatusMixin, ReportDeviceViewMixin, WorkflowApplic
         )
         analysis_select_options = []
         analysis_selected_description = ""
-        analysis_selected_symbol = "◉"
         for level_value, level_symbol, level_label, level_description in analysis_level_options:
             selected = ' selected' if level_value == analysis_level_default else ""
             if level_value == analysis_level_default:
                 analysis_selected_description = level_description
-                analysis_selected_symbol = level_symbol
             analysis_select_options.append(
                 f'<option value="{html.escape(level_value, quote=True)}" data-symbol="{html.escape(level_symbol, quote=True)}" '
                 f'data-description="{html.escape(level_description, quote=True)}"{selected}>'
@@ -701,7 +699,7 @@ class ReportApplication(ReportStatusMixin, ReportDeviceViewMixin, WorkflowApplic
         language_toolbar_html = f"""
 <div class="header-tools" aria-label="{html.escape(t("Application controls"), quote=True)}">
 <div class="analysis-select-group">
-<label class="analysis-select-label" for="analysis-level-select"><span class="visually-hidden">{html.escape(t("View"))}</span><span class="analysis-select-control"><span class="analysis-select-icon" id="analysis-level-icon" aria-hidden="true">{html.escape(analysis_selected_symbol)}</span>
+<label class="analysis-select-label" for="analysis-level-select"><span class="visually-hidden">{html.escape(t("View"))}</span><span class="analysis-select-control">
 <select id="analysis-level-select" aria-label="{html.escape(t("View"), quote=True)}" title="{html.escape(t("View"), quote=True)}" data-default-level="{html.escape(analysis_level_default, quote=True)}">{''.join(analysis_select_options)}</select></span></label>
 <small id="analysis-level-description" class="header-select-description" aria-live="polite">{html.escape(analysis_selected_description)}</small>
 </div>
@@ -714,8 +712,12 @@ class ReportApplication(ReportStatusMixin, ReportDeviceViewMixin, WorkflowApplic
 </form>
 <div class="header-status-column">
 <a class="header-status-badge {connection_state_class}" id="header-status-badge" href="#devices" title="{html.escape(connection_summary, quote=True)}" aria-label="{html.escape(connection_summary, quote=True)}"><span class="header-status-symbol" aria-hidden="true">{header_connection_symbol}</span><span class="header-status-text">{html.escape(header_connection_label)}</span></a>
+<div class="section-navigation-slot" id="section-navigation-slot">
+<div class="section-floating-navigation" id="section-floating-navigation">
 <label class="section-select-label" for="section-select"><span class="visually-hidden">{html.escape(t("Section"))}</span><span class="section-select-control">
 <select id="section-select" aria-label="{html.escape(t("Section"), quote=True)}" title="{html.escape(t("Section"), quote=True)}">{''.join(section_select_options)}</select></span></label>
+</div>
+</div>
 </div>
 <button type="button" class="header-tool-button reload-button" id="reload-dashboard" aria-label="{html.escape(t("Refresh page"), quote=True)}" title="{html.escape(t("Refresh page"), quote=True)}"><span class="header-tool-icon" aria-hidden="true">↻</span><span class="header-tool-label visually-hidden">{html.escape(t("Refresh"))}</span></button>
 </div>
