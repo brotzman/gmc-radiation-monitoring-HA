@@ -715,8 +715,32 @@ class ReportApplication(ReportStatusMixin, ReportDeviceViewMixin, WorkflowApplic
                 f'<option value="{html.escape(language_code, quote=True)}"{selected}>'
                 f'{html.escape(option_label)}</option>'
             )
+        analysis_level_default = "summary" if mode == "simple" else "analysis"
+        analysis_level_options = (
+            ("summary", "◉", t("Summary"), t("Only the most important conclusions at a glance")),
+            ("analysis", "▤", t("Analysis"), t("Detailed interpretation and the most useful supporting values")),
+            ("expert", "∑", t("Expert"), t("All statistical values, confidence intervals and diagnostics")),
+        )
+        analysis_select_options = []
+        analysis_selected_description = ""
+        analysis_selected_symbol = "◉"
+        for level_value, level_symbol, level_label, level_description in analysis_level_options:
+            selected = ' selected' if level_value == analysis_level_default else ""
+            if level_value == analysis_level_default:
+                analysis_selected_description = level_description
+                analysis_selected_symbol = level_symbol
+            analysis_select_options.append(
+                f'<option value="{html.escape(level_value, quote=True)}" data-symbol="{html.escape(level_symbol, quote=True)}" '
+                f'data-description="{html.escape(level_description, quote=True)}"{selected}>'
+                f'{html.escape(level_symbol)} {html.escape(level_label)}</option>'
+            )
         language_toolbar_html = f"""
 <div class="header-tools" aria-label="{html.escape(t("Application controls"), quote=True)}">
+<div class="analysis-select-group">
+<label class="analysis-select-label" for="analysis-level-select"><span class="visually-hidden">{html.escape(t("View"))}</span><span class="analysis-select-control"><span class="analysis-select-icon" id="analysis-level-icon" aria-hidden="true">{html.escape(analysis_selected_symbol)}</span>
+<select id="analysis-level-select" aria-label="{html.escape(t("View"), quote=True)}" title="{html.escape(t("View"), quote=True)}" data-default-level="{html.escape(analysis_level_default, quote=True)}">{''.join(analysis_select_options)}</select></span></label>
+<small id="analysis-level-description" class="header-select-description" aria-live="polite">{html.escape(analysis_selected_description)}</small>
+</div>
 <form method="get" class="language-select-form" id="language-select-form">
 <input type="hidden" name="mode" value="{html.escape(mode, quote=True)}">
 {f'<input type="hidden" name="device" value="{html.escape(selected_serial, quote=True)}">' if selected_serial else ''}

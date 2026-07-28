@@ -122,31 +122,10 @@ def render_collapsible_card(
 
 
 def render_analysis_level_controls(*, default_level: str, translator: TranslatorLike) -> str:
-    level = AnalysisLevel.normalize(default_level)
-    labels = (
-        (AnalysisLevel.SUMMARY, "◉", translator("Summary"), translator("Only the most important conclusions at a glance")),
-        (AnalysisLevel.ANALYSIS, "▤", translator("Analysis"), translator("Detailed interpretation and the most useful supporting values")),
-        (AnalysisLevel.EXPERT, "∑", translator("Expert"), translator("All statistical values, confidence intervals and diagnostics")),
-    )
-    buttons = "".join(
-        f'<button type="button" class="analysis-level-button" data-analysis-level="{name.value}" '
-        f'data-analysis-description="{html.escape(help_text, quote=True)}" '
-        f'aria-controls="primary-dashboard analysis history workflow reports maintenance" '
-        f'aria-pressed="{str(name == level).lower()}" title="{html.escape(help_text, quote=True)}">'
-        f'<span class="analysis-level-symbol" aria-hidden="true">{symbol}</span>'
-        f'<span class="analysis-level-label">{html.escape(label)}</span></button>'
-        for name, symbol, label, help_text in labels
-    )
-    selected_description = next(help_text for name, _symbol, _label, help_text in labels if name == level)
-    return (
-        f'<section class="analysis-level-panel" id="analysis-level-panel" data-default-level="{level.value}">'
-        f'<div class="analysis-level-copy"><strong>{html.escape(translator("View"))}</strong>'
-        f'<span>{html.escape(translator("Choose how many details and tools this page shows. The selection is stored in this browser."))}</span></div>'
-        f'<div class="analysis-level-control-group">'
-        f'<div class="analysis-level-buttons" role="group" aria-label="{html.escape(translator("View"), quote=True)}">{buttons}</div>'
-        f'<small id="analysis-level-description" class="analysis-level-description" aria-live="polite">{html.escape(selected_description)}</small>'
-        f'</div></section>'
-    )
+    """The analysis-level chooser now lives in the compact header toolbar."""
+    _ = AnalysisLevel.normalize(default_level)
+    _translator = translator
+    return ""
 
 
 def render_analysis_result_summary(result: AnalysisResult, translator: TranslatorLike) -> str:

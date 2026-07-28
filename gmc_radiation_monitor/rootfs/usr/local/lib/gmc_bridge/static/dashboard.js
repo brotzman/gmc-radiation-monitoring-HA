@@ -86,23 +86,31 @@
     writeJson(uiStorageKey, preferences);
     applyMeasurementDisplayPreferences();
   });
-  const analysisLevelPanel = document.getElementById('analysis-level-panel');
+  const analysisLevelSelect = document.getElementById('analysis-level-select');
+  const analysisLevelIcon = document.getElementById('analysis-level-icon');
   const allowedAnalysisLevels = new Set(['summary', 'analysis', 'expert']);
   function setAnalysisLevel(requestedLevel, persist = true) {
-    const fallback = analysisLevelPanel?.dataset.defaultLevel || 'analysis';
+    const fallback = analysisLevelSelect?.dataset.defaultLevel || 'analysis';
     const level = allowedAnalysisLevels.has(requestedLevel) ? requestedLevel : fallback;
     document.body.dataset.analysisLevel = level;
     let selectedDescription = '';
-    document.querySelectorAll('.analysis-level-button').forEach((button) => {
-      const selected = button.dataset.analysisLevel === level;
-      button.setAttribute('aria-pressed', String(selected));
-      if (selected) selectedDescription = button.dataset.analysisDescription || '';
-    });
+    let selectedSymbol = '';
+    if (analysisLevelSelect instanceof HTMLSelectElement) {
+      analysisLevelSelect.value = level;
+      const selectedOption = analysisLevelSelect.selectedOptions[0];
+      selectedDescription = selectedOption?.dataset.description || '';
+      selectedSymbol = selectedOption?.dataset.symbol || '';
+      analysisLevelSelect.title = selectedDescription || analysisLevelSelect.getAttribute('aria-label') || '';
+    }
     const description = document.getElementById('analysis-level-description');
     if (description && selectedDescription) description.textContent = selectedDescription;
+    if (analysisLevelIcon && selectedSymbol) analysisLevelIcon.textContent = selectedSymbol;
     if (persist) { preferences.analysisLevel = level; writeJson(uiStorageKey, preferences); }
   }
-  setAnalysisLevel(preferences.analysisLevel || analysisLevelPanel?.dataset.defaultLevel || 'analysis', false);
+  analysisLevelSelect?.addEventListener('change', () => {
+    setAnalysisLevel(analysisLevelSelect.value || 'analysis');
+  });
+  setAnalysisLevel(preferences.analysisLevel || analysisLevelSelect?.dataset.defaultLevel || 'analysis', false);
 
   const toggleAllButton = document.getElementById('toggle-all-cards');
   const allDetailsSelector = 'details.collapsible-card, details.analysis-group, details.download-group';
