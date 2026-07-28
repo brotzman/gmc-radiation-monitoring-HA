@@ -287,18 +287,45 @@ class ReportApplication(ReportStatusMixin, ReportDeviceViewMixin, WorkflowApplic
         )
         dashboard_controls_html = f"""
 <nav class="dashboard-controls" id="dashboard-controls" aria-label="{html.escape(t("Dashboard navigation"), quote=True)}">
-<div class="jump-links">
-<a href="#devices">{html.escape(t("Devices"))}</a>
-<a href="#radiation-intelligence">{html.escape(t("Intelligence"))}</a>
-<a href="#analysis">{html.escape(t("Analysis"))}</a>
-<a href="#long-term-analysis">{html.escape(t("Long-term"))}</a>
-<a href="#history">{html.escape(t("History"))}</a>
-<a href="#workflow">{html.escape(t("Workflows"))}</a>
-<a href="#calibration-management">{html.escape(t("Calibration profiles"))}</a>
-<a href="#reports">{html.escape(t("Reports"))}</a>
+<div class="desktop-dashboard-navigation">
+<div class="jump-links primary-jump-links">
+<a data-jump-link href="#devices">{html.escape(t("Devices"))}</a>
+<a data-jump-link href="#radiation-intelligence">{html.escape(t("Intelligence"))}</a>
+<a data-jump-link href="#analysis">{html.escape(t("Analysis"))}</a>
+<a data-jump-link href="#long-term-analysis">{html.escape(t("Long-term"))}</a>
+<a data-jump-link href="#history">{html.escape(t("History"))}</a>
 </div>
-<div class="dashboard-actions">
-<button type="button" class="compact-action" id="toggle-all-cards" aria-expanded="false">{html.escape(t("Expand all"))}</button>
+<details class="navigation-menu more-navigation-menu">
+<summary>{html.escape(t("More"))}<span aria-hidden="true">▾</span></summary>
+<div class="navigation-menu-popover">
+<a data-jump-link href="#workflow">{html.escape(t("Workflows"))}</a>
+<a data-jump-link href="#calibration-management">{html.escape(t("Calibration"))}</a>
+<a data-jump-link href="#reports">{html.escape(t("Reports"))}</a>
+<hr>
+<button type="button" class="navigation-menu-action" id="toggle-all-cards" aria-expanded="false">{html.escape(t("Expand all"))}</button>
+</div>
+</details>
+</div>
+<div class="mobile-dashboard-navigation">
+<details class="navigation-menu sections-navigation-menu" id="mobile-sections-menu">
+<summary><span aria-hidden="true">☰</span><span>{html.escape(t("Sections"))}</span></summary>
+<div class="mobile-navigation-sheet">
+<strong>{html.escape(t("Overview"))}</strong>
+<a data-jump-link href="#devices">{html.escape(t("Devices"))}</a>
+<a data-jump-link href="#radiation-intelligence">{html.escape(t("Intelligence"))}</a>
+<strong>{html.escape(t("Evaluation"))}</strong>
+<a data-jump-link href="#analysis">{html.escape(t("Analysis"))}</a>
+<a data-jump-link href="#long-term-analysis">{html.escape(t("Long-term"))}</a>
+<a data-jump-link href="#history">{html.escape(t("History"))}</a>
+<strong>{html.escape(t("Administration"))}</strong>
+<a data-jump-link href="#workflow">{html.escape(t("Workflows"))}</a>
+<a data-jump-link href="#calibration-management">{html.escape(t("Calibration"))}</a>
+<a data-jump-link href="#reports">{html.escape(t("Reports"))}</a>
+<button type="button" class="navigation-menu-action mobile-toggle-all" data-toggle-all-cards aria-expanded="false">{html.escape(t("Expand all"))}</button>
+</div>
+</details>
+<span class="current-section-label" id="current-section-label" aria-live="polite">{html.escape(t("Devices"))}</span>
+<button type="button" class="back-to-top-button" id="back-to-top" aria-label="{html.escape(t("Back to top"), quote=True)}" title="{html.escape(t("Back to top"), quote=True)}">⌃</button>
 </div>
 </nav>
 """
