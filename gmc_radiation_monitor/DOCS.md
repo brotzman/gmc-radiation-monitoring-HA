@@ -6,11 +6,11 @@ A local Home Assistant App (formerly add-on) for compatible GQ GMC Geiger counte
 
 > **Safety notice:** This add-on is intended for monitoring and home automation. It is not a calibrated radiation-protection instrument. Derived dose rates, profiles, anomaly detection and recommendations do not replace official measurements, professional advice or emergency instructions.
 
-## Version 10.0.17: archive and maintenance cleanup
+## Version 10.0.18: compact header section navigation
 
-Version 10.0.17 removes obsolete CSS, JavaScript and Python rendering code left behind by the earlier replacement of the large status panel and segmented view selector. The standalone responsive fixture now represents the current compact header controls, and a dedicated regression test prevents the retired components from returning unnoticed.
+Version 10.0.18 replaces the floating desktop/mobile navigation with a grouped section dropdown directly below the connection-status badge. The selector follows the visible section, and the retired floating-menu code has been removed.
 
-The quality runner now reports its discovered unit/integration test count dynamically. Duplicate 10.0.15 release documentation was consolidated, the add-on description formatting was normalized and generated cache files are excluded from the release archive. Database schema 8, measurements, MQTT identities, detector profiles, thresholds, scientific calculations, serial protocols and existing configuration remain compatible.
+The dropdown groups overview, evaluation and administration destinations, uses a symbol before every section name and follows the visible section while scrolling. “Expand all” remains available as a small content action rather than part of the navigation. Database schema 8, measurements, MQTT identities, detector profiles, thresholds, scientific calculations, serial protocols and existing configuration remain compatible.
 
 ## Version 10.0.15: simplified measurement display and shorter German title
 

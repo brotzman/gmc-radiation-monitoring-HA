@@ -1,6 +1,16 @@
 # Changelog
 
-## 10.0.17
+## 10.0.18
+
+- Replaced the sticky/floating desktop and mobile section navigation with one compact section dropdown in the application header.
+- Positioned the section dropdown directly below the connection-status badge and kept the same placement model across desktop and mobile layouts.
+- Added grouped, symbol-prefixed destinations for devices, intelligent evaluation, analysis, long-term analysis, history, workflows, calibration and reports.
+- Updated the active dropdown selection while scrolling and retained smooth section jumps without adding browser-history entries.
+- Moved the global expand/collapse action out of the navigation into a small content utility control.
+- Removed the retired floating-menu markup, scroll-direction state, mobile sheet, back-to-top control and associated responsive CSS.
+- Kept database schema 8, stored measurements, MQTT identities, detector profiles, thresholds, scientific calculations, serial protocols and existing app options compatible.
+
+## 10.0.18
 
 - Removed the obsolete large system-status panel styles, segmented analysis-selector styles and JavaScript handlers left behind after the compact header controls replaced them.
 - Removed dead report-rendering variables, empty component wrappers and unused imports associated with those retired controls.
