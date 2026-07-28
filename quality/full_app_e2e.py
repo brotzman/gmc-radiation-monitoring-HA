@@ -200,6 +200,9 @@ def _inspect(page: Any, width: int, zoom: int) -> dict[str, Any]:
           const analysisSelect = document.querySelector('#analysis-level-select');
           const reloadButton = document.querySelector('#reload-dashboard');
           const headerTools = document.querySelector('.header-tools');
+          const subtitle = document.querySelector('.header-intro p');
+          const subtitleBox = subtitle ? subtitle.getBoundingClientRect() : null;
+          const subtitleStyle = subtitle ? getComputedStyle(subtitle) : null;
           const statusColumnBox = statusColumn ? statusColumn.getBoundingClientRect() : null;
           const statusBadgeBox = statusBadge ? statusBadge.getBoundingClientRect() : null;
           const sectionSelectBox = sectionSelect ? sectionSelect.getBoundingClientRect() : null;
@@ -246,7 +249,12 @@ def _inspect(page: Any, width: int, zoom: int) -> dict[str, Any]:
             languageSelected: languageSelect ? languageSelect.value : '',
             reloadButtonPresent: Boolean(reloadButton),
             headerToolsWidth: headerTools ? headerTools.scrollWidth : 0,
-            headerToolsClientWidth: headerTools ? headerTools.clientWidth : 0
+            headerToolsClientWidth: headerTools ? headerTools.clientWidth : 0,
+            subtitleWhiteSpace: subtitleStyle ? subtitleStyle.whiteSpace : '',
+            subtitleHeight: subtitleBox ? subtitleBox.height : 0,
+            subtitleLineHeight: subtitleStyle ? Number.parseFloat(subtitleStyle.lineHeight) : 0,
+            subtitleScrollWidth: subtitle ? subtitle.scrollWidth : 0,
+            subtitleClientWidth: subtitle ? subtitle.clientWidth : 0
           };
         }"""
     )
@@ -268,6 +276,7 @@ def run(package_root: Path, *, chromium_path: str | None = None) -> list[dict[st
         checks.extend(("de", width, zoom) for width in VIEWPORT_WIDTHS)
         checks.extend((language, 320, zoom) for language in LANGUAGES if language != "de")
         checks.extend((language, 390, zoom) for language in LANGUAGES if language != "de")
+    checks.extend(("de", width, 1) for width in (1024, 1280, 1440))
 
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(executable_path=executable, headless=True, args=["--no-sandbox"])
@@ -312,6 +321,14 @@ def run(package_root: Path, *, chromium_path: str | None = None) -> list[dict[st
                 and result["languageSelected"] == language
                 and result["reloadButtonPresent"]
                 and result["headerToolsWidth"] <= result["headerToolsClientWidth"] + 1
+                and (
+                    width <= 800
+                    or (
+                        result["subtitleWhiteSpace"] == "nowrap"
+                        and result["subtitleHeight"] <= result["subtitleLineHeight"] + 1
+                        and result["subtitleScrollWidth"] <= result["subtitleClientWidth"] + 1
+                    )
+                )
             )
             if not ok:
                 failures.append({"language": language, "width": width, "zoom": zoom, **result})
