@@ -15,7 +15,7 @@ FIXTURE_BODY = r'''
 <header class="report-header">
   <div class="header-topline">
     <div class="header-intro"><h1>GMC Radiation Monitor responsive regression</h1><p>Sehr lange mobile Überschrift und Beschreibung für die Überprüfung der Darstellung.</p></div>
-    <div class="header-tools"><form class="language-select-form"><label class="language-select-label"><span>Sprache</span><select id="language-select"><option>Automatisch</option><option selected>Deutsch</option><option>English</option></select></label></form><button class="header-tool-button reload-button" id="reload-dashboard" aria-label="Seite aktualisieren" title="Seite aktualisieren"><span class="header-tool-icon">↻</span><span class="header-tool-label visually-hidden">Aktualisieren</span></button></div>
+    <div class="header-tools"><form class="language-select-form"><label class="language-select-label"><span class="visually-hidden">Sprache</span><span class="language-select-control"><span class="language-select-icon" aria-hidden="true">🌐</span><select id="language-select" aria-label="Sprache"><option>Automatisch</option><option selected>Deutsch</option><option>English</option></select></span></label></form><button class="header-tool-button reload-button" id="reload-dashboard" aria-label="Seite aktualisieren" title="Seite aktualisieren"><span class="header-tool-icon">↻</span><span class="header-tool-label visually-hidden">Aktualisieren</span></button></div>
   </div>
 </header>
 <nav class="dashboard-controls">

@@ -32,6 +32,10 @@ class HeaderControlTests(unittest.TestCase):
         self.assertIn('<option value="de" selected>Deutsch</option>', page)
         self.assertIn('id="reload-dashboard"', page)
         self.assertIn('aria-label="Seite aktualisieren"', page)
+        self.assertIn('class="language-select-control"', page)
+        self.assertIn('class="language-select-icon"', page)
+        self.assertIn('aria-label="Sprache"', page)
+        self.assertNotIn('<span>Sprache</span>', page)
         self.assertNotIn('class="language-switcher"', page)
 
     def test_dashboard_script_wires_both_header_controls(self) -> None:
