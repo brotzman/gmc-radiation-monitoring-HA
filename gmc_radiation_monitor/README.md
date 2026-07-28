@@ -6,11 +6,9 @@ A local Home Assistant App (formerly add-on) for compatible GQ GMC Geiger counte
 
 > **Safety notice:** This add-on is intended for monitoring and home automation. It is not a calibrated radiation-protection instrument. Derived dose rates, profiles, anomaly detection and recommendations do not replace official measurements, professional advice or emergency instructions.
 
-## Version 10.0.19: focused floating section selector
+## Version 10.0.20: compact desktop header
 
-Version 10.0.19 keeps the view selector, language selector, connection status and refresh control together at the top right beside the application title. The section selector remains directly below the connection-status badge in its normal position.
-
-Only the section selector becomes floating after it scrolls beyond the top of the dashboard. The other header controls remain static. The floating position is measured from the original selector slot, remains inside the viewport on narrow screens and returns to its normal place when the user scrolls back to the header. The duplicated analysis symbol was also removed. Database schema 8, measurements, MQTT identities, detector profiles, thresholds, scientific calculations, serial protocols and existing configuration remain compatible.
+Version 10.0.20 reduces the width, spacing and height of the view selector, language selector, connection-status badge, section selector and refresh button on desktop. This gives the title area enough room to keep the German subtitle on one line. The controls remain at the top right, the section selector remains directly below the status badge, and only that selector floats while scrolling. Mobile layouts retain their existing reflow behavior.
 
 ## Version 10.0.18: compact header section navigation
 

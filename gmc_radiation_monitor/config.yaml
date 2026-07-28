@@ -2,7 +2,7 @@ name: GMC Radiation Monitor
 description: >-
   Local GQ GMC monitoring with MQTT Discovery, configurable safety profiles, background anomaly
   detection, diagnostics, reports, backups and streamed exports
-version: 10.0.19
+version: 10.0.20
 slug: gmc_radiation_monitor
 url: https://github.com/brotzman/gmc-homeassistant/tree/main/gmc_radiation_monitor
 stage: stable

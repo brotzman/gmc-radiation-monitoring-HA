@@ -1,5 +1,12 @@
 # Changelog
 
+## 10.0.20
+
+- Reduced the desktop widths of the view, language and section dropdowns.
+- Made the connection-status badge, refresh control, control spacing and control height more compact.
+- Kept the German subtitle "Lokale Überwachung für GQ-GMC-Geigerzähler" on one line in the desktop layout.
+- Preserved the existing mobile reflow and the floating behavior of only the section selector.
+
 ## 10.0.19
 
 - Kept the view selector, language selector, connection-status badge and refresh button together at the top right beside the application title on desktop.
