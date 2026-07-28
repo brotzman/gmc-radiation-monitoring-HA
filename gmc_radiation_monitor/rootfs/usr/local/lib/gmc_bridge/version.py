@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-APP_VERSION = "10.0.19"
-ASSET_REVISION = f"{APP_VERSION}-floating-section-selector-1"
+APP_VERSION = "10.0.20"
+ASSET_REVISION = f"{APP_VERSION}-compact-desktop-header-1"
 USER_AGENT = f"GMC-Radiation-Monitor/{APP_VERSION}"
 REPORT_SERVER_VERSION = f"GMCReportServer/{APP_VERSION}"
