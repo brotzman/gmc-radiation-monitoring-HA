@@ -285,50 +285,6 @@ class ReportApplication(ReportStatusMixin, ReportDeviceViewMixin, WorkflowApplic
             else "🔴" if known_count
             else "🔵"
         )
-        dashboard_controls_html = f"""
-<nav class="dashboard-controls" id="dashboard-controls" aria-label="{html.escape(t("Dashboard navigation"), quote=True)}">
-<div class="desktop-dashboard-navigation">
-<div class="jump-links primary-jump-links">
-<a data-jump-link href="#devices">{html.escape(t("Devices"))}</a>
-<a data-jump-link href="#radiation-intelligence">{html.escape(t("Intelligence"))}</a>
-<a data-jump-link href="#analysis">{html.escape(t("Analysis"))}</a>
-<a data-jump-link href="#long-term-analysis">{html.escape(t("Long-term"))}</a>
-<a data-jump-link href="#history">{html.escape(t("History"))}</a>
-</div>
-<details class="navigation-menu more-navigation-menu">
-<summary>{html.escape(t("More"))}<span aria-hidden="true">▾</span></summary>
-<div class="navigation-menu-popover">
-<a data-jump-link href="#workflow">{html.escape(t("Workflows"))}</a>
-<a data-jump-link href="#calibration-management">{html.escape(t("Calibration"))}</a>
-<a data-jump-link href="#reports">{html.escape(t("Reports"))}</a>
-<hr>
-<button type="button" class="navigation-menu-action" id="toggle-all-cards" aria-expanded="false">{html.escape(t("Expand all"))}</button>
-</div>
-</details>
-</div>
-<div class="mobile-dashboard-navigation">
-<details class="navigation-menu sections-navigation-menu" id="mobile-sections-menu">
-<summary><span aria-hidden="true">☰</span><span>{html.escape(t("Sections"))}</span></summary>
-<div class="mobile-navigation-sheet">
-<strong>{html.escape(t("Overview"))}</strong>
-<a data-jump-link href="#devices">{html.escape(t("Devices"))}</a>
-<a data-jump-link href="#radiation-intelligence">{html.escape(t("Intelligence"))}</a>
-<strong>{html.escape(t("Evaluation"))}</strong>
-<a data-jump-link href="#analysis">{html.escape(t("Analysis"))}</a>
-<a data-jump-link href="#long-term-analysis">{html.escape(t("Long-term"))}</a>
-<a data-jump-link href="#history">{html.escape(t("History"))}</a>
-<strong>{html.escape(t("Administration"))}</strong>
-<a data-jump-link href="#workflow">{html.escape(t("Workflows"))}</a>
-<a data-jump-link href="#calibration-management">{html.escape(t("Calibration"))}</a>
-<a data-jump-link href="#reports">{html.escape(t("Reports"))}</a>
-<button type="button" class="navigation-menu-action mobile-toggle-all" data-toggle-all-cards aria-expanded="false">{html.escape(t("Expand all"))}</button>
-</div>
-</details>
-<span class="current-section-label" id="current-section-label" aria-live="polite">{html.escape(t("Devices"))}</span>
-<button type="button" class="back-to-top-button" id="back-to-top" aria-label="{html.escape(t("Back to top"), quote=True)}" title="{html.escape(t("Back to top"), quote=True)}">⌃</button>
-</div>
-</nav>
-"""
         purge_controls = (
             f'<div class="note"><strong>{html.escape(t("Deletion is disabled by default."))}</strong><br>'
             f"{html.escape(t('Enable history management in the app configuration and restart only when maintenance is planned.'))}"
@@ -707,6 +663,41 @@ class ReportApplication(ReportStatusMixin, ReportDeviceViewMixin, WorkflowApplic
                 f'data-description="{html.escape(level_description, quote=True)}"{selected}>'
                 f'{html.escape(level_symbol)} {html.escape(level_label)}</option>'
             )
+        section_navigation_groups = (
+            (
+                t("Overview"),
+                (
+                    ("devices", "▣", t("Devices")),
+                    ("radiation-intelligence", "✦", t("Intelligence")),
+                ),
+            ),
+            (
+                t("Evaluation"),
+                (
+                    ("analysis", "▤", t("Analysis")),
+                    ("long-term-analysis", "↗", t("Long-term")),
+                    ("history", "⌁", t("History")),
+                ),
+            ),
+            (
+                t("Administration"),
+                (
+                    ("workflow", "⚙", t("Workflows")),
+                    ("calibration-management", "◎", t("Calibration")),
+                    ("reports", "⇩", t("Reports")),
+                ),
+            ),
+        )
+        section_select_options = []
+        for group_label, group_items in section_navigation_groups:
+            options = "".join(
+                f'<option value="{html.escape(section_id, quote=True)}">'
+                f'{html.escape(symbol)} {html.escape(label)}</option>'
+                for section_id, symbol, label in group_items
+            )
+            section_select_options.append(
+                f'<optgroup label="{html.escape(group_label, quote=True)}">{options}</optgroup>'
+            )
         language_toolbar_html = f"""
 <div class="header-tools" aria-label="{html.escape(t("Application controls"), quote=True)}">
 <div class="analysis-select-group">
@@ -721,10 +712,19 @@ class ReportApplication(ReportStatusMixin, ReportDeviceViewMixin, WorkflowApplic
 <select name="lang" id="language-select" aria-label="{html.escape(t("Language"), quote=True)}" title="{html.escape(t("Language"), quote=True)}">{''.join(language_select_options)}</select></span></label>
 <noscript><button type="submit" class="header-tool-button">{html.escape(t("Apply"))}</button></noscript>
 </form>
+<div class="header-status-column">
 <a class="header-status-badge {connection_state_class}" id="header-status-badge" href="#devices" title="{html.escape(connection_summary, quote=True)}" aria-label="{html.escape(connection_summary, quote=True)}"><span class="header-status-symbol" aria-hidden="true">{header_connection_symbol}</span><span class="header-status-text">{html.escape(header_connection_label)}</span></a>
+<label class="section-select-label" for="section-select"><span class="visually-hidden">{html.escape(t("Section"))}</span><span class="section-select-control">
+<select id="section-select" aria-label="{html.escape(t("Section"), quote=True)}" title="{html.escape(t("Section"), quote=True)}">{''.join(section_select_options)}</select></span></label>
+</div>
 <button type="button" class="header-tool-button reload-button" id="reload-dashboard" aria-label="{html.escape(t("Refresh page"), quote=True)}" title="{html.escape(t("Refresh page"), quote=True)}"><span class="header-tool-icon" aria-hidden="true">↻</span><span class="header-tool-label visually-hidden">{html.escape(t("Refresh"))}</span></button>
 </div>
 """
+        content_utility_html = (
+            f'<div class="content-utility-bar">'
+            f'<button type="button" class="compact-content-action" id="toggle-all-cards" '
+            f'aria-expanded="false">{html.escape(t("Expand all"))}</button></div>'
+        )
         page = f"""<!doctype html>
 <html lang="{language}">
 <head>
@@ -762,7 +762,7 @@ input[type="date"], input[type="week"], input[type="month"], input[type="datetim
 </a>
 </div>
 </header>
-{dashboard_controls_html}
+{content_utility_html}
 <div id="primary-dashboard" class="primary-dashboard">
 {multi_device_html}
 {radiation_intelligence_html}
