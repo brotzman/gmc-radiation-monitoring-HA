@@ -720,8 +720,8 @@ class ReportApplication(ReportStatusMixin, ReportDeviceViewMixin, WorkflowApplic
 <form method="get" class="language-select-form" id="language-select-form">
 <input type="hidden" name="mode" value="{html.escape(mode, quote=True)}">
 {f'<input type="hidden" name="device" value="{html.escape(selected_serial, quote=True)}">' if selected_serial else ''}
-<label class="language-select-label" for="language-select"><span>{html.escape(t("Language"))}</span>
-<select name="lang" id="language-select" title="{html.escape(t("Language"), quote=True)}">{''.join(language_select_options)}</select></label>
+<label class="language-select-label" for="language-select"><span class="visually-hidden">{html.escape(t("Language"))}</span><span class="language-select-control"><span class="language-select-icon" aria-hidden="true">🌐</span>
+<select name="lang" id="language-select" aria-label="{html.escape(t("Language"), quote=True)}" title="{html.escape(t("Language"), quote=True)}">{''.join(language_select_options)}</select></span></label>
 <noscript><button type="submit" class="header-tool-button">{html.escape(t("Apply"))}</button></noscript>
 </form>
 <button type="button" class="header-tool-button reload-button" id="reload-dashboard" aria-label="{html.escape(t("Refresh page"), quote=True)}" title="{html.escape(t("Refresh page"), quote=True)}"><span class="header-tool-icon" aria-hidden="true">↻</span><span class="header-tool-label visually-hidden">{html.escape(t("Refresh"))}</span></button>
